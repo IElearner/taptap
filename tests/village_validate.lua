@@ -7,6 +7,10 @@ end
 local function build(s, kind, x, y)
     local ok, message, b = s:build(kind, x, y)
     V.assert(ok, kind .. ": " .. message)
+    if ok and kind=="road" then
+        for _=1,3000 do if s.roads[x .. ":" .. y] then break end;s:update(0.1,true) end
+        V.assert(s.roads[x .. ":" .. y], "Planned road is constructed before logistics use")
+    end
     return b
 end
 V.atFrame(6, function()
@@ -26,7 +30,9 @@ V.atFrame(8, function()
     local sx = layout.x + layout.w * 0.53 - 60
     local sy = layout.y + layout.h * 0.52 - 270 + 240
     view.panel.props.onTap({ x = sx, y = sy }) -- tile (7,9) at default camera
-    V.assert(live.roadCount == 1, "Map tap projects to intended isometric road tile")
+    V.assert(live:roadSiteAt(7,9) ~= nil and live.roadCount==0, "Map tap plans the intended road tile without instant completion")
+    advance(live,10)
+    V.assert(live.roadCount==1,"Mobile road plan is completed by a real builder")
     local pause = hud.root:FindById("pause")
     pause.props.onClick(pause)
     V.assert(live.paused, "Pause HUD action reaches simulation")
@@ -41,20 +47,20 @@ V.atFrame(8, function()
     for x = 7, 4, -1 do build(s, "road", x, 9) end
     V.assert(s:nextLesson(), "Road tutorial completed with four connected tiles")
     local home = build(s, "house", 7, 8)
-    advance(s, 6)
+    advance(s, 20)
     V.assert(home.complete and s.population == 14, "Housing completes and adds villagers once")
     V.assert(s:nextLesson(), "Housing tutorial advances")
-    build(s, "farm", 6, 8); advance(s, 6)
+    build(s, "farm", 6, 8); advance(s, 20)
     V.assert(s:nextLesson(), "Farm tutorial advances")
-    build(s, "mill", 5, 8); advance(s, 6)
+    build(s, "mill", 5, 8); advance(s, 20)
     V.assert(s:nextLesson(), "Mill tutorial advances")
     build(s, "kitchen", 4, 8)
     advance(s, 150)
     V.assert(s.produced.food >= 4, "Grain is transported, milled, cooked and delivered as food")
     V.assert(s:nextLesson(), "Food tutorial counts delivered food, not starter inventory")
-    build(s, "road", 13, 9); build(s, "woodcutter", 13, 8); advance(s, 6)
+    build(s, "road", 13, 9); build(s, "woodcutter", 13, 8); advance(s, 20)
     V.assert(s:nextLesson(), "Woodcutter tutorial advances")
-    build(s, "road", 14, 9); build(s, "barracks", 14, 8); advance(s, 6)
+    build(s, "road", 14, 9); build(s, "barracks", 14, 8); advance(s, 20)
     for _ = 1, 3 do V.assert(s:train(), "Train a militia from available workers") end
     V.assert(s:nextLesson(), "Militia tutorial advances")
     local before = s.elapsed

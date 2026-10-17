@@ -21,7 +21,7 @@ D.names = { wood = "木料", stone = "石料", grain = "稻谷", flour = "米粉
 ---@type table<string,VillageBuildingDefinition>
 D.buildings = {
     store = { name = "义仓", cost = {}, workers = 0, color = { 85, 103, 101 }, description = "村庄的中心。搬运工沿道路运送物资。" },
-    road = { name = "道路", cost = {}, workers = 0, color = { 190, 166, 116 }, description = "免费铺路。点击空地逐格修建；拖动仍为移动地图。" },
+    road = { name = "道路", cost = {}, workers = 0, color = { 190, 166, 116 }, description = "免费规划道路；空闲村民将到场铺设，完工后才能运输。拖动可移动地图。" },
     house = { name = "民居", cost = { wood = 8, stone = 2 }, workers = 0, color = { 97, 111, 114 }, description = "竣工后增加 4 名村民，无需另行招募。" },
     farm = { name = "稻田", cost = { wood = 8 }, workers = 1, output = "grain", amount = 3, period = 7, color = { 187, 157, 69 }, description = "每 7 秒收获 3 份稻谷，由搬运工送入义仓。" },
     mill = { name = "磨坊", cost = { wood = 10, stone = 4 }, workers = 1, input = "grain", output = "flour", amount = 2, period = 6, color = { 118, 100, 79 }, description = "搬入 1 份稻谷，加工为 2 份米粉。" },
@@ -33,7 +33,7 @@ D.buildings = {
 }
 ---@type {title:string, lines:string[], kind:string, target:number}[]
 D.lessons = {
-    { title = "一 · 道通百业", lines = { "里正：先接通义仓门前的路。", "选「道路」，点击空地铺设。", "从现有路接出 4 格即可。" }, kind = "road", target = 4 },
+    { title = "一 · 道通百业", lines = { "里正：先接通义仓门前的路。", "打开营造选道路，点空地规划。", "从现有路接出 4 格，等待工人铺好。" }, kind = "road", target = 4 },
     { title = "二 · 安居于此", lines = { "在道路上方建一栋民居。", "建筑下方一格须接路。", "竣工后增加 4 名村民。" }, kind = "house", target = 1 },
     { title = "三 · 耕者有粮", lines = { "沿路建一块稻田，等待竣工。", "农夫自动上岗，搬运工运谷。", "点击建筑可调整岗位。" }, kind = "farm", target = 1 },
     { title = "四 · 谷成细粉", lines = { "在路边建一座磨坊。", "搬运工从义仓送谷进坊。", "有稻谷后便会自动加工。" }, kind = "mill", target = 1 },

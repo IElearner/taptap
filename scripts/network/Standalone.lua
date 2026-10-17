@@ -7,6 +7,8 @@ local SaveStore = require "game.SaveStore"
 local SaveData = require "game.SaveData"
 local Offline = require "game.Offline"
 local Game = {}
+local session = { accepted = false, userId = 0, guest = false }
+local injectedStore = false
 ---@type VillageSimulation
 local state
 ---@type VillageWorldView
@@ -43,22 +45,42 @@ local function startSettlement(savedAt)
     if not info.settling then finishSettlement() end
 end
 render = function()
-    actions.mode, actions.selected, actions.saveInfo = "inspect", false, info
+    if view then view.dispose() end
+    actions.mode, actions.selected, actions.saveInfo, actions.session, actions.road = "inspect", false, info, session, false
+    actions.login = function(guest)
+        local id = clientCloud and tonumber(clientCloud.userId) or 0
+        if not guest and id <= 0 then return false, "尚未识别账号，请用 TapTap 扫码进入，或选游客试玩。" end
+        session.accepted, session.userId, session.guest = true, id, guest
+        if not injectedStore then
+            local backend = SaveStore.nativeBackend()
+            if guest then
+                local read, write = backend.read, backend.write
+                backend.cloudGet, backend.cloudSet = nil, nil
+                backend.read = function(name) return read("guest_" .. name) end
+                backend.write = function(name, value) return write("guest_" .. name, value) end
+            end
+            store = SaveStore.new(backend)
+        end
+        create(state.mode, false)
+        return true, guest and "游客试玩 · 仅本地存档" or "已连接 TapTap 账号"
+    end
     actions.setMode = function(mode)
         if info.loading or info.settling then return end
-        actions.mode, actions.selected = mode, false
+        actions.mode, actions.selected, actions.road = mode, false, false
         view.setMode(mode); view.select(false)
         if mode ~= "inspect" then state:notify(require("game.Definitions").buildings[mode].description) end
     end
     view = WorldView.create(state, function(x, y)
         if info.loading or info.settling or background then return end
         local b = state:buildingAt(x, y)
-        if b then actions.selected = b; actions.mode = "inspect"; view.setMode("inspect"); view.select(b)
+        if b then actions.road=false; actions.selected = b; actions.mode = "inspect"; view.setMode("inspect"); view.select(b)
+        elseif actions.mode == "inspect" and state:roadSiteAt(x,y) then
+            actions.selected,actions.road=false,state:roadSiteAt(x,y);view.select(false)
         elseif actions.mode ~= "inspect" then
             local _, message, built = state:build(actions.mode, x, y)
             state:notify(message)
             if built then actions.selected = built; view.select(built) end
-        else actions.selected = false; view.select(false) end
+        else actions.selected,actions.road = false,false; view.select(false) end
     end)
     actions.restart = function() create(state.mode, true) end
     actions.changeMode = function(value)
@@ -66,7 +88,7 @@ render = function()
         create(value, false)
     end
     actions.enter = function()
-        if info.loading or info.settling then return false end
+        if not session.accepted or info.loading or info.settling then return false end
         state.started, state.paused, state.menuOpen = true, false, false
         persist()
         return true
@@ -92,6 +114,11 @@ create = function(mode, fresh)
         status = "读取存档中…", summary = "离线生产最多累计 8 小时；不结算敌袭与损失。", progress = 0 }
     saveClock, background, lastWall = 0, false, store.now()
     render()
+    if not session.accepted then
+        info.loading, info.status = false, "选择账号后读取进度"
+        hud.update()
+        return
+    end
     if fresh then
         store.generation, store.loading, store.completeLoad = store.generation + 1, false, false
         store.activeMode, store.status = state.mode, "新局准备就绪；入村后保存"
@@ -117,6 +144,8 @@ function Game.Start()
     graphics.windowTitle = "山河里 · 炊烟再起"
     UI.Init({ theme = "default-light", scale = UI.Scale.DEFAULT,
         fonts = { { family = "sans", weights = { normal = "Fonts/MiSans-Regular.ttf" } } } })
+    session = { accepted = false, guest = false, userId = clientCloud and tonumber(clientCloud.userId) or 0 }
+    injectedStore = false
     store = SaveStore.new()
     create("finite", false)
 end
@@ -151,12 +180,18 @@ function Game.Focus(focused)
         lastWall = store.now()
     end
 end
-function Game.Stop() persist(); UI.Shutdown() end
+function Game.Stop()
+    persist()
+    if view then view.dispose(); view = nil end
+    require("game.Art").release()
+    UI.Shutdown()
+end
 function Game.Inspect() return state, view, hud, info, store end
 -- Dependency injection also lets tests avoid touching a real player's files or cloud data.
-function Game.UseStore(storage)
+function Game.UseStore(storage, showLogin)
     if store then store.generation = store.generation + 1 end
-    store = storage
+    store, injectedStore = storage, true
+    session.accepted = not showLogin
     create("finite", false)
 end
 return Game

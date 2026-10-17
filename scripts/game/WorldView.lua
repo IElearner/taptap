@@ -1,5 +1,8 @@
 local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
+local Art = require "game.Art"
+local Characters = require "game.Characters"
+local Meals = require "game.Meals"
 local WorldView = {}
 local function color(c, alpha) return nvgRGBA(c[1], c[2], c[3], alpha or c[4] or 255) end
 local function polygon(vg, points, c)
@@ -23,18 +26,34 @@ local function tile(vg, x, y, c, shrink)
     polygon(vg, { sx, sy - b, sx + a, sy, sx, sy + b, sx - a, sy }, c)
 end
 local function tree(vg, sx, sy, seed)
-    nvgBeginPath(vg); nvgEllipse(vg, sx + 5, sy + 2, 19, 7); nvgFillColor(vg, color({ 37, 58, 39, 45 })); nvgFill(vg)
-    rect(vg, sx - 2, sy - 29, 5, 30, { 96, 75, 50 })
-    local height = 38 + seed % 9
-    polygon(vg, { sx, sy - height - 16, sx + 20, sy - 13, sx - 20, sy - 13 }, { 56, 88 + seed % 16, 64 })
-    polygon(vg, { sx, sy - height - 16, sx, sy - 12, sx - 20, sy - 13 }, { 75, 112, 74 })
-    polygon(vg, { sx, sy - height - 10, sx + 14, sy - 22, sx - 14, sy - 22 }, { 79, 118, 79 })
+    local kinds = { "tree-oak", "tree-pine", "tree-bamboo" }
+    local size = 74 + seed % 9
+    if Art.draw(vg, kinds[seed % 3 + 1], sx-size/2, sy-size*0.8, size, size) then return end
+    nvgBeginPath(vg); nvgEllipse(vg, sx + 8, sy + 3, 20, 8); nvgFillColor(vg, color({ 20, 32, 20, 65 })); nvgFill(vg)
+    local h = 32 + seed % 12
+    polygon(vg, {sx-3,sy+1,sx+4,sy-1,sx+2,sy-h,sx-1,sy-h}, {76, 65, 40})
+    line(vg, sx, sy-15, sx-9, sy-27, {91,76,43}, 2)
+    line(vg, sx+1, sy-19, sx+10, sy-30, {91,76,43}, 2)
+    for i = 0, 6 do
+        local a = i * 2.4 + seed
+        local px, py = sx + math.cos(a)*10, sy-h + math.sin(a)*8
+        circle(vg, px+2, py+3, 12, {42,63+seed%17,37})
+        circle(vg, px-1, py-2, 10, {69+seed%11,88+seed%19,43})
+        circle(vg, px-4, py-5, 6, {98+seed%18,112+seed%15,55})
+    end
 end
-local function house(vg, b, selected, clock)
+local function house(vg, b, selected, clock, art)
     local x, y = iso(b.x, b.y)
     local def = D.buildings[b.kind]
     if selected then tile(vg, b.x, b.y, { 239, 208, 115, 210 }) end
-    if b.kind == "farm" then
+    if art and art > 0 then
+        local size = b.kind == "store" and 120 or 108
+        nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
+        nvgFillPaint(vg, nvgImagePattern(vg, x-size/2, y-size*0.76, size, size, 0, art, b.complete and 1 or 0.65)); nvgFill(vg)
+        if b.kind == "kitchen" and b.complete then
+            for i = 1, 3 do circle(vg, x+10+math.sin(clock+i)*3, y-50-i*7-clock%1*5, 3+i, {235,225,195,60}) end
+        end
+    elseif b.kind == "farm" then
         tile(vg, b.x, b.y, { 132, 113, 65 })
         for row = -2, 2 do
             for col = -2, 2 do
@@ -83,19 +102,70 @@ local function house(vg, b, selected, clock)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
 end
-local function person(vg, x, y, c, carrying, clock)
+local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo)
     local sx, sy = iso(x, y); local step = math.sin(clock * 9 + x) * 2
+    local size = 34
+    local name = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
+    local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85+step*0.2, size, size)
+    if not painted then
     nvgBeginPath(vg); nvgEllipse(vg, sx, sy + 2, 5, 2); nvgFillColor(vg, color({ 30, 42, 28, 65 })); nvgFill(vg)
     line(vg, sx - 1, sy - 2, sx - 3, sy + 3 + step, { 62, 64, 56 }, 2)
     line(vg, sx + 1, sy - 2, sx + 3, sy + 3 - step, { 62, 64, 56 }, 2)
     rect(vg, sx - 3, sy - 11, 6, 10, c); circle(vg, sx, sy - 14, 3, { 218, 181, 130 })
-    polygon(vg, { sx, sy - 19, sx + 6, sy - 13, sx - 6, sy - 13 }, { 197, 167, 103 })
-    if carrying then rect(vg, sx + 2, sy - 12, 7, 6, { 190, 144, 75 }) end
+    local hat = profile and profile.hat or "straw"
+    if hat == "straw" then polygon(vg, { sx, sy - 19, sx + 6, sy - 13, sx - 6, sy - 13 }, { 197, 167, 103 })
+    elseif hat == "cap" then rect(vg, sx-3, sy-18, 6, 4, {62,65,58})
+    else
+        circle(vg, sx,sy-16,3,{64,54,42})
+        if hat == "braid" then line(vg,sx+2,sy-15,sx+4,sy-7,{50,45,36},2)
+        else line(vg,sx-3,sy-15,sx+3,sy-15,{180,154,105},2) end
+    end
+    if profile and profile.age == "elder" then line(vg,sx-1,sy-12,sx,sy-9,{215,212,190},2) end
+    if profile and profile.gender == "female" then polygon(vg,{sx-2,sy-7,sx+2,sy-7,sx+4,sy-1,sx-4,sy-1},c) end
+    end
+    if carrying then
+        local good=cargo or "wood"
+        if not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
+            if good=="wood" then
+                for i=0,2 do line(vg,sx+3,sy-9-i*3,sx+13,sy-13-i*3,{137,94,49},3) end
+            elseif good=="stone" then
+                polygon(vg,{sx+3,sy-8,sx+1,sy-14,sx+7,sy-18,sx+14,sy-13,sx+12,sy-7},{146,148,137})
+            elseif good=="food" then
+                rect(vg,sx+2,sy-15,12,8,{176,139,76});line(vg,sx+2,sy-11,sx+14,sy-11,{104,82,43},1)
+            else
+                circle(vg,sx+8,sy-12,6,good=="flour" and {225,215,179} or {181,145,80})
+                line(vg,sx+5,sy-17,sx+11,sy-17,{92,75,42},2)
+            end
+        end
+    end
+    if action=="hammer" then
+        local angle=-0.8+math.sin(clock*9)*1.05
+        local hx,hy=sx+5+math.sin(angle)*12,sy-11-math.cos(angle)*12
+        line(vg,sx+3,sy-10,hx,hy,{173,133,78},2)
+        line(vg,hx-3,hy+1,hx+3,hy-1,{167,172,163},4)
+        if math.sin(clock*9)>0.8 then
+            line(vg,sx+11,sy-2,sx+15,sy-5,{224,201,116},1)
+            line(vg,sx+12,sy-1,sx+17,sy,{224,201,116},1)
+        end
+    elseif action=="eat" then
+        circle(vg,sx+5,sy-9,4,{223,213,179})
+        line(vg,sx+5,sy-9,sx+1,sy-12-math.sin(clock*5)*2,{145,115,67},1.5)
+    end
 end
 function WorldView.create(sim, onTile)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
     local camera = { x = 0, y = 0, zoom = 1, pinchZoom = 1 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
+    local images, checked, imageContext = {}, {}, nil
+    local function image(kind, vg)
+        imageContext = vg
+        if not checked[kind] then
+            checked[kind] = true
+            local path = "assets/image/building-" .. kind .. ".png"
+            if fileSystem:FileExists(path) then images[kind] = nvgCreateImage(vg, path, 0) end
+        end
+        return images[kind]
+    end
     local mode = "inspect"
     local selected = false
     local function projection()
@@ -106,6 +176,17 @@ function WorldView.create(sim, onTile)
         local _, ox, oy = projection()
         local a, b = (event.x - ox) / camera.zoom / 30, (event.y - oy) / camera.zoom / 15
         local x, y = math.floor((a + b) / 2 + 0.5), math.floor((b - a) / 2 + 0.5)
+        if mode == "inspect" then
+            local px, py = (event.x-ox)/camera.zoom, (event.y-oy)/camera.zoom
+            local hit, depth = nil, -math.huge
+            for _, building in ipairs(sim.buildings) do
+                local bx, by = iso(building.x, building.y)
+                if px >= bx-27 and px <= bx+27 and py >= by-54 and py <= by+10 and building.x+building.y > depth then
+                    hit, depth = building, building.x+building.y
+                end
+            end
+            if hit then x,y = hit.x,hit.y end
+        end
         onTile(x, y)
     end
     panel.props.onPanStart = function() end
@@ -120,7 +201,7 @@ function WorldView.create(sim, onTile)
     panel.props.onPinchMove = function(event) camera.zoom = math.max(0.55, math.min(1.8, camera.pinchZoom * event.scale)) end
     function panel:Render(vg)
         local l, ox, oy = projection()
-        rect(vg, l.x, l.y, l.w, l.h, { 89, 111, 78 })
+        rect(vg, l.x, l.y, l.w, l.h, { 63, 77, 48 })
         nvgSave(vg); nvgIntersectScissor(vg, l.x, l.y, l.w, l.h)
         nvgTranslate(vg, ox, oy); nvgScale(vg, camera.zoom, camera.zoom)
         -- Inverse-project just the viewport. Work stays bounded as the world expands.
@@ -140,14 +221,34 @@ function WorldView.create(sim, onTile)
                 do
                     local terrain = sim:terrain(x, y)
                     local variation = (x * 17 + y * 23) % 13
-                    local c = { 132 + variation, 151 + variation, 96 + variation }
-                    if terrain == "water" then c = { 100, 148 + variation, 154 + variation }
+                    local c = { 108 + variation, 122 + variation, 68 + variation }
+                    if terrain == "water" then c = { 73, 113 + variation, 112 + variation }
                     elseif terrain == "fog" then c = { 66 + variation, 85 + variation, 66 + variation }
-                    elseif terrain == "forest" then c = { 109 + variation, 135 + variation, 84 + variation } end
+                    elseif terrain == "forest" then c = { 87 + variation, 110 + variation, 60 + variation } end
                     tile(vg, x, y, c)
                     local sx, sy = iso(x, y)
-                    if sim.roads[x .. ":" .. y] then
-                        tile(vg, x, y, { 193, 174, 132 }, 1)
+                    local ground = terrain == "water" and "ground-water" or ((terrain == "grass" or terrain == "forest") and "ground-grass" or nil)
+                    if ground then Art.draw(vg, ground, sx-30, sy-15, 60, 30) end
+                    if (terrain == "grass" or terrain == "forest") and not Art.exists("ground-grass") then
+                        for j = 1, 5 do
+                            local dx, dy = ((x*31+y*13+j*17)%37)-18, ((x*11+y*23+j*7)%13)-6
+                            line(vg, sx+dx, sy+dy, sx+dx-1, sy+dy-2, {76+variation,96+variation,48,100}, 1)
+                        end
+                    end
+                    local site=sim:roadSiteAt(x,y)
+                    if site then
+                        tile(vg,x,y,{127,107,67},2)
+                        for k=-1,1 do line(vg,sx-12+k*7,sy-3,sx-5+k*7,sy+2,{188,163,102},1) end
+                        rect(vg,sx-14,sy+5,28,3,{58,57,37});rect(vg,sx-14,sy+5,28*site.progress,3,{222,184,95})
+                    elseif sim.roads[x .. ":" .. y] then
+                        tile(vg, x, y, { 161, 143, 101 }, 1)
+                        for j = -1, 1 do
+                            for k = -1, 1 do
+                                local px,py = iso(x+j*0.25,y+k*0.25)
+                                polygon(vg,{px,py-2,px+5,py,px,py+3,px-5,py}, {175+variation,158+variation,116+variation})
+                            end
+                        end
+                        Art.draw(vg, "ground-road", sx-30, sy-15, 60, 30)
                         line(vg, sx - 13, sy, sx + 3, sy + 7, { 168, 149, 110 }, 1)
                         line(vg, sx + 8, sy - 6, sx + 18, sy - 1, { 213, 194, 155 }, 1)
                     elseif terrain == "water" then
@@ -161,26 +262,79 @@ function WorldView.create(sim, onTile)
                 end
             end
         end
+        local agentsByDepth={}
+        local function addAgent(a,role,profile,action,cargo,queueSlot)
+            if Meals.hidden(sim,a) then return end
+            local drawX,drawY=a.x,a.y
+            if a.meal and a.meal.phase=="queue" then
+                local place=(queueSlot or 1)%3
+                drawX=drawX+(place-1)*0.18
+                drawY=drawY+math.floor((queueSlot or 1)/3)*0.13
+            end
+            local depth=math.floor(drawX+drawY+0.5)
+            local sx,sy=iso(drawX,drawY)
+            if depth < minX+minY or depth > maxX+maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
+                or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
+            agentsByDepth[depth]=agentsByDepth[depth] or {}
+            local walking=a.path and a.path[a.index] ~= nil
+            local clock=(walking or action=="hammer" or action=="eat") and sim.elapsed or 0
+            table.insert(agentsByDepth[depth],{actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,clock=clock})
+        end
+        for index,a in ipairs(sim.carriers) do
+            local role,profile=Characters.carrier(index,a.carrying)
+            local action=a.meal and a.meal.phase=="eat" and "eat" or nil
+            addAgent(a,role,profile,action,a.job and a.job.resource or nil,index)
+        end
+        for _,a in pairs(sim.workers) do
+            local b=sim.buildings[a.building]
+            local role,profile=Characters.worker(b,a.slot)
+            if role then addAgent(a,role,profile,a.meal and a.meal.phase=="eat" and "eat" or nil,nil,a.building*2+a.slot) end
+        end
+        for index,a in ipairs(sim.builders) do
+            if a.active then
+                local role,profile=Characters.carrier(index,false)
+                addAgent(a,role,profile,a.phase=="hammer" and "hammer" or nil,a.carrying and "wood" or nil)
+            end
+        end
         for sum = minX + minY, maxX + maxY do
             for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
                 local y = sum - x
                 do
                     if sim:terrain(x, y) == "forest" and (x + y) % 2 == 0 then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
                     local b = sim:buildingAt(x, y)
-                    if b then house(vg, b, selected == b, sim.elapsed) end
+                    if not b and not sim.roads[x .. ":" .. y] then
+                        local terrain = sim:terrain(x,y)
+                        local sx,sy = iso(x,y)
+                        if terrain == "forest" and (x*7+y*3)%13 == 0 then Art.draw(vg, "rock-moss", sx-27,sy-32,54,40)
+                        elseif terrain == "grass" and (x*11+y*7)%29 == 0 then Art.draw(vg, "bush-flowers",sx-22,sy-28,44,35)
+                        elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
+                    end
+                    if b then house(vg,b,selected==b,sim.elapsed,image(b.kind,vg)) end
                 end
             end
-            for _, c in ipairs(sim.carriers) do
-                if math.floor(c.x + c.y + 0.5) == sum then person(vg, c.x, c.y, { 91, 116, 131 }, c.carrying, sim.elapsed) end
+            local bucket=agentsByDepth[sum]
+            if bucket then
+                for _,entry in ipairs(bucket) do
+                    local a=entry.actor
+                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo)
+                end
             end
         end
-        for i = 1, sim.militia do person(vg, 8 + (i % 4) * 0.4, 10 + math.floor((i - 1) / 4) * 0.5, { 125, 64, 53 }, false, 0) end
-        for _, e in ipairs(sim.enemies) do if e.hp > 0 then person(vg, e.x, e.y, { 74, 64, 73 }, false, sim.elapsed) end end
+        for i = 1, sim.militia do
+            local role, profile = Characters.militia(i)
+            person(vg,8+(i%4)*0.4,10+math.floor((i-1)/4)*0.5,profile.color,false,0,role,"se",profile)
+        end
+        for _, e in ipairs(sim.enemies) do if e.hp > 0 then person(vg, e.x, e.y, { 74, 64, 73 }, false, sim.elapsed, "bandit", "sw") end end
         nvgRestore(vg)
     end
     ---@class VillageWorldView
     local result = {
         panel = panel,
+        dispose = function()
+            if imageContext then for _, handle in pairs(images) do if handle > 0 then nvgDeleteImage(imageContext, handle) end end end
+            images, checked, imageContext = {}, {}, nil
+        end,
+
         setMode = function(value) mode = value end,
         select = function(value) selected = value end,
         zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,

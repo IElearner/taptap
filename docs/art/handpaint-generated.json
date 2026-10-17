@@ -1,0 +1,72 @@
+{
+  "total": 5,
+  "succeeded": 5,
+  "failed": 0,
+  "results": [
+    {
+      "name": "shanheli_environment_atlas",
+      "prompt": "原创中国宋代乡村经营战略游戏，经典90年代等距手绘经营RTS的精细油彩/水粉绘制质感，非矢量、非低多边形、非卡通，沉稳麦金、苔绿、灰瓦、土褐色，光来自左上，与青瓦木屋乡村统一。透明背景严格3列3行等大512像素格图集，每格独立居中，完整轮廓四周留白12%，不要文字、网格线或外框。第一行：一棵枝叶精细的阔叶古树、一棵层叠苍松、一簇竹林；第二行：带苔藓的灰色岩石群、低矮开花灌木、河岸芦苇；第三行：一块草地地面菱形瓦片、一块黄土碎石道路地面菱形瓦片、一块深青绿河水地面菱形瓦片。最后一行三块地面均等距2比1菱形，宽420高210，菱形外透明，边缘干净、无凸起平台或厚度，草地细碎自然植被、土路车辙、河水轻微波纹。所有树木岩石地面锚点在格子高度80%，轻微自然投影。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/077cc59f-5af7-4950-9071-07bc6313ff1d.png",
+      "actualSize": "1536x1536",
+      "aspect_ratio": "1:1",
+      "transparent": true,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    },
+    {
+      "name": "shanheli_people_atlas",
+      "prompt": "原创中国宋代乡村经营战略游戏，经典90年代等距手绘经营RTS的精细油彩/水粉绘制质感，非矢量、非低多边形、非卡通，沉稳麦金、苔绿、灰瓦、土褐色，光来自左上，与青瓦木屋乡村统一。人物精灵图集，透明背景严格4列4行16个256x256等大格，无边框无文字。每格一个完整小人物，头脚不裁切，人物占格子高度70%，脚底位于格子高度85%，等距俯视小比例但衣服褶皱工具皮肤细致。每行角色相同，四列依次朝向东南、西南、东北、西北，步行姿势。第一行：戴斗笠穿靛蓝粗布衣的空手搬运农夫。第二行：同款农夫肩扛麻布粮袋，双手扶袋。第三行：穿暗红布甲持长矛的乡勇民兵。第四行：穿深灰破衣持刀的山匪。材质色调自然，人物可直接用于地图，禁止白底和棋盘格。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/0f21e987-bc17-4ea1-a099-1edb31a6d408.png",
+      "actualSize": "1024x1024",
+      "aspect_ratio": "1:1",
+      "transparent": true,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    },
+    {
+      "name": "shanheli_ui_icons_atlas",
+      "prompt": "原创中国宋代乡村经营战略游戏，经典90年代等距手绘经营RTS的精细油彩/水粉绘制质感，非矢量、非低多边形、非卡通，沉稳麦金、苔绿、灰瓦、土褐色，光来自左上，与青瓦木屋乡村统一。游戏界面手绘物件图标集，透明背景，严格4列4行16个256x256等大格，每格一个独立图标居中留白20%，视觉重量一致，便于缩到32像素识别。无文字无字母无格线无背景底座。第一行左到右：木锤与木尺交叉（营造）、村务账簿与毛笔（村务）、交叉长矛与圆木盾（军务）、铜齿轮（系统）。第二行：捆扎圆木、灰色石块堆、金色稻穗、装白米粉的陶碗。第三行：竹蒸笼包子（口粮）、青瓦小屋（归村）、铜制放大镜加号、铜制放大镜减号。第四行：两条铜色暂停竖条、红绳竹简（存档）、铜沙漏（离线生产）、展开的里正手札（教程）。每个物件都细致手绘，轮廓鲜明。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/c2aa33f5-2626-4cfb-aa39-537045d6d453.png",
+      "actualSize": "1024x1024",
+      "aspect_ratio": "1:1",
+      "transparent": true,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    },
+    {
+      "name": "shanheli_panel_wood",
+      "prompt": "原创中国宋代乡村经营战略游戏，经典90年代等距手绘经营RTS的精细油彩/水粉绘制质感，非矢量、非低多边形、非卡通，沉稳麦金、苔绿、灰瓦、土褐色，光来自左上，与青瓦木屋乡村统一。UI面板背景纯材质贴图，充满整张正方形，深棕黑旧木板底纹，横向细密手绘木纹、柔和不规则刷痕、非常低对比度便于叠加金色文字。边缘到中心亮度基本一致，可平铺。不要边框不要铆钉不要物件不要文字不要光照热点。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/b40c5f5c-0a9f-4db0-98fb-46c727ee672e.png",
+      "actualSize": "512x512",
+      "aspect_ratio": "1:1",
+      "transparent": false,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    },
+    {
+      "name": "shanheli_button_painting",
+      "prompt": "原创中国宋代乡村经营战略游戏，经典90年代等距手绘经营RTS的精细油彩/水粉绘制质感，非矢量、非低多边形、非卡通，沉稳麦金、苔绿、灰瓦、土褐色，光来自左上，与青瓦木屋乡村统一。单个横向游戏按钮素材，充满整张图，外缘旧铜包角、细窄金属框、四角小铆钉，中间暗褐木纹，柔和厚度与凹凸阴影，长方形边框宽度细，不要任何文字图标。中心木板纹理低对比度便于叠字，边缘完整不裁切。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/c25d01e1-4d1a-43ec-aa9d-ff8396135b45.png",
+      "actualSize": "576x384",
+      "aspect_ratio": "4:3",
+      "transparent": false,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    }
+  ]
+}

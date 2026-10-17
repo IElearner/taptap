@@ -1,7 +1,7 @@
 -- Explicit versioned save format. Jobs reference building IDs instead of table identity.
 local Sim = require "game.Simulation"
 local D = require "game.Definitions"
-local Data = { VERSION = 1 }
+local Data = { VERSION = 2 }
 local fields = { "population", "militia", "lesson", "elapsed", "foodClock", "speed", "paused", "started", "skipped",
     "raid", "victory", "defeat", "health", "combatClock", "roadCount", "wave", "wavesDefeated", "nextRaid", "defended", "timber", "rock", "score" }
 local function clone(value)
@@ -13,26 +13,27 @@ local function number(value, low, high)
 end
 local function jobData(job)
     if not job then return false end
-    return { building = job.b.id, inbound = job.inbound, resource = job.resource, amount = job.amount }
+    return { building = job.b.id, inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
 end
 function Data.capture(s, savedAt, revision, idleEnabled)
     local world = { stock = clone(s.stock), produced = clone(s.produced), roads = clone(s.roads),
-        buildings = {}, jobs = {}, carriers = {}, enemies = clone(s.enemies) }
+        buildings = {}, jobs = {}, carriers = {}, enemies = clone(s.enemies),
+        pendingRoads=clone(s.pendingRoads), builders=clone(s.builders), workers=clone(s.workers), mealsServed=s.mealsServed }
     for _, name in ipairs(fields) do world[name] = s[name] end
     for _, b in ipairs(s.buildings) do
-        local entry = clone(b); entry.cachedConnected, entry.networkRevision = nil, nil
+        local entry = clone(b); entry.cachedConnected, entry.networkRevision, entry.activeWorkers = nil, nil, nil
         world.buildings[#world.buildings + 1] = entry
     end
     for _, job in ipairs(s.jobs) do world.jobs[#world.jobs + 1] = jobData(job) end
     for _, c in ipairs(s.carriers) do
         world.carriers[#world.carriers + 1] = { x = c.x, y = c.y, path = clone(c.path), index = c.index,
-            job = jobData(c.job), carrying = c.carrying }
+            job = jobData(c.job), carrying = c.carrying, hunger=c.hunger or 0, meal=clone(c.meal or false), facing=c.facing }
     end
     return { version = Data.VERSION, mode = s.mode, seed = s.map.seed, expansion = s.map.expansion,
         savedAt = savedAt, revision = revision or 1, idleEnabled = idleEnabled ~= false, world = world }
 end
 local function restoreUnsafe(data, mode)
-    assert(type(data) == "table" and data.version == Data.VERSION, "version")
+    assert(type(data) == "table" and (data.version == 1 or data.version == Data.VERSION), "version")
     assert(data.mode == mode and (mode == "finite" or mode == "infinite"), "mode")
     assert(number(data.savedAt, 0, 4102444800) and number(data.revision, 1, 1e12), "timestamp")
     assert(number(data.seed, -1e9, 1e9) and number(data.expansion, 0, 1e6) and data.expansion % 1 == 0, "map")
@@ -67,7 +68,9 @@ local function restoreUnsafe(data, mode)
         assert(number(b.timer, 0, 1e12) and number(b.buffer, 0, 1e12) and number(b.inputs, 0, 1e12), "buffer")
         assert(type(b.incoming) == "boolean" and type(b.outgoing) == "boolean", "transit flags")
         assert(not s:buildingAt(b.x, b.y), "duplicate position")
+        assert(number(b.mealStock or 0,0,100) and (b.mealIncoming==nil or type(b.mealIncoming)=="boolean"),"dining inventory")
         local restored = clone(b); restored.cachedConnected, restored.networkRevision = nil, nil
+        restored.mealStock,restored.mealIncoming=b.mealStock or 0,b.mealIncoming or false
         s.buildings[i], s.buildingIndex[b.x .. ":" .. b.y] = restored, restored
     end
     assert(s.buildings[1].kind == "store" and s.buildings[1].x == 10 and s.buildings[1].y == 8, "warehouse")
@@ -75,7 +78,9 @@ local function restoreUnsafe(data, mode)
         if job == false then return false end
         assert(type(job) == "table" and s.buildings[job.building], "job building")
         assert(type(job.inbound) == "boolean" and D.names[job.resource] and number(job.amount, 1, 1e12), "job")
-        return { b = s.buildings[job.building], inbound = job.inbound, resource = job.resource, amount = job.amount }
+        assert(job.service==nil or type(job.service)=="boolean","service job")
+        if job.service then assert(job.inbound and job.resource=="food" and job.amount<=2 and s.buildings[job.building].kind=="kitchen","meal delivery") end
+        return { b = s.buildings[job.building], inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
     end
     for _, job in ipairs(w.jobs) do s.jobs[#s.jobs + 1] = restoreJob(job) end
     for _, c in ipairs(w.carriers) do
@@ -88,6 +93,69 @@ local function restoreUnsafe(data, mode)
     assert(type(w.enemies) == "table" and #w.enemies <= 10000, "enemies")
     for _, e in ipairs(w.enemies) do assert(number(e.x, -1e9, 1e9) and number(e.y, -1e9, 1e9) and number(e.hp, -1e12, 1e12), "enemy state") end
     s.enemies = clone(w.enemies)
+    local function validatePath(a)
+        assert(type(a.path) == "table" and #a.path <= 100000 and number(a.index,1,100001), "activity path")
+        assert(number(a.x,-1e9,1e9) and number(a.y,-1e9,1e9), "activity position")
+        for _,p in ipairs(a.path) do
+            assert(type(p)=="table" and number(p.x,-1e9,1e9) and number(p.y,-1e9,1e9), "activity path point")
+        end
+        if a.facing ~= nil then assert(a.facing=="se" or a.facing=="sw" or a.facing=="ne" or a.facing=="nw", "facing") end
+    end
+    local function validateMeal(a)
+        assert(number(a.hunger or 0,0,600), "hunger")
+        if not a.meal then return end
+        local m=a.meal
+        assert(type(m)=="table" and number(m.target,1,#s.buildings) and s.buildings[m.target], "dining target")
+        local target=s.buildings[m.target]
+        assert(target.complete and (target.kind=="kitchen" or target.kind=="store"), "dining building")
+        assert(m.phase=="walk" or m.phase=="queue" or m.phase=="enter" or m.phase=="eat" or m.phase=="exit" or m.phase=="return", "meal phase")
+        assert(number(m.timer,0,4) and number(m.resumeX,-1e9,1e9) and number(m.resumeY,-1e9,1e9) and type(m.paid)=="boolean", "meal state")
+        if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then assert(m.paid,"reserved meal") end
+    end
+    if data.version >= 2 then
+        assert(type(w.pendingRoads)=="table" and #w.pendingRoads<=100000 and type(w.builders)=="table" and #w.builders<=2, "construction")
+        s.pendingRoads,s.roadPlanIndex,s.builders={}, {},clone(w.builders)
+        for _,p in ipairs(w.pendingRoads) do
+            assert(type(p)=="table" and number(p.x,-1e9,1e9) and p.x%1==0 and number(p.y,-1e9,1e9) and p.y%1==0 and number(p.progress,0,1), "road site")
+            local k=p.x .. ":" .. p.y
+            assert(not s.roads[k] and not s:buildingAt(p.x,p.y) and not s.roadPlanIndex[k], "road overlap")
+            local entry=clone(p);s.pendingRoads[#s.pendingRoads+1]=entry;s.roadPlanIndex[k]=entry
+        end
+        local claims={}
+        for _,a in ipairs(s.builders) do
+            validatePath(a)
+            assert(type(a.active)=="boolean" and type(a.carrying)=="boolean" and number(a.timer,0,1e12), "builder state")
+            assert(a.phase=="idle" or a.phase=="collect" or a.phase=="packing" or a.phase=="toSite" or a.phase=="hammer" or a.phase=="return", "builder phase")
+            assert(a.active == (a.phase~="idle"), "builder occupancy")
+            if a.job then
+                local j=a.job
+                assert(type(j)=="table" and (j.kind=="road" or j.kind=="building") and a.active and a.phase~="return", "builder job")
+                assert(number(j.doorX,-1e9,1e9) and number(j.doorY,-1e9,1e9), "construction door")
+                local claim
+                if j.kind=="road" then
+                    assert(number(j.x,-1e9,1e9) and number(j.y,-1e9,1e9) and s:roadSiteAt(j.x,j.y), "road job")
+                    claim="r" .. j.x .. ":" .. j.y
+                else
+                    assert(number(j.building,1,#s.buildings) and s.buildings[j.building] and not s.buildings[j.building].complete, "building job")
+                    claim="b" .. j.building
+                end
+                assert(not claims[claim], "duplicate construction worker");claims[claim]=true
+            else assert(a.phase=="idle" or a.phase=="return", "builder missing job") end
+        end
+        assert(type(w.workers)=="table" and number(w.mealsServed,0,1e12), "worker activities")
+        s.workers,s.mealsServed={},w.mealsServed
+        local count=0
+        for k,a in pairs(w.workers) do
+            count=count+1;assert(count<=20000 and type(k)=="string" and type(a)=="table", "worker limit")
+            local b=s.buildings[a.building]
+            assert(b and b.complete and number(a.slot,1,b.workers) and a.slot%1==0 and k==a.building .. ":" .. a.slot, "worker slot")
+            validatePath(a);validateMeal(a);s.workers[k]=clone(a)
+        end
+        for _,a in ipairs(s.carriers) do validatePath(a);validateMeal(a) end
+    else
+        -- V1 roads remain completed; actors start at their existing jobs without eating twice.
+        for _,a in ipairs(s.carriers) do a.hunger,a.meal=0,false end
+    end
     assert(s:availableWorkers() >= 0, "workforce")
     return s
 end

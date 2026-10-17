@@ -1,206 +1,241 @@
 local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
+local Skin = require "game.Skin"
+local label, button, panel = Skin.label, Skin.button, Skin.panel
 local Hud = {}
-local ink, paper, muted, red = { 63, 58, 43 }, { 242, 230, 197, 249 }, { 125, 113, 86 }, { 143, 61, 43 }
-local function label(text, size, c)
-    return UI.Label { text = text, fontSize = size or 14, fontColor = c or ink, flexShrink = 1 }
-end
-local function button(text, action, props)
-    local p = props or {}
-    p.text, p.onClick = text, action
-    p.height, p.minWidth, p.fontSize = p.height or 48, p.minWidth or 52, p.fontSize or 15
-    p.backgroundColor, p.textColor = p.backgroundColor or { 224, 208, 166 }, p.fontColor or ink
-    p.fontColor = nil
-    p.borderWidth, p.borderColor = 1, { 164, 142, 99 }
-    p.borderRadius, p.paddingHorizontal = 2, 12
-    return UI.Button(p)
-end
-local function panel(props)
-    props.backgroundColor, props.borderWidth, props.borderColor = paper, 1, { 161, 140, 95 }
-    return UI.Panel(props)
-end
+local function row(children, gap) return UI.Panel { flexDirection = "row", alignItems = "center", gap = gap or 8, children = children } end
 local function costText(def)
     local parts = {}
-    for _, resource in ipairs(D.goods) do if def.cost[resource] then parts[#parts + 1] = def.cost[resource] .. D.names[resource] end end
-    return #parts > 0 and table.concat(parts, " · ") or "免费"
+    for _, r in ipairs(D.goods) do if def.cost[r] then parts[#parts + 1] = def.cost[r] .. D.names[r] end end
+    return #parts > 0 and table.concat(parts, " / ") or "免费铺设"
 end
 function Hud.create(sim, world, actions)
-    local saveInfo = actions.saveInfo
-    local resources, buildButtons = {}, {}
-    local modeLabel = label("", 13, muted)
+    local info, session = actions.saveInfo, actions.session
+    local opened, selectedLast, roadLast = nil, false, false
+    local drawers, mainButtons, resources = {}, {}, {}
+    local function close() opened = nil end
+    local function open(name) opened = opened == name and nil or name end
+    local function header(name)
+        return row { label(name, 20, Skin.gold), UI.Panel { flexGrow = 1 }, button("×", close, { width = 44, id = "closeDrawer" .. name }) }
+    end
+    local function drawer(name, title, items)
+        local p = panel { id = "drawer_" .. name, position = "absolute", right = 12, top = 58, bottom = 78, width = 310, padding = 14, gap = 8,
+            visible = false, children = { header(title), UI.ScrollView { flexGrow = 1, flexBasis = 0, scrollY = true,
+                children = { UI.Panel { gap = 9, paddingRight = 5, children = items } } } } }
+        drawers[name] = p
+        return p
+    end
     ---@type Widget[]
-    local topChildren = { label("山河里", 23, red), modeLabel }
+    local top = { label("山 河 里", 19, Skin.gold) }
     for _, r in ipairs(D.goods) do
-        resources[r] = label("", 14)
-        topChildren[#topChildren + 1] = resources[r]
+        resources[r] = label("", 13)
+        top[#top + 1] = row({ Skin.icon(r, 22), resources[r] }, 3)
     end
-    local people = label("", 13)
-    topChildren[#topChildren + 1] = people
-    local pause = button("暂停", function() sim.paused = not sim.paused end, { id = "pause" })
-    local speed = button("1倍", function() sim.speed = sim.speed == 1 and 2 or 1 end)
-    topChildren[#topChildren + 1], topChildren[#topChildren + 2] = pause, speed
-    local title, line1, line2, line3 = label("", 17, red), label("", 13), label("", 13), label("", 13)
-    for _, item in ipairs({ line1, line2, line3 }) do item:SetStyle({ width = "100%", whiteSpace = "normal" }) end
-    local progress = label("", 13, muted)
-    local next = button("完成后继续", function() sim:nextLesson() end, { backgroundColor = { 152, 73, 47 }, fontColor = { 255, 242, 212 } })
-    local raid = button("开始守村", function() local _, message = sim:startRaid(); sim:notify(message) end)
-    local worldInfo = label("", 12, muted)
-    worldInfo:SetStyle({ width = "100%", whiteSpace = "normal" })
-    local tutorial = panel { position = "absolute", left = 12, top = 76, width = 268, padding = 12, gap = 6,
-        children = { worldInfo, title, line1, line2, line3, progress, next, raid } }
-    local selectedTitle, selectedInfo, selectedState = label("村务", 18, red), label("点击建筑查看详情。", 13), label("", 13, muted)
-    selectedInfo:SetStyle({ width = "100%", whiteSpace = "normal" })
-    selectedState:SetStyle({ width = "100%", whiteSpace = "normal" })
-    local minus = button("减岗", function() if actions.selected then sim:staff(actions.selected, -1) end end)
-    local plus = button("加岗", function() if actions.selected then sim:staff(actions.selected, 1) end end)
-    local train = button("训练乡勇", function() local _, message = sim:train(); sim:notify(message) end)
-    local repair = button("修缮义仓", function() local _, message = sim:repair(); sim:notify(message) end)
-    local selectedPanel = panel { position = "absolute", right = 12, top = 76, width = 246, padding = 12, gap = 9,
-        children = { selectedTitle, selectedInfo, selectedState, UI.Panel { flexDirection = "row", gap = 8, children = { minus, plus, train, repair } } } }
-    local buildItems = {}
+    local people = label("", 12, Skin.muted); top[#top + 1] = people
+    local topbar = panel { position = "absolute", top = 8, left = 12, right = 12, height = 42, paddingHorizontal = 15,
+        flexDirection = "row", alignItems = "center", justifyContent = "space-between", gap = 8, children = top }
+    ---@type Widget[]
+    local buildItems = { label("先接通道路，再沿路营造。", 12, Skin.muted) }
     for _, kind in ipairs(D.order) do
-        local def = D.buildings[kind]
-        local btn = button(def.name, function() actions.setMode(kind) end, { id = "build_" .. kind, flexGrow = 1, minWidth = 56, paddingHorizontal = 4, height = 50, fontSize = 15 })
-        buildButtons[kind] = btn
-        buildItems[#buildItems + 1] = UI.Panel { flexGrow = 1, flexBasis = 0, gap = 4, alignItems = "stretch", children = { btn, label(costText(def), 11, muted) } }
+        local k, def = kind, D.buildings[kind]
+        buildItems[#buildItems + 1] = row {
+            button(def.name, function() actions.setMode(k); close() end, { id = "build_" .. k, width = 100 }),
+            UI.Panel { flexGrow = 1, flexBasis = 0, minWidth = 0, gap = 3, children = { label(costText(def), 12, Skin.gold), label(def.output and ("生产 · " .. D.names[def.output]) or (k == "road" and "运输的命脉" or "村庄设施"), 11, Skin.muted) } },
+        }
     end
-    local toolHint = label("点击建筑查看 · 单指拖动地图 · 双指缩放", 13, muted)
-    local toast = label("", 14, { 255, 243, 212 })
-    local notice = UI.Panel { position = "absolute", bottom = 160, alignSelf = "center", padding = 12,
-        maxWidth = "80%", backgroundColor = { 53, 65, 46, 235 }, children = { toast }, pointerEvents = "none" }
-    local expand = button("拓荒", function()
-        local _, message = sim:expand(); sim:notify(message)
-    end, { id = "expandWorld", height = 44 })
+    local buildDrawer = drawer("build", "营 造 工 坊", buildItems)
+    local title, line1, line2, line3 = label("", 17, Skin.gold), label("", 13), label("", 13), label("", 13)
+    local progress, worldInfo = label("", 12, Skin.gold), label("", 12, Skin.muted)
+    local next = button("完成后继续 →", function() sim:nextLesson() end, { id = "nextLesson" })
+    local activityInfo=label("",12,Skin.muted)
+    local villageDrawer = drawer("village", "乡 里 事 务", {
+        worldInfo, activityInfo, title, line1, line2, line3, progress, next,
+        button("重新阅读教程", function() sim.lesson, sim.skipped = 1, false end),
+        button("结束教学 · 自由经营", function() sim.skipped, sim.lesson = true, #D.lessons + 1; close() end),
+    })
+    local military = label("", 14)
+    local raid = button("开始守村", function() local _, msg = sim:startRaid(); sim:notify(msg) end, { id = "startRaid" })
+    local expand = button("拓荒 · 发现新土地", function() local _, msg = sim:expand(); sim:notify(msg) end, { id = "expandWorld" })
     expand:SetVisible(sim.mode == "infinite")
-    local frontier = button("远方", function() world.frontier() end, { height = 44 })
+    local frontier = button("前往边疆", function() world.frontier(); close() end)
     frontier:SetVisible(sim.mode == "infinite")
-    local showModeMenu = function() end
-    local buildBar = panel { position = "absolute", bottom = 8, left = 12, right = 12, padding = 10, gap = 8, children = {
-        UI.Panel { flexDirection = "row", alignItems = "center", gap = 10, children = {
-            label("营造", 18, red), toolHint,
-            button("查看", function() actions.setMode("inspect") end, { height = 44 }),
-            button("−", function() world.zoom(-0.15) end, { height = 44 }), button("+", function() world.zoom(0.15) end, { height = 44 }),
-            button("归村", function() world.home() end, { height = 44 }),
-            expand, frontier,
-            button("教程", function()
-                if sim.lesson > #D.lessons then sim.lesson = 1; sim.skipped = false; tutorial:Show()
-                else tutorial:SetVisible(not tutorial:IsVisible()) end
-            end, { height = 44 }),
-            button("自由", function()
-                sim.skipped = true; sim.lesson = #D.lessons + 1; tutorial:Hide()
-                sim:notify("已跳过指引；点击「教程」可重新阅读。")
-            end, { height = 44 }),
-            button("模式", function() showModeMenu() end, { height = 44 }),
-            button("存档", function() actions.save() end, { id = "saveGame", height = 44 }),
-        } },
-        UI.Panel { flexDirection = "row", gap = 8, children = buildItems },
+    local armyDrawer = drawer("army", "军 务 与 拓 荒", { military,
+        label("在乡勇营训练，义仓附近自动迎敌。", 12, Skin.muted),
+        button("训练乡勇 · 2木 / 2粮 / 1人", function() local _, msg = sim:train(); sim:notify(msg) end, { id = "trainMilitia" }),
+        raid, button("修缮义仓 · 4木 / 4石", function() local _, msg = sim:repair(); sim:notify(msg) end), expand, frontier,
+    })
+    local intro, confirmNew
+    local status, summary = label("", 12, Skin.muted), label("", 12, Skin.muted)
+    summary:SetStyle({ width = "100%", whiteSpace = "normal" })
+    status:SetStyle({ width = "100%", whiteSpace = "normal" })
+    local idle = button("", function() actions.toggleIdle() end, { id = "toggleIdle" })
+    local pause = button("", function() sim.paused = not sim.paused end, { id = "pause", flexGrow = 1 })
+    local speed = button("", function() sim.speed = sim.speed == 1 and 2 or 1 end, { flexGrow = 1 })
+    local systemDrawer = drawer("system", "系 统 与 存 档", { status, summary,
+        row { pause, speed }, button("保存进度", function() actions.save() end, { id = "saveGame", artIcon = "save" }), idle,
+        button("返回模式选择", function() sim.menuOpen = true; intro:Show(); close() end, { id = "showModes" }),
+        button("重新开始本模式", function() confirmNew:Show() end, { id = "newGame" }),
+    })
+    local selectedTitle, selectedInfo, selectedState = label("", 18, Skin.gold), label("", 13), label("", 12, Skin.muted)
+    selectedState:SetStyle({ width = "100%", whiteSpace = "normal" })
+    selectedInfo:SetStyle({ width = "100%", whiteSpace = "normal" })
+    local minus = button("减少岗位", function() if actions.selected then sim:staff(actions.selected, -1) end end, { flexGrow = 1 })
+    local plus = button("增加岗位", function() if actions.selected then sim:staff(actions.selected, 1) end end, { flexGrow = 1 })
+    local train = button("训练乡勇", function() local _, msg = sim:train(); sim:notify(msg) end)
+    local repair = button("修缮义仓", function() local _, msg = sim:repair(); sim:notify(msg) end)
+    local selectedDrawer = drawer("selected", "建 筑 详 情", { selectedTitle, selectedInfo, selectedState, row { minus, plus }, train, repair })
+    local roadState=label("",14,Skin.gold)
+    local roadDrawer=drawer("road","道 路 工 地",{roadState,label("工人会先到义仓取材，再走到路段旁施工。规划路段完工前不能运输。",13)})
+    local dockItems = {}
+    for _, item in ipairs({ {"build","营造"}, {"village","村务"}, {"army","军务"}, {"system","系统"} }) do
+        local name = item[1]
+        local b = button(item[2], function() open(name) end, { id = "open_" .. name, artIcon = name, width = 94, height = 50, fontSize = 17 })
+        mainButtons[name] = b; dockItems[#dockItems + 1] = b
+    end
+    local dock = panel { position = "absolute", right = 12, bottom = 12, padding = 7, flexDirection = "row", gap = 5, children = dockItems }
+    local controls = panel { position = "absolute", left = 12, bottom = 12, padding = 6, flexDirection = "row", gap = 5, children = {
+        button("归村", function() world.home() end, { artIcon = "home" }), button("−", function() world.zoom(-0.15) end), button("+", function() world.zoom(0.15) end),
     } }
-    ---@type Panel
-    local intro
-    ---@type Panel
-    local confirmNew
-    local saveStatus = label("", 12, muted)
-    local offlineSummary = label("", 12, muted)
-    saveStatus:SetStyle({ width = "100%", whiteSpace = "normal" })
-    offlineSummary:SetStyle({ width = "100%", whiteSpace = "normal" })
-    local idleToggle = button("挂机：开", function() actions.toggleIdle() end, { id = "toggleIdle", flexGrow = 1, height = 40 })
-    local enter = button("随里正入村", function()
-        if actions.enter() then intro:Hide() end
-    end, { id = "enterVillage", backgroundColor = red, fontColor = { 255, 243, 212 } })
-    intro = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center",
-        backgroundColor = { 30, 40, 29, 170 }, children = { panel { width = "86%", maxWidth = 560, padding = 18, gap = 9, children = {
-            label("山 河 里", 27, red), label(D.modes[sim.mode].name, 17),
-            label(D.modes[sim.mode].description, 14),
-            label(sim.mode == "finite" and "固定 22×22 河谷，生产新口粮并守村即可通关。" or "没有最终边界；拓荒发现新区域，守住一波再迎下一波。", 14),
-            UI.Panel { flexDirection = "row", gap = 10, children = {
-                button("有限关卡", function() actions.changeMode("finite") end, { id = "modeFinite", flexGrow = 1, height = 44,
-                    backgroundColor = sim.mode == "finite" and red or nil, fontColor = sim.mode == "finite" and { 255, 243, 212 } or nil }),
-                button("无限拓荒", function() actions.changeMode("infinite") end, { id = "modeInfinite", flexGrow = 1, height = 44,
-                    backgroundColor = sim.mode == "infinite" and red or nil, fontColor = sim.mode == "infinite" and { 255, 243, 212 } or nil }),
-            } },
-            saveStatus, offlineSummary,
-            UI.Panel { flexDirection = "row", gap = 10, children = {
-                idleToggle,
-                button("新局", function() confirmNew:Show() end, { id = "newGame", flexGrow = 1, height = 40 }),
-                button("保存", function() actions.save() end, { flexGrow = 1, height = 40 }),
-            } },
-            enter,
-        } } } }
-    showModeMenu = function() sim.menuOpen = true; intro:Show() end
+    local quest = button("", function() open("village") end, { id = "questChip", position = "absolute", top = 60, left = 12, height = 44, fontSize = 13 })
+    local placementText = label("", 13)
+    local placement = panel { position = "absolute", bottom = 82, left = 12, padding = 10, gap = 8, visible = false,
+        children = { placementText, button("完成放置", function() actions.setMode("inspect") end, { id = "cancelPlacement" }) } }
+    local toast = label("", 13)
+    local notice = panel { position = "absolute", bottom = 84, left = "26%", maxWidth = "42%", padding = 12, visible = false, pointerEvents = "none", children = { toast } }
+    local menuStatus = label("", 12, Skin.muted)
+    local enter = button("", function() if actions.enter() then intro:Hide() end end, { id = "enterVillage", height = 46, backgroundColor = { 91, 105, 65 } })
+    intro = UI.Panel { id = "modeScreen", position = "absolute", left = 0, right = 0, top = 0, bottom = 0,
+        alignItems = "center", justifyContent = "center", backgroundColor = { 13, 21, 17, 180 }, children = {
+        panel { width = "76%", maxWidth = 460, padding = 22, gap = 12, children = {
+            label("择 一 方 水 土", 25, Skin.gold), label("从一缕炊烟，到万家灯火。", 13, Skin.muted),
+            row {
+                button("有限 · 炊烟再起", function() actions.changeMode("finite") end, { id = "modeFinite", flexGrow = 1, backgroundColor = sim.mode == "finite" and { 110, 91, 49 } or nil }),
+                button("无限 · 山河拓荒", function() actions.changeMode("infinite") end, { id = "modeInfinite", flexGrow = 1, backgroundColor = sim.mode == "infinite" and { 110, 91, 49 } or nil }),
+            },
+            label(D.modes[sim.mode].description, 14), menuStatus, enter,
+        } },
+    } }
     confirmNew = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
-        backgroundColor = { 30, 40, 29, 190 }, children = { panel { width = "85%", maxWidth = 470, padding = 22, gap = 12, children = {
-            label("重新开始本模式？", 22, red), label("入村后将覆盖本模式旧档，另一模式不受影响。", 14),
-            button("确认新局", function() actions.restart() end, { id = "confirmNewGame" }),
-            button("取消", function() confirmNew:Hide() end),
+        backgroundColor = { 13, 21, 17, 210 }, children = { panel { width = "80%", maxWidth = 430, padding = 24, gap = 14, children = {
+            label("另起炉灶？", 24, Skin.gold), label("入村后覆盖本模式旧档，另一模式不受影响。", 14),
+            button("确认新局", function() actions.restart() end, { id = "confirmNewGame" }), button("取消", function() confirmNew:Hide() end),
         } } } }
-    local settlementText = label("读取存档中…", 18)
-    local settlementOverlay = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
-        backgroundColor = { 30, 40, 29, 170 }, children = { panel { width = "80%", maxWidth = 440, padding = 24, gap = 12, children = {
-            settlementText, label("离线只结算生产，不触发敌袭、饥饿或战损。", 13),
+    local loginHint = label("", 12, Skin.muted)
+    loginHint:SetStyle({ width = "100%", whiteSpace = "normal" })
+    local login
+    login = UI.Panel { id = "loginScreen", position = "absolute", left = 0, right = 0, top = 0, bottom = 0,
+        backgroundColor = { 30, 40, 29 }, backgroundImage = fileSystem:FileExists("assets/image/login-painting.png") and "assets/image/login-painting.png" or nil, backgroundFit = "cover", children = {
+        UI.SafeAreaView { width = "100%", height = "100%", justifyContent = "center", alignItems = "flex-end", padding = 24, children = {
+            panel { width = 294, marginRight = 24, padding = 20, gap = 9, children = {
+                label("山  河  里", 34, Skin.gold), label("炊 烟 再 起", 16),
+                label("耕田 · 营造 · 通商 · 守土", 12, Skin.muted),
+                loginHint,
+                button("TapTap 账号进入", function()
+                    local ok, message = actions.login(false)
+                    loginHint:SetText(message)
+                    if ok then login:Hide() end
+                end, { id = "loginTapTap", height = 46, backgroundColor = { 73, 105, 86 } }),
+                button("游客试玩", function() local ok = actions.login(true); if ok then login:Hide() end end, { id = "loginGuest", height = 44 }),
+                label("游客进度仅保存在当前设备。", 11, Skin.muted),
+            } },
+        } },
+    } }
+    login:SetVisible(not session.accepted)
+    loginHint:SetText(session.userId > 0 and "已识别 TapTap 账号，可同步云存档。" or "从 TapTap 打开可使用账号；也可先游客试玩。")
+    local settlementText = label("读取存档中…", 18, Skin.gold)
+    local settlement = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
+        backgroundColor = { 13, 21, 17, 210 }, children = { panel { width = "80%", maxWidth = 430, padding = 24, gap = 12, children = {
+            settlementText, label("离线结算生产，乡亲们安心守候。", 13),
         } } } }
-    local resultTitle, resultText = label("", 28, red), label("", 15)
+    local resultTitle, resultText = label("", 25, Skin.gold), label("", 14)
     local ending = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
-        backgroundColor = { 30, 40, 29, 150 }, children = { panel { width = "80%", maxWidth = 480, padding = 26, gap = 16, children = {
+        backgroundColor = { 13, 21, 17, 210 }, children = { panel { width = "80%", maxWidth = 460, padding = 24, gap = 14, children = {
             resultTitle, resultText, button("重新开始", function() actions.restart() end),
             button("切换模式", function() actions.changeMode(sim.mode == "finite" and "infinite" or "finite") end),
         } } } }
-    local root = UI.Panel { width = "100%", height = "100%", pointerEvents = "box-none", children = {
-        world.panel, UI.SafeAreaView { width = "100%", height = "100%", pointerEvents = "box-none", children = {
-            panel { position = "absolute", top = 8, left = 12, right = 12, height = 58, paddingHorizontal = 12,
-                flexDirection = "row", alignItems = "center", justifyContent = "space-between", gap = 8, children = topChildren },
-            tutorial, selectedPanel, notice, buildBar, intro, ending, confirmNew, settlementOverlay,
-        } },
+    local chrome = UI.SafeAreaView { width = "100%", height = "100%", pointerEvents = "box-none", children = {
+        topbar, quest, controls, dock, placement, notice, buildDrawer, villageDrawer, armyDrawer, systemDrawer, selectedDrawer, roadDrawer,
     } }
+    local root = UI.Panel { width = "100%", height = "100%", pointerEvents = "box-none", children = { world.panel, chrome, intro, ending, confirmNew, login, settlement } }
     local function update()
-        for _, r in ipairs(D.goods) do resources[r]:SetText(D.names[r] .. " " .. sim.stock[r]) end
-        saveStatus:SetText(saveInfo.status or "尚未保存")
-        offlineSummary:SetText(saveInfo.summary or "离线生产最多累计 8 小时。")
-        idleToggle:SetText(saveInfo.idleEnabled and "挂机：开" or "挂机：关")
-        enter:SetText((saveInfo.hasSave or sim.started) and "继续村庄" or "随里正入村")
-        enter:SetDisabled(saveInfo.loading or saveInfo.settling)
-        settlementOverlay:SetVisible(saveInfo.loading or saveInfo.settling)
-        settlementText:SetText(saveInfo.loading and "读取存档中…" or ("离线生产结算 " .. math.floor((saveInfo.progress or 0) * 100) .. "%"))
-        modeLabel:SetText(sim.mode == "finite" and "有限 · 清溪里" or ("无限 · 拓荒 " .. sim.map.expansion))
-        people:SetText("乡亲 " .. sim.population .. " / 闲 " .. sim:availableWorkers())
-        pause:SetText(sim.paused and "继续" or "暂停"); speed:SetText(sim.speed .. "倍")
+        for _, r in ipairs(D.goods) do resources[r]:SetText(D.names[r] .. "  " .. sim.stock[r]) end
+        people:SetText("村民 " .. sim.population .. " / 闲 " .. sim:availableWorkers())
+        status:SetText(info.status or "尚未保存"); menuStatus:SetText(info.status or "尚未保存")
+        summary:SetText(info.summary or "离线生产最多累计 8 小时。")
+        idle:SetText(info.idleEnabled and "离线生产：开启" or "离线生产：关闭")
+        pause:SetText(sim.paused and "继续经营" or "暂停经营"); speed:SetText("速度 " .. sim.speed .. " 倍")
+        enter:SetText((info.hasSave or sim.started) and "继续经营 →" or "随里正入村 →")
+        enter:SetDisabled(not session.accepted or info.loading or info.settling)
+        chrome:SetVisible(session.accepted and not sim.menuOpen)
+        settlement:SetVisible(session.accepted and (info.loading or info.settling))
+        settlementText:SetText(info.loading and "读取存档中…" or ("离线生产结算 " .. math.floor((info.progress or 0) * 100) .. "%"))
         local lesson = D.lessons[sim.lesson]
-        if sim.mode == "infinite" then
-            worldInfo:SetText("拓荒 " .. sim.map.expansion .. " 圈 · 已守 " .. sim.wavesDefeated .. " 波 · 耐久 " .. sim.health)
-        else worldInfo:SetText("有限河谷 · 22×22 · 义仓 " .. sim.health) end
         local value, target = sim:lessonProgress()
-        title:SetText(lesson and lesson.title or (sim.mode == "infinite" and "山河未尽，继续拓荒" or "重建并守住清溪里"))
-        line1:SetText(lesson and lesson.lines[1] or (sim.mode == "infinite" and ("生存 " .. math.floor(sim.elapsed) .. " 秒 · 乡里分 " .. sim.score) or "民居、稻田、磨坊、炊坊须竣工。"))
-        line2:SetText(lesson and lesson.lines[2] or (sim.mode == "infinite" and ("下次来袭 " .. math.ceil(sim.nextRaid) .. " 秒；断粮会损耗义仓。") or "至少送回 4 份新口粮，再击退山匪。"))
-        local cost = sim:expansionCost()
-        line3:SetText(lesson and lesson.lines[3] or (sim.mode == "infinite" and ("拓荒需 " .. cost.wood .. " 木 / " .. cost.food .. " 粮；余木 " .. sim.timber .. " 石 " .. sim.rock) or "在有限空间安排运输和岗位。"))
-        progress:SetText(lesson and ("当前进度  " .. value .. " / " .. target) or "教程已结束 / 跳过")
-        next:SetDisabled(value < target); next:SetVisible(lesson ~= nil)
-        raid:SetVisible(sim.lesson >= 8 and not sim.raid and not sim.defended)
-        if sim.mode == "infinite" then raid:SetVisible(sim.lesson >= 8 and not sim.raid); raid:SetText("提前迎敌") end
-        toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0)
+        quest:SetText(lesson and ("里正手札  ·  " .. lesson.title .. "  ›") or "乡里近况  ›")
+        title:SetText(lesson and lesson.title or "乡里安居，百业待兴")
+        line1:SetText(lesson and lesson.lines[1] or "安排运输与岗位，保持粮食供给。")
+        line2:SetText(lesson and lesson.lines[2] or "稻田 → 磨坊 → 炊坊 → 义仓")
+        line3:SetText(lesson and lesson.lines[3] or "点击建筑可调整岗位。")
+        progress:SetText(lesson and ("进度  " .. value .. " / " .. target) or "已完成基础教学")
+        next:SetVisible(lesson ~= nil); next:SetDisabled(value < target)
+        worldInfo:SetText(sim.mode == "finite" and ("清溪河谷 · 义仓 " .. sim.health) or ("拓荒 " .. sim.map.expansion .. " 圈 · 已守 " .. sim.wavesDefeated .. " 波"))
+        military:SetText("乡勇 " .. sim.militia .. " 人 · 义仓 " .. sim.health .. "/100" .. (sim.mode == "infinite" and ("\n下次来袭 " .. math.ceil(sim.nextRaid) .. " 秒") or ""))
+        raid:SetVisible(sim.lesson >= 8 and not sim.raid and (sim.mode == "infinite" or not sim.defended))
+        toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0 and not opened)
+        if actions.selected ~= selectedLast then
+            selectedLast = actions.selected
+            if selectedLast then opened = "selected" elseif opened == "selected" then close() end
+        end
+        if actions.road ~= roadLast then
+            roadLast=actions.road
+            if roadLast then opened="road" elseif opened=="road" then close() end
+        end
+        if actions.road then
+            local p=actions.road
+            local status="等待空闲村民到场"
+            for _,a in ipairs(sim.builders) do
+                if a.job and a.job.kind=="road" and a.job.x==p.x and a.job.y==p.y then
+                    status=a.phase=="hammer" and "压实路面 · 举锤施工" or "工人正在取材 / 前往工地"
+                end
+            end
+            if p.progress>=1 then status="已竣工，可以运输" end
+            roadState:SetText("地块 " .. p.x .. "," .. p.y .. "\n进度 " .. math.floor(p.progress*100) .. "%\n" .. status)
+        end
+        activityInfo:SetText("待铺路 " .. #sim.pendingRoads .. " · 施工 " .. require("game.Construction").busy(sim) .. " 人 · 供餐 " .. sim.mealsServed)
         local b = actions.selected
-        selectedPanel:SetVisible(b ~= false and b ~= nil)
         if b then
             local def = D.buildings[b.kind]
             selectedTitle:SetText(def.name); selectedInfo:SetText(def.description)
-            local state = b.complete and ("岗位 " .. b.workers .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%")
-            if def.input then state = state .. " · 待料 " .. b.inputs end
-            selectedState:SetText(state)
+            selectedState:SetText(b.complete and ("岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
+            if b.kind=="kitchen" and b.complete then
+                local inside,queue=0,0
+                local function visit(a)
+                    local m=a.meal
+                    if m and m.target==b.id then
+                        if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then inside=inside+1
+                        elseif m.phase=="queue" then queue=queue+1 end
+                    end
+                end
+                for _,a in ipairs(sim.carriers) do visit(a) end
+                for _,a in pairs(sim.workers) do visit(a) end
+                selectedState:SetText("供餐席位 " .. inside .. "/2 · 门前候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. " · 搬运工补餐，入店消耗。")
+            end
             minus:SetVisible(def.output ~= nil); plus:SetVisible(def.output ~= nil)
-            train:SetVisible(b.kind == "barracks")
-            repair:SetVisible(b.kind == "store")
+            train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")
         end
-        for kind, btn in pairs(buildButtons) do
-            btn:SetBackgroundColor(actions.mode == kind and { 151, 78, 47 } or { 224, 208, 166 })
-            btn:SetProp("textColor", actions.mode == kind and { 255, 243, 212 } or ink)
-        end
-        toolHint:SetText(actions.mode == "inspect" and "单指拖动 · 双指缩放" or (D.buildings[actions.mode].name .. "：点击空地放置 · 门前接路"))
-        ending:SetVisible(sim.victory or sim.defeat)
-        if sim.victory then resultTitle:SetText("炊烟又起，乡里安宁"); resultText:SetText("你已打通粮食生产链，并带领乡勇守住清溪里。")
-        elseif sim.defeat then resultTitle:SetText("义仓失守"); resultText:SetText(sim.mode == "infinite" and ("本局生存 " .. math.floor(sim.elapsed) .. " 秒，拓荒 " .. sim.map.expansion .. " 圈，守住 " .. sim.wavesDefeated .. " 波。") or "重新规划生产与兵力，再带乡亲们守一次村。") end
+        for name, p in pairs(drawers) do p:SetVisible(opened == name) end
+        for name, btn in pairs(mainButtons) do btn:SetBackgroundColor(opened == name and { 124, 96, 48 } or { 83, 69, 43 }) end
+        placement:SetVisible(actions.mode ~= "inspect" and not opened)
+        if actions.mode ~= "inspect" then placementText:SetText(D.buildings[actions.mode].name .. " · 点击空地放置\n门前接路才能运输") end
+        ending:SetVisible(session.accepted and (sim.victory or sim.defeat))
+        if sim.victory then resultTitle:SetText("炊烟又起，乡里安宁"); resultText:SetText("粮道已通，乡勇已成，清溪里再闻饭香。")
+        elseif sim.defeat then resultTitle:SetText("义仓失守"); resultText:SetText("重新安排粮食生产与兵力，再守一次村。") end
     end
     ---@class VillageHud
-    local result = { root = root, update = update, dismissIntro = function() if actions.enter() then intro:Hide() end end }
+    local result = { root = root, update = update, dismissIntro = function()
+        if not session.accepted then actions.login(true) end
+        if actions.enter() then intro:Hide() end
+    end }
     return result
 end
 return Hud

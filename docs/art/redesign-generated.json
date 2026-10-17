@@ -1,0 +1,33 @@
+{
+  "total": 2,
+  "succeeded": 2,
+  "failed": 0,
+  "results": [
+    {
+      "name": "shanheli_login_painting",
+      "prompt": "原创中国古代村落经营战略游戏登录背景画。1990年代末经典欧洲经营RTS骑士与商人那种精细手绘游戏插画质感，但所有内容是中国宋代乡村，温暖秋日、青灰瓦木屋、茅草农舍、稻田、水车磨坊、小桥流水、远山、松林、正在肩挑稻谷的农夫。细密绘画笔触，真实建筑材料纹理，沉稳苔绿、麦金、土褐色调，富有生活气息，精致非卡通，非简陋几何。画面左侧三分之二为村落全景，右侧三分之一深色树林适合叠加登录面板。无任何文字、标题、logo、UI、边框。横屏游戏封面。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/a0af61b1-a68b-4a63-8756-677ac20dedd9.png",
+      "actualSize": "1600x900",
+      "aspect_ratio": "16:9",
+      "transparent": false,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    },
+    {
+      "name": "shanheli_buildings_atlas",
+      "prompt": "原创2D等距视角中国宋代乡村经营战略游戏建筑精灵图集，经典90年代手绘RTS骑士与商人般精密描绘、非卡通、非矢量，苔绿灰瓦麦金木石自然色。透明背景。严格3列3行九个相同512x512格子，每格一栋完整建筑居中、完整不裁切、留白四周20%，各建筑地面接触线在每格从上往下约75%处，等距30度俯视，光从左上照射，朝向一致。第一行左到右：青灰瓦白墙木结构的村庄义仓附粮袋木箱；茅草屋顶竹篱笆中国农舍附柴堆；成熟金色稻田含低矮田埂水渠。第二行左到右：附木水轮的青瓦磨坊；带烟囱红瓦蒸笼的炊坊；伐木工棚附圆木锯架斧头。第三行左到右：采石工棚附成堆灰色石块凿子；古代驿站马厩附木车；乡勇兵营青瓦院门附红旗兵器架。九种不同剪影，细密屋瓦、横梁、门窗、工具细节、自然不规则轮廓，精致游戏素材，无文字、无字母、无网格线、无外框、无大块地面底座。",
+      "success": true,
+      "previewUrl": "https://tapcode-sce.spark.xd.com/tapcode-images/3eeb93d6-6d15-4fee-9be6-d8466c2400b6.png",
+      "actualSize": "1536x1536",
+      "aspect_ratio": "1:1",
+      "transparent": true,
+      "download": {
+        "success": false,
+        "error": "Asset download failed: fetch failed"
+      }
+    }
+  ]
+}

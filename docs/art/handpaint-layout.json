@@ -1,0 +1,232 @@
+{
+  "review": "unreviewed",
+  "coordinateSpace": "source-pixels",
+  "note": "Layout requested from Maker generation; actual image order, alpha, anchors and frame borders must be inspected before slicing and acceptance.",
+  "atlases": {
+    "shanheli_buildings_atlas": {
+      "grid": [
+        3,
+        3
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "outputs": [
+        "building-store",
+        "building-house",
+        "building-farm",
+        "building-mill",
+        "building-kitchen",
+        "building-woodcutter",
+        "building-quarry",
+        "building-courier",
+        "building-barracks"
+      ],
+      "anchor": [
+        0.5,
+        0.76
+      ]
+    },
+    "shanheli_environment_atlas": {
+      "grid": [
+        3,
+        3
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "outputs": [
+        "tree-oak",
+        "tree-pine",
+        "tree-bamboo",
+        "rock-moss",
+        "bush-flowers",
+        "reeds",
+        "ground-grass",
+        "ground-road",
+        "ground-water"
+      ],
+      "anchor": [
+        0.5,
+        0.8
+      ],
+      "terrainNote": "Crop alpha bounds of the last row to exact 2:1 diamond before runtime placement; inspect edge seams."
+    },
+    "shanheli_people_atlas": {
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        256,
+        256
+      ],
+      "outputs": [
+        "person-carrier-se",
+        "person-carrier-sw",
+        "person-carrier-ne",
+        "person-carrier-nw",
+        "person-loaded-se",
+        "person-loaded-sw",
+        "person-loaded-ne",
+        "person-loaded-nw",
+        "person-militia-se",
+        "person-militia-sw",
+        "person-militia-ne",
+        "person-militia-nw",
+        "person-bandit-se",
+        "person-bandit-sw",
+        "person-bandit-ne",
+        "person-bandit-nw"
+      ],
+      "anchor": [
+        0.5,
+        0.85
+      ]
+    },
+    "shanheli_ui_icons_atlas": {
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        256,
+        256
+      ],
+      "outputs": [
+        "icon-build",
+        "icon-village",
+        "icon-army",
+        "icon-system",
+        "icon-wood",
+        "icon-stone",
+        "icon-grain",
+        "icon-flour",
+        "icon-food",
+        "icon-home",
+        "icon-zoom-in",
+        "icon-zoom-out",
+        "icon-pause",
+        "icon-save",
+        "icon-idle",
+        "icon-tutorial"
+      ]
+    },
+    "shanheli_diverse_villagers": {
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        256,
+        256
+      ],
+      "outputs": [
+        "person-civilian-blue-man-se",
+        "person-civilian-blue-man-sw",
+        "person-civilian-blue-man-ne",
+        "person-civilian-blue-man-nw",
+        "person-civilian-ochre-woman-se",
+        "person-civilian-ochre-woman-sw",
+        "person-civilian-ochre-woman-ne",
+        "person-civilian-ochre-woman-nw",
+        "person-civilian-grey-elder-se",
+        "person-civilian-grey-elder-sw",
+        "person-civilian-grey-elder-ne",
+        "person-civilian-grey-elder-nw",
+        "person-civilian-green-woman-se",
+        "person-civilian-green-woman-sw",
+        "person-civilian-green-woman-ne",
+        "person-civilian-green-woman-nw"
+      ],
+      "anchor": [
+        0.5,
+        0.85
+      ],
+      "review": "unreviewed"
+    },
+    "shanheli_diverse_loaded": {
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        256,
+        256
+      ],
+      "outputs": [
+        "person-loaded-blue-man-se",
+        "person-loaded-blue-man-sw",
+        "person-loaded-blue-man-ne",
+        "person-loaded-blue-man-nw",
+        "person-loaded-ochre-woman-se",
+        "person-loaded-ochre-woman-sw",
+        "person-loaded-ochre-woman-ne",
+        "person-loaded-ochre-woman-nw",
+        "person-loaded-grey-elder-se",
+        "person-loaded-grey-elder-sw",
+        "person-loaded-grey-elder-ne",
+        "person-loaded-grey-elder-nw",
+        "person-loaded-green-woman-se",
+        "person-loaded-green-woman-sw",
+        "person-loaded-green-woman-ne",
+        "person-loaded-green-woman-nw"
+      ],
+      "anchor": [
+        0.5,
+        0.85
+      ],
+      "review": "unreviewed"
+    },
+    "shanheli_profession_workers": {
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        256,
+        256
+      ],
+      "outputs": [
+        "person-occupation-farmer-se",
+        "person-occupation-farmer-sw",
+        "person-occupation-farmer-ne",
+        "person-occupation-farmer-nw",
+        "person-occupation-artisan-se",
+        "person-occupation-artisan-sw",
+        "person-occupation-artisan-ne",
+        "person-occupation-artisan-nw",
+        "person-occupation-logger-se",
+        "person-occupation-logger-sw",
+        "person-occupation-logger-ne",
+        "person-occupation-logger-nw",
+        "person-occupation-guard-se",
+        "person-occupation-guard-sw",
+        "person-occupation-guard-ne",
+        "person-occupation-guard-nw"
+      ],
+      "anchor": [
+        0.5,
+        0.85
+      ],
+      "review": "unreviewed"
+    }
+  },
+  "singleImages": {
+    "shanheli_login_painting": "login-painting",
+    "shanheli_panel_wood": "panel-wood",
+    "shanheli_button_painting": "button-painting"
+  },
+  "destination": "assets/image/",
+  "acceptance": [
+    "Inspect actual art and correct bindings",
+    "Verify transparency and ground anchors",
+    "Generate official resource metadata",
+    "Render all building types, terrain and role directions at phone resolution",
+    "Inspect login, mode menu, four drawers, and button states",
+    "Run gameplay/save/login UI suites",
+    "Maker build and phone QR test"
+  ]
+}

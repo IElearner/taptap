@@ -1,6 +1,8 @@
 -- Pure Lua simulation: no engine dependency. All goods move on connected roads.
 local D = require "game.Definitions"
 local WorldMap = require "game.WorldMap"
+local Construction = require "game.Construction"
+local Meals = require "game.Meals"
 ---@class VillageSimulation
 ---@field roads table<string,boolean>
 ---@field buildings table[]
@@ -37,6 +39,11 @@ local WorldMap = require "game.WorldMap"
 ---@field score number
 ---@field buildingIndex table<string,table>
 ---@field menuOpen boolean?
+---@field pendingRoads table[]
+---@field roadPlanIndex table<string,table>
+---@field builders table[]
+---@field workers table<string,table>
+---@field mealsServed number
 local S = {}
 S.__index = S
 local directions = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
@@ -55,6 +62,7 @@ function S:init(mode, seed)
     self.defended, self.timber, self.rock, self.score = false, 320, 180, 0
     self.roads, self.buildings, self.jobs, self.carriers = {}, {}, {}, {}
     self.buildingIndex = {}
+    self.pendingRoads,self.roadPlanIndex,self.builders,self.workers,self.mealsServed={},{},{},{},0
     ---@type table<string, number>
     self.stock = { wood = 72, stone = 40, grain = 0, flour = 0, food = 28 }
     if self.mode == "infinite" then self.stock.food = 48 end
@@ -78,6 +86,7 @@ end
 function S:terrain(x, y)
     return self.map:terrain(x, y)
 end
+function S:roadSiteAt(x,y) return self.roadPlanIndex[key(x,y)] end
 function S:buildingAt(x, y)
     return self.buildingIndex[key(x, y)]
 end
@@ -109,7 +118,7 @@ function S:connected(b)
     return b.cachedConnected
 end
 function S:availableWorkers()
-    local used = #self.carriers + self.militia
+    local used = #self.carriers + self.militia + Construction.busy(self)
     for _, b in ipairs(self.buildings) do
         if b.complete then used = used + b.workers
         elseif b.kind == "courier" then used = used + 1 end
@@ -127,7 +136,7 @@ function S:spend(cost)
 end
 function S:addBuilding(kind, x, y, complete)
     local b = { id = #self.buildings + 1, kind = kind, x = x, y = y, complete = complete or false,
-        progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false }
+        progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false, mealStock=0,mealIncoming=false }
     self.buildings[#self.buildings + 1] = b
     self.buildingIndex[key(x, y)] = b
     return b
@@ -137,22 +146,25 @@ function S:build(kind, x, y)
     if x ~= math.floor(x) or y ~= math.floor(y) then return false, "请在完整地块上营造。" end
     if self:terrain(x, y) == "fog" then return false, "此处尚未勘探，点击「拓荒」发现新区域。" end
     if self:terrain(x, y) ~= "grass" then return false, "此处是树林、水域或地图边界。" end
-    if self:buildingAt(x, y) or self.roads[key(x, y)] then return false, "此处已有建筑或道路。" end
+    if self:buildingAt(x, y) or self.roads[key(x, y)] or self:roadSiteAt(x,y) then return false, "此处已有建筑或道路。" end
     -- Protect all existing doors; a door occupies the tile immediately south.
     for _, b in ipairs(self.buildings) do
         if b.x == x and b.y + 1 == y and kind ~= "road" then return false, "请为建筑门前保留一格道路。" end
     end
     if kind == "road" then
         local neighbor = false
-        for _, d in ipairs(directions) do if self.roads[key(x + d[1], y + d[2])] then neighbor = true end end
+        for _, d in ipairs(directions) do
+            if self.roads[key(x+d[1],y+d[2])] or self:roadSiteAt(x+d[1],y+d[2]) then neighbor=true;break end
+        end
         if not neighbor then return false, "请从现有道路向外延伸。" end
-        self.roads[key(x, y)], self.roadCount = true, self.roadCount + 1
-        return true, "道路已铺好。"
+        local site={x=x,y=y,progress=0}
+        self.pendingRoads[#self.pendingRoads+1],self.roadPlanIndex[key(x,y)]=site,site
+        return true, "已规划道路，空闲村民将取材到场铺设。"
     end
     local def = D.buildings[kind]
     if not def then return false, "未知建筑。" end
     if self:terrain(x, y + 1) ~= "grass" or self:buildingAt(x, y + 1) then return false, "建筑门前需要可通行的空地。" end
-    if not self:connected({ x = x, y = y }) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
+    if not self:connected({ x = x, y = y }) and not self:roadSiteAt(x,y+1) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
     if kind == "courier" and self:availableWorkers() < 1 then return false, "驿站需要 1 名空闲村民。" end
     if not self:spend(def.cost) then return false, "物资不足，先让生产链补充库存。" end
     local b = self:addBuilding(kind, x, y)
@@ -231,7 +243,8 @@ function S:enqueue(b, inbound)
     self.jobs[#self.jobs + 1] = { b = b, inbound = inbound, resource = resource, amount = inbound and 1 or b.buffer }
     if not inbound then b.buffer = 0 end
 end
-function S:updateCarrier(c, dt)
+function S:updateCarrier(c, dt, offline)
+    if Meals.tick(self,c,dt,offline,c.job ~= false and c.job ~= nil) then return end
     if not c.job and #self.jobs > 0 then
         c.job = table.remove(self.jobs, 1)
         local job = c.job
@@ -256,7 +269,8 @@ function S:updateCarrier(c, dt)
         if job.inbound then tx, ty = job.b.x, job.b.y + 1 end
         c.path, c.index = self:path(math.floor(c.x + 0.5), math.floor(c.y + 0.5), tx, ty) or {}, 1
     else
-        if job.inbound then job.b.inputs, job.b.incoming = job.b.inputs + 1, false
+        if job.service then job.b.mealStock,job.b.mealIncoming=(job.b.mealStock or 0)+job.amount,false
+        elseif job.inbound then job.b.inputs, job.b.incoming = job.b.inputs + 1, false
         else
             self.stock[job.resource] = self.stock[job.resource] + job.amount
             if job.resource == "food" then self.produced.food = self.produced.food + job.amount end
@@ -274,30 +288,21 @@ function S:update(dt, offline)
         self.foodClock = self.foodClock - 15
         -- Tutorial relief floor prevents an unrecoverable beginner starvation spiral.
         local floorFood = self.mode == "finite" and not self.skipped and 8 or 0
-        self.stock.food = math.max(floorFood, self.stock.food - math.ceil(self.population / 5))
+        self.stock.food = math.max(floorFood, self.stock.food)
         if self.mode == "infinite" and self.stock.food == 0 then
             self.health = math.max(0, self.health - 4)
             self:notify("粮仓告急！断粮会损耗义仓耐久，请尽快打通粮食链。")
             if self.health == 0 then self.defeat = true end
         end
     end
+    Construction.update(self,dt)
+    Meals.prepareWorkers(self,dt,offline)
     for _, b in ipairs(self.buildings) do
         local def = D.buildings[b.kind]
-        if not b.complete and self:connected(b) then
-            b.progress = math.min(1, b.progress + dt / 5)
-            if b.progress >= 1 then
-                b.complete = true
-                if b.kind == "house" then self.population = self.population + 4 end
-                if b.kind == "courier" then
-                    self.carriers[#self.carriers + 1] = { x = 10, y = 9, path = {}, index = 1, job = false, carrying = false }
-                end
-                if def.workers > 0 and self:availableWorkers() > 0 then b.workers = def.workers end
-                self:notify(def.name .. "已竣工。")
-            end
-        elseif b.complete and def.output and self:connected(b) then
-            if def.input and b.inputs == 0 and not b.incoming and b.workers > 0 then self:enqueue(b, true) end
-            if b.workers > 0 and b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
-                b.timer = b.timer + dt * b.workers
+        if b.complete and def.output and self:connected(b) then
+            if def.input and b.inputs == 0 and not b.incoming and b.activeWorkers > 0 then self:enqueue(b, true) end
+            if b.activeWorkers > 0 and b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
+                b.timer = b.timer + dt * b.activeWorkers
                 if b.timer >= def.period then
                     b.timer, b.buffer = 0, def.amount
                     if b.kind == "woodcutter" then
@@ -311,7 +316,7 @@ function S:update(dt, offline)
             if b.buffer > 0 and not b.outgoing then self:enqueue(b, false) end
         end
     end
-    for _, c in ipairs(self.carriers) do self:updateCarrier(c, dt) end
+    for _, c in ipairs(self.carriers) do self:updateCarrier(c, dt, offline) end
     -- Offline time advances production/logistics only, never raids, hunger or records.
     if offline then return end
     self.score = math.floor(self.elapsed / 10) + self.map.expansion * 100 + self.wavesDefeated * 200 + #self.buildings * 10

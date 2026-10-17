@@ -70,3 +70,6 @@ CLAUDE.md
 # Local play progress (tool-mode Runtime may store relative files in the checkout)
 /shanheli_save_v1_*.json
 /shanheli_save_v1_*.json.bak
+
+/guest_shanheli_save_v1_*.json
+/guest_shanheli_save_v1_*.json.bak
