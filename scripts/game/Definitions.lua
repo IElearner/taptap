@@ -28,7 +28,7 @@ D.buildings = {
     store = { name = "义仓", cost = {}, workers = 0, footprint = { 2, 2 }, color = { 85, 103, 101 }, description = "村庄的中心。工人沿道路运送物资。" },
     road = { name = "道路", cost = {}, workers = 0, color = { 190, 166, 116 }, description = "免费规划道路；空闲村民将到场铺设，完工后才能运输。拖动可移动地图。" },
     house = { name = "民居", cost = { wood = 8, stone = 2 }, workers = 0, color = { 97, 111, 114 }, description = "竣工后增加 4 名村民，无需另行招募。" },
-    farm = { name = "麦田", cost = { wood = 8 }, workers = 1, footprint = { 1, 2 }, output = "grain", amount = 3, period = 16, color = { 187, 157, 69 }, description = "围栏麦田：工人播种、两次照料，麦子成熟后收割。生长时可等待或去食堂休息；每轮收获 3 袋麦粒。" },
+    farm = { name = "麦田", cost = { wood = 8 }, workers = 1, footprint = { 1, 2 }, output = "grain", amount = 3, period = 90, color = { 187, 157, 69 }, description = "围栏麦田：工人先犁地播种，生长中浇水、照料，约 90 秒成熟后收割。每次劳作约 4 秒，生长时可等待或去食堂休息；每轮收获 3 袋麦粒。" },
     ranch = { name = "牧场", cost = { wood = 10 }, workers = 1, footprint = { 2, 1 }, output = "livestock", amount = 2, period = 12, color = { 129, 113, 68 }, description = "工人照料牲畜，每 12 秒出栏 2 头；工人送往屠宰场。" },
     mill = { name = "磨坊", cost = { wood = 10, stone = 4 }, workers = 1, input = "grain", output = "flour", amount = 2, period = 6, color = { 118, 100, 79 }, description = "搬入 1 袋麦粒，加工为 2 袋面粉。" },
     butcher = { name = "屠宰场", cost = { wood = 8, stone = 3 }, workers = 1, input = "livestock", output = "meat", amount = 3, period = 8, color = { 145, 79, 62 }, description = "屠夫加工工人送来的牲畜，每 8 秒产出 3 份鲜肉；工人再送往食堂。" },

@@ -143,7 +143,7 @@ local function thoughtBubble(vg,sx,sy,thought)
 end
 local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
     local sx, sy = iso(x, y)
-    local step = walking and math.abs(math.sin(clock * 12 + (phase or 0))) * 1.6 or 0
+    local step = walking and math.abs(math.sin(clock * 7 + (phase or 0))) * 1.4 or 0
     local size = action == "hammer" and 47 or action == "eat" and 34 or 42
     local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
     local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
@@ -214,10 +214,32 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         circle(vg,sx+2,sy-7,2,{177,123,63})
         line(vg,sx+8,sy-13,sx+3,sy-8-math.sin(clock*5)*2,{158,126,80},2)
     elseif action=="farm" then
-        local swing=math.sin(clock*6)
+        local swing=math.sin(clock*2.4)
         line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
         line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
         if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
+    elseif action=="plow" or action=="tend" then
+        local swing=math.sin(clock*2.2)
+        local hx,hy=sx+11+swing*3,sy-20+swing*6
+        line(vg,sx+3,sy-9,hx,hy,{132,91,52},2.5)
+        line(vg,hx-2,hy,hx+7,hy+4,{130,139,126},3)
+        line(vg,hx+7,hy+4,hx+8,hy+9,{130,139,126},2)
+        if swing>0.6 then circle(vg,sx+12,sy-1,2,{142,112,67,145}) end
+    elseif action=="water" then
+        local tilt=math.sin(clock*2)*2
+        line(vg,sx+3,sy-9,sx+9,sy-12,{141,103,61},2)
+        polygon(vg,{sx+8,sy-15+tilt,sx+18,sy-14+tilt,sx+16,sy-6+tilt,sx+10,sy-6+tilt},{120,103,78,230})
+        line(vg,sx+9,sy-14+tilt,sx+12,sy-18+tilt,{171,151,108},2)
+        line(vg,sx+12,sy-18+tilt,sx+17,sy-15+tilt,{171,151,108},2)
+        for i=0,2 do
+            line(vg,sx+18+i*2,sy-8+tilt,sx+20+i*3,sy-1+math.sin(clock*2+i)*2,{116,167,181,190},1.4)
+        end
+    elseif action=="harvest" then
+        local swing=math.sin(clock*2.3)
+        line(vg,sx+3,sy-9,sx+11+swing*3,sy-15+swing*4,{144,100,53},2)
+        line(vg,sx+11+swing*3,sy-15+swing*4,sx+17+swing*3,sy-17+swing*4,{189,188,164},2.4)
+        line(vg,sx+17+swing*3,sy-17+swing*4,sx+19+swing*3,sy-13+swing*4,{189,188,164},2)
+        if swing>0.4 then circle(vg,sx+15,sy-2,2,{222,186,85,170}) end
     elseif action=="cook" then
         local stir=math.sin(clock*6)
         nvgBeginPath(vg);nvgEllipse(vg,sx+10,sy-1,8,4);nvgFillColor(vg,color({82,68,51,220}));nvgFill(vg)
@@ -462,7 +484,8 @@ function WorldView.create(sim, onTile)
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
             agentsByDepth[depth]=agentsByDepth[depth] or {}
             local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1)
-            local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="cook" or action=="butcher") and sim.elapsed or 0
+            local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="plow" or
+                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher") and sim.elapsed or 0
             local thought
             if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
                 if (a.hunger or 0)>=65 then thought="food"
@@ -488,7 +511,8 @@ function WorldView.create(sim, onTile)
             local b=sim.buildings[a.building]
             local role,profile=Characters.worker(b,a.slot)
             local action=a.meal and a.meal.phase=="eat" and "eat" or
-                (not a.meal and ((b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.9 or b.kind=="ranch") and "farm" or
+                (not a.meal and (b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.95 and Farm.action(b) or
+                    b.kind=="ranch" and "farm" or
                     b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
             if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
         end

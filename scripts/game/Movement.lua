@@ -14,7 +14,7 @@ function M.step(actor, dt, speed)
         if math.abs(dx) > math.abs(dy) then actor.facing = dx >= 0 and "se" or "nw"
         else actor.facing = dy >= 0 and "sw" or "ne" end
     end
-    local step = dt * (speed or 2.8)
+    local step = dt * (speed or 1.8)
     if distance <= step then actor.x,actor.y,actor.index = target.x,target.y,actor.index+1
     else actor.x,actor.y = actor.x+dx/distance*step,actor.y+dy/distance*step end
     return actor.index > #actor.path

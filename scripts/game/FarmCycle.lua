@@ -1,9 +1,11 @@
--- Wheat grows on its own between four short visits by an assigned worker.
-local Farm = { workSeconds = 0.9 }
+-- Wheat grows on its own between four deliberate visits by an assigned worker.
+local Farm = { workSeconds = 4 }
 local thresholds = { 0, 1/3, 2/3, 1 }
+local actions = { "plow", "water", "tend", "harvest" }
 function Farm.step(b)
     return b.farmStep or ((b.timer or 0) > 0 and 1 or 0)
 end
+function Farm.action(b) return actions[Farm.step(b)+1] end
 function Farm.needsWork(b, period)
     if not b.complete or (b.buffer or 0) > 0 or b.outgoing then return false end
     local step=Farm.step(b)

@@ -297,7 +297,7 @@ function Hud.create(sim, world, actions)
                 local stage=Farm.stage(b,D.buildings.farm.period)
                 local stageName=({seed="播种期",sprout="幼苗期",green="拔节期",ripe="成熟期"})[stage]
                 local task=Farm.needsWork(b,D.buildings.farm.period) and
-                    ({"等待播种","等待第一次照料","等待第二次照料","等待收割"})[Farm.step(b)+1] or "麦子生长中 · 工人在田边等待 / 休息"
+                    ({"犁地播种中","浇水中","照料麦苗中","收割中"})[Farm.step(b)+1] or "麦子生长中 · 工人在田边等待 / 休息"
                 selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · " .. stageName .. " " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n" .. task .. "\n每轮收获 3 袋麦粒，由工人送入义仓。")
             elseif b.kind=="woodcutter" and b.complete then
                 selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n木材余量 " .. sim.timber .. " · 门前接路后工人送回义仓。")
