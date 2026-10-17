@@ -5,7 +5,7 @@
     "id": "1041661401"
   },
   "entry": "main.lua",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "taptap_publish": {
     "title": "山河里",
     "description": "中式等距城镇经营策略原型。有限模式跟随教学重建清溪里、打通粮食链并守村；无限模式逐圈拓荒、补给乡勇、抵御持续来袭。",
@@ -24,10 +24,10 @@
     "promotional_image": ""
   },
   "test_qrcode": {
-    "url": "https://tapcode-sce.spark.xd.com/qrcode/m_jg7f_1792247805368.png",
-    "generated_at": "2026-10-17T14:36:45.496Z"
+    "url": "https://tapcode-sce.spark.xd.com/qrcode/m_jg7f_1792248435629.png",
+    "generated_at": "2026-10-17T14:47:15.736Z"
   },
   "metadata": {
-    "updated_at": "2026-10-17T14:36:45.496Z"
+    "updated_at": "2026-10-17T14:47:15.736Z"
   }
 }
