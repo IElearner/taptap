@@ -12,7 +12,7 @@
     "category": "strategy",
     "screen_orientation": "landscape",
     "collection_type": "sce",
-    "trial_note": "横屏试玩。先选有限关卡或无限拓荒，再点入村；点底部按钮后点空地营造，建筑下方一格须接路；单指拖动、双指缩放。当前为测试原型，未启用存档。",
+    "trial_note": "横屏试玩。有限关卡与无限拓荒独立存档，每30秒自动保存，也可点存档。模式页可继续村庄及开关挂机；离线生产最多累计8小时，不结算敌袭或损失。看到云端与本地已保存后，可退出重进验证。",
     "app_platforms": "1,2",
     "app_id": 981728,
     "miniapp_id": "tapmc9ckaeqbkquaxy",
