@@ -2,6 +2,7 @@ local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
 local Skin = require "game.Skin"
 local Mentor = require "game.Mentor"
+local Art = require "game.Art"
 local label, button, panel = Skin.label, Skin.button, Skin.panel
 local Hud = {}
 local function row(children, gap) return UI.Panel { flexDirection = "row", alignItems = "center", gap = gap or 8, children = children } end
@@ -134,7 +135,7 @@ function Hud.create(sim, world, actions)
     loginHint:SetStyle({ width = "100%", whiteSpace = "normal" })
     local login
     login = UI.Panel { id = "loginScreen", position = "absolute", left = 0, right = 0, top = 0, bottom = 0,
-        backgroundColor = { 30, 40, 29 }, backgroundImage = fileSystem:FileExists("assets/image/login-painting.png") and "assets/image/login-painting.png" or nil, backgroundFit = "cover", children = {
+        backgroundColor = { 30, 40, 29 }, backgroundImage = Art.path("login-painting"), backgroundFit = "cover", children = {
         UI.SafeAreaView { width = "100%", height = "100%", justifyContent = "center", alignItems = "flex-end", padding = 24, children = {
             panel { width = 294, marginRight = 24, padding = 20, gap = 9, children = {
                 label("山  河  里", 34, Skin.gold), label("炊 烟 再 起", 16),

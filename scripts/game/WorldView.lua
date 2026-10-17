@@ -160,16 +160,6 @@ function WorldView.create(sim, onTile)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
     local camera = { x = 0, y = 0, zoom = 1, pinchZoom = 1 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
-    local images, checked, imageContext = {}, {}, nil
-    local function image(kind, vg)
-        imageContext = vg
-        if not checked[kind] then
-            checked[kind] = true
-            local path = "assets/image/building-" .. kind .. ".png"
-            if fileSystem:FileExists(path) then images[kind] = nvgCreateImage(vg, path, 0) end
-        end
-        return images[kind]
-    end
     local mode = "inspect"
     local selected = false
     local pinchAnchor = nil
@@ -392,7 +382,7 @@ function WorldView.create(sim, onTile)
                         elseif terrain == "grass" and (x*11+y*7)%29 == 0 then Art.draw(vg, "bush-flowers",sx-22,sy-28,44,35)
                         elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
                     end
-                    if b then house(vg,b,selected==b,sim.elapsed,image(b.kind,vg)) end
+                    if b then house(vg,b,selected==b,sim.elapsed,nil) end
                 end
             end
             local bucket=agentsByDepth[sum]
@@ -414,10 +404,7 @@ function WorldView.create(sim, onTile)
     local result = {
         panel = panel,
         minimap = minimap,
-        dispose = function()
-            if imageContext then for _, handle in pairs(images) do if handle > 0 then nvgDeleteImage(imageContext, handle) end end end
-            images, checked, imageContext = {}, {}, nil
-        end,
+        dispose = function() end,
 
         setMode = function(value) mode = value end,
         select = function(value) selected = value end,

@@ -18,4 +18,6 @@
 
 十一张图已有 Maker 官方 `.meta`。`Art.lua` 按实际图集位置和尺寸取样；搬运人物、界面图标、木纹面板和按钮均读取图片。当前登录页、教程和地图截图已在真实引擎中核对；地图地面图集为减少重复纹理以较低透明度覆盖基础地块。
 
+手机测试包的资源路径从 `asset_dirs` 根目录开始，使用 `image/*.png`，不能使用工作区文件路径 `assets/image/*.png` 或 `fileSystem:FileExists` 判断资源是否可用。`.project/resources.json` 把 `default` 加入 `preload_groups`，保证这些界面与地图图片在游戏启动前下载；生成测试二维码后应核对线上 manifest 的 `preload_groups` 和图片条目。
+
 先前 `handpaint-layout.json` 对应的 Maker 输出仍未下载，`dev/check_art.py` 是那套完整裁切素材的验收脚本，不能用其缺失报告代替本次六张图片是否已接入的验证。

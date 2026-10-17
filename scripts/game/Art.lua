@@ -1,6 +1,11 @@
--- Shared hand-painted resource cache. Missing assets remain explicit fallbacks during import.
+-- Shared hand-painted resource cache. Paths here are virtual resource paths,
+-- relative to settings.json asset_dirs, not files in the project checkout.
 local Art = {}
-local textures, checked, available, context = {}, {}, {}, nil
+local textures, context = {}, nil
+local direct = {}
+for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment",
+    "atlas-villagers","atlas-workers","atlas-loaded","atlas-combatants","atlas-icons",
+    "panel-wood","button-painting"}) do direct[name]=true end
 local atlas = {}
 local function register(prefix,atlasName,names,cols,rows,options)
     for i,name in ipairs(names) do
@@ -35,23 +40,17 @@ for row,id in ipairs({"farmer","artisan","logger","guard"}) do
         atlas["person-occupation-" .. id .. "-" .. dir]={source="atlas-workers",col=col-1,row=row-1,cols=4,rows=4}
     end
 end
-function Art.path(name) return "assets/image/" .. name .. ".png" end
+function Art.path(name) return "image/" .. name .. ".png" end
 function Art.exists(name)
-    if available[name] == nil then
-        available[name]=fileSystem:FileExists(Art.path(name))
-        if not available[name] and atlas[name] then available[name]=fileSystem:FileExists(Art.path(atlas[name].source)) end
-    end
-    return available[name]
+    return direct[name] == true or atlas[name] ~= nil
 end
 function Art.texture(vg, name)
     context = vg
-    if not checked[name] then
-        checked[name] = true
-        if fileSystem:FileExists(Art.path(name)) then
-            local flags = name == "panel-wood" and (NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) or 0
-            textures[name] = nvgCreateImage(vg, Art.path(name), flags)
-        end
-    end
+    if not direct[name] then return nil end
+    if textures[name] and textures[name] > 0 then return textures[name] end
+    local flags = name == "panel-wood" and (NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) or 0
+    local handle = nvgCreateImage(vg, Art.path(name), flags)
+    if handle and handle > 0 then textures[name] = handle end
     return textures[name]
 end
 function Art.draw(vg, name, x, y, w, h, alpha)
@@ -96,6 +95,6 @@ function Art.release()
     if context then
         for _, handle in pairs(textures) do if handle > 0 then nvgDeleteImage(context, handle) end end
     end
-    textures, checked, available, context = {}, {}, {}, nil
+    textures, context = {}, nil
 end
 return Art

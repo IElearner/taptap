@@ -2,9 +2,10 @@ local Art=require "game.Art"
 V.atFrame(8,function()
     for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers",
         "atlas-loaded","atlas-combatants","atlas-icons","panel-wood","button-painting"}) do
-        V.assert(fileSystem:FileExists(Art.path(name)),"Imported original PNG exists: " .. name)
-        V.assert(fileSystem:FileExists(Art.path(name) .. ".meta"),"Official image metadata exists: " .. name)
+        V.assert(fileSystem:FileExists("assets/" .. Art.path(name)),"Imported original PNG exists: " .. name)
+        V.assert(fileSystem:FileExists("assets/" .. Art.path(name) .. ".meta"),"Official image metadata exists: " .. name)
     end
+    V.assert(Art.path("atlas-buildings")=="image/atlas-buildings.png","Runtime image path uses the resource root")
     for _,name in ipairs({"building-store","building-house","building-farm","building-mill","building-kitchen",
         "building-woodcutter","building-quarry","building-courier","building-barracks",
         "ground-grass","ground-road","ground-water","tree-oak","tree-pine","tree-bamboo",
