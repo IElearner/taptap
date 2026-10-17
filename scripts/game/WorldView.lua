@@ -444,12 +444,13 @@ function WorldView.create(sim, onTile)
                 local place=(queueSlot or 1)%3
                 drawX=drawX+(place-1)*0.18
                 drawY=drawY+math.floor((queueSlot or 1)/3)*0.13
-            elseif action=="farm" and a.building then
+            elseif (a.farmPresence or 0)>0 and a.building then
                 local field=sim.buildings[a.building]
-                if field then
+                if field and field.kind=="farm" then
                     local clock=a.workClock or 0
-                    drawX=field.x-0.22+math.sin(clock*0.8+(a.slot or 0))*0.16
-                    drawY=field.y-0.22+math.cos(clock*0.8+(a.slot or 0))*0.08
+                    local presence=a.farmPresence
+                    drawX=a.x+(field.x-0.22+math.sin(clock*0.8+(a.slot or 0))*0.16-a.x)*presence
+                    drawY=a.y+(field.y-0.22+math.cos(clock*0.8+(a.slot or 0))*0.08-a.y)*presence
                 end
             elseif guardIndex and not a.meal and not (a.path and a.path[a.index]) then
                 drawX=9.3+((guardIndex-1)%3)*0.28
@@ -460,7 +461,7 @@ function WorldView.create(sim, onTile)
             if depth < minX+minY or depth > maxX+maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
             agentsByDepth[depth]=agentsByDepth[depth] or {}
-            local walking=a.path and a.path[a.index] ~= nil
+            local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1)
             local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="cook" or action=="butcher") and sim.elapsed or 0
             local thought
             if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
@@ -487,7 +488,7 @@ function WorldView.create(sim, onTile)
             local b=sim.buildings[a.building]
             local role,profile=Characters.worker(b,a.slot)
             local action=a.meal and a.meal.phase=="eat" and "eat" or
-                (not a.meal and ((b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) or b.kind=="ranch") and "farm" or
+                (not a.meal and ((b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.9 or b.kind=="ranch") and "farm" or
                     b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
             if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
         end

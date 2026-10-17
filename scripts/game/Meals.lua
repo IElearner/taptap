@@ -97,7 +97,13 @@ function Meals.prepareWorkers(sim,dt,offline)
                 end
                 alive[key]=true
                 local working=b.kind~="farm" or Farm.needsWork(b,require("game.Definitions").buildings.farm.period)
-                if not Meals.tick(sim,a,dt,offline,false,working) then
+                local eating=Meals.tick(sim,a,dt,offline,false,working)
+                if b.kind=="farm" and not offline then
+                    local target=working and not eating and 1 or 0
+                    local presence=a.farmPresence or 0
+                    a.farmPresence=math.max(0,math.min(1,presence+(target==1 and 1 or -1)*dt*2.5))
+                end
+                if not eating then
                     b.activeWorkers=b.activeWorkers+1
                     b.workRate=b.workRate+(a.energy<25 and 0.6 or 1)
                     if working then a.workClock=(a.workClock or 0)+dt end

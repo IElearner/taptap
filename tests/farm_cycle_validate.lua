@@ -23,6 +23,10 @@ V.atFrame(8,function()
     V.assert(b.timer>=D.buildings.farm.period/3 and b.farmStep==1 and b.buffer==0,
         "Wheat grows without a worker but cannot skip the tending visit")
     V.assert(s:staff(b,1),"Restore the worker for tending")
+    tick(1)
+    local returning=s.workers[b.id .. ":1"]
+    V.assert(returning and returning.farmPresence>0 and returning.farmPresence<1,
+        "Worker walks into the field before tending")
     local snapshot=Data.capture(s,1000,1,true)
     local restored=Data.restore(snapshot,s.mode)
     V.assert(restored and restored.buildings[b.id].farmStep==1,"Mid-growth save keeps the farming step")
