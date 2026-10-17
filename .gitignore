@@ -66,3 +66,7 @@ CLAUDE.md
 /.claude
 /.codex
 /.opencode
+
+# Local play progress (tool-mode Runtime may store relative files in the checkout)
+/shanheli_save_v1_*.json
+/shanheli_save_v1_*.json.bak

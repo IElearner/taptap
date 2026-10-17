@@ -36,6 +36,7 @@ local WorldMap = require "game.WorldMap"
 ---@field rock number
 ---@field score number
 ---@field buildingIndex table<string,table>
+---@field menuOpen boolean?
 local S = {}
 S.__index = S
 local directions = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
@@ -264,12 +265,12 @@ function S:updateCarrier(c, dt)
         c.job, c.carrying = false, false
     end
 end
-function S:update(dt)
+function S:update(dt, offline)
     self.messageTime = math.max(0, self.messageTime - dt)
     if not self.started or self.paused or self.defeat or self.victory then return end
-    dt = math.min(dt, 0.25) * self.speed
-    self.elapsed, self.foodClock = self.elapsed + dt, self.foodClock + dt
-    if self.foodClock >= 15 then
+    dt = math.min(dt, 0.25) * (offline and 1 or self.speed)
+    if not offline then self.elapsed, self.foodClock = self.elapsed + dt, self.foodClock + dt end
+    if not offline and self.foodClock >= 15 then
         self.foodClock = self.foodClock - 15
         -- Tutorial relief floor prevents an unrecoverable beginner starvation spiral.
         local floorFood = self.mode == "finite" and not self.skipped and 8 or 0
@@ -311,6 +312,8 @@ function S:update(dt)
         end
     end
     for _, c in ipairs(self.carriers) do self:updateCarrier(c, dt) end
+    -- Offline time advances production/logistics only, never raids, hunger or records.
+    if offline then return end
     self.score = math.floor(self.elapsed / 10) + self.map.expansion * 100 + self.wavesDefeated * 200 + #self.buildings * 10
     if self.mode == "infinite" and not self.raid then
         self.nextRaid = math.max(0, self.nextRaid - dt)

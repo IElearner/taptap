@@ -1,5 +1,8 @@
 -- A deterministic visual fixture, not a player's save or gameplay automation.
 V.atFrame(8, function()
+    require("network.Standalone").UseStore(require("game.SaveStore").new({
+        now = function() return 1000 end, read = function() return nil end, write = function() return true end,
+    }))
     local state, _, hud = require("network.Standalone").Inspect()
     hud.dismissIntro()
     for x = 7, 4, -1 do state:build("road", x, 9) end

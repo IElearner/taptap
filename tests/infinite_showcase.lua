@@ -1,5 +1,8 @@
 -- Deterministic fixture showing the infinite-mode HUD after establishing a village.
 V.atFrame(8, function()
+    require("network.Standalone").UseStore(require("game.SaveStore").new({
+        now = function() return 1000 end, read = function() return nil end, write = function() return true end,
+    }))
     local _, _, originalHud = require("network.Standalone").Inspect()
     originalHud.root:FindById("modeInfinite").props.onClick()
     local state, _, hud = require("network.Standalone").Inspect()

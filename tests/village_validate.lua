@@ -9,6 +9,11 @@ local function build(s, kind, x, y)
     V.assert(ok, kind .. ": " .. message)
     return b
 end
+V.atFrame(6, function()
+    require("network.Standalone").UseStore(require("game.SaveStore").new({
+        now = function() return 1000 end, read = function() return nil end, write = function() return true end,
+    }))
+end)
 V.atFrame(8, function()
     local live, view, hud = require("network.Standalone").Inspect()
     local enter = hud.root:FindById("enterVillage")

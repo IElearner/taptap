@@ -25,6 +25,7 @@ local function costText(def)
     return #parts > 0 and table.concat(parts, " · ") or "免费"
 end
 function Hud.create(sim, world, actions)
+    local saveInfo = actions.saveInfo
     local resources, buildButtons = {}, {}
     local modeLabel = label("", 13, muted)
     ---@type Widget[]
@@ -90,14 +91,25 @@ function Hud.create(sim, world, actions)
                 sim:notify("已跳过指引；点击「教程」可重新阅读。")
             end, { height = 44 }),
             button("模式", function() showModeMenu() end, { height = 44 }),
+            button("存档", function() actions.save() end, { id = "saveGame", height = 44 }),
         } },
         UI.Panel { flexDirection = "row", gap = 8, children = buildItems },
     } }
     ---@type Panel
     local intro
+    ---@type Panel
+    local confirmNew
+    local saveStatus = label("", 12, muted)
+    local offlineSummary = label("", 12, muted)
+    saveStatus:SetStyle({ width = "100%", whiteSpace = "normal" })
+    offlineSummary:SetStyle({ width = "100%", whiteSpace = "normal" })
+    local idleToggle = button("挂机：开", function() actions.toggleIdle() end, { id = "toggleIdle", flexGrow = 1, height = 40 })
+    local enter = button("随里正入村", function()
+        if actions.enter() then intro:Hide() end
+    end, { id = "enterVillage", backgroundColor = red, fontColor = { 255, 243, 212 } })
     intro = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center",
-        backgroundColor = { 30, 40, 29, 170 }, children = { panel { width = "86%", maxWidth = 510, padding = 28, gap = 16, children = {
-            label("山 河 里", 30, red), label(D.modes[sim.mode].name, 19),
+        backgroundColor = { 30, 40, 29, 170 }, children = { panel { width = "86%", maxWidth = 560, padding = 18, gap = 9, children = {
+            label("山 河 里", 27, red), label(D.modes[sim.mode].name, 17),
             label(D.modes[sim.mode].description, 14),
             label(sim.mode == "finite" and "固定 22×22 河谷，生产新口粮并守村即可通关。" or "没有最终边界；拓荒发现新区域，守住一波再迎下一波。", 14),
             UI.Panel { flexDirection = "row", gap = 10, children = {
@@ -106,10 +118,26 @@ function Hud.create(sim, world, actions)
                 button("无限拓荒", function() actions.changeMode("infinite") end, { id = "modeInfinite", flexGrow = 1, height = 44,
                     backgroundColor = sim.mode == "infinite" and red or nil, fontColor = sim.mode == "infinite" and { 255, 243, 212 } or nil }),
             } },
-            label("横屏游玩 · 点击选中 · 单指拖动 · 双指缩放", 13, muted),
-            button("随里正入村 / 继续", function() sim.started = true; sim.paused = false; intro:Hide() end, { id = "enterVillage", backgroundColor = red, fontColor = { 255, 243, 212 } }),
+            saveStatus, offlineSummary,
+            UI.Panel { flexDirection = "row", gap = 10, children = {
+                idleToggle,
+                button("新局", function() confirmNew:Show() end, { id = "newGame", flexGrow = 1, height = 40 }),
+                button("保存", function() actions.save() end, { flexGrow = 1, height = 40 }),
+            } },
+            enter,
         } } } }
-    showModeMenu = function() sim.paused = true; intro:Show() end
+    showModeMenu = function() sim.menuOpen = true; intro:Show() end
+    confirmNew = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
+        backgroundColor = { 30, 40, 29, 190 }, children = { panel { width = "85%", maxWidth = 470, padding = 22, gap = 12, children = {
+            label("重新开始本模式？", 22, red), label("入村后将覆盖本模式旧档，另一模式不受影响。", 14),
+            button("确认新局", function() actions.restart() end, { id = "confirmNewGame" }),
+            button("取消", function() confirmNew:Hide() end),
+        } } } }
+    local settlementText = label("读取存档中…", 18)
+    local settlementOverlay = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
+        backgroundColor = { 30, 40, 29, 170 }, children = { panel { width = "80%", maxWidth = 440, padding = 24, gap = 12, children = {
+            settlementText, label("离线只结算生产，不触发敌袭、饥饿或战损。", 13),
+        } } } }
     local resultTitle, resultText = label("", 28, red), label("", 15)
     local ending = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
         backgroundColor = { 30, 40, 29, 150 }, children = { panel { width = "80%", maxWidth = 480, padding = 26, gap = 16, children = {
@@ -120,11 +148,18 @@ function Hud.create(sim, world, actions)
         world.panel, UI.SafeAreaView { width = "100%", height = "100%", pointerEvents = "box-none", children = {
             panel { position = "absolute", top = 8, left = 12, right = 12, height = 58, paddingHorizontal = 12,
                 flexDirection = "row", alignItems = "center", justifyContent = "space-between", gap = 8, children = topChildren },
-            tutorial, selectedPanel, notice, buildBar, intro, ending,
+            tutorial, selectedPanel, notice, buildBar, intro, ending, confirmNew, settlementOverlay,
         } },
     } }
     local function update()
         for _, r in ipairs(D.goods) do resources[r]:SetText(D.names[r] .. " " .. sim.stock[r]) end
+        saveStatus:SetText(saveInfo.status or "尚未保存")
+        offlineSummary:SetText(saveInfo.summary or "离线生产最多累计 8 小时。")
+        idleToggle:SetText(saveInfo.idleEnabled and "挂机：开" or "挂机：关")
+        enter:SetText((saveInfo.hasSave or sim.started) and "继续村庄" or "随里正入村")
+        enter:SetDisabled(saveInfo.loading or saveInfo.settling)
+        settlementOverlay:SetVisible(saveInfo.loading or saveInfo.settling)
+        settlementText:SetText(saveInfo.loading and "读取存档中…" or ("离线生产结算 " .. math.floor((saveInfo.progress or 0) * 100) .. "%"))
         modeLabel:SetText(sim.mode == "finite" and "有限 · 清溪里" or ("无限 · 拓荒 " .. sim.map.expansion))
         people:SetText("乡亲 " .. sim.population .. " / 闲 " .. sim:availableWorkers())
         pause:SetText(sim.paused and "继续" or "暂停"); speed:SetText(sim.speed .. "倍")
@@ -165,7 +200,7 @@ function Hud.create(sim, world, actions)
         elseif sim.defeat then resultTitle:SetText("义仓失守"); resultText:SetText(sim.mode == "infinite" and ("本局生存 " .. math.floor(sim.elapsed) .. " 秒，拓荒 " .. sim.map.expansion .. " 圈，守住 " .. sim.wavesDefeated .. " 波。") or "重新规划生产与兵力，再带乡亲们守一次村。") end
     end
     ---@class VillageHud
-    local result = { root = root, update = update, dismissIntro = function() sim.started = true; intro:Hide() end }
+    local result = { root = root, update = update, dismissIntro = function() if actions.enter() then intro:Hide() end end }
     return result
 end
 return Hud
