@@ -24,7 +24,9 @@ function Mentor.portrait()
         local l=self:GetAbsoluteLayout()
         local x,y,s=l.x,l.y,math.min(l.w/112,l.h/128)
         nvgSave(vg);nvgTranslate(vg,x,y);nvgScale(vg,s,s)
-        if Art.draw(vg,"portrait-elder",0,0,112,128) then nvgRestore(vg);return end
+        nvgSave(vg);nvgIntersectScissor(vg,8,8,96,110)
+        if Art.draw(vg,"portrait-elder",-18,-16,148,222) then nvgRestore(vg);nvgRestore(vg);return end
+        nvgRestore(vg)
         -- Warm paper ground, layered robe, weathered face and long white beard.
         nvgBeginPath(vg);nvgRoundedRect(vg,3,3,106,122,9);fill(vg,{83,65,39})
         nvgBeginPath(vg);nvgRoundedRect(vg,7,7,98,114,7);fill(vg,{177,145,91})

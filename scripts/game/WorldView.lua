@@ -46,10 +46,14 @@ local function house(vg, b, selected, clock, art)
     local x, y = iso(b.x, b.y)
     local def = D.buildings[b.kind]
     if selected then tile(vg, b.x, b.y, { 239, 208, 115, 210 }) end
-    if art and art > 0 then
-        local size = b.kind == "store" and 120 or 108
+    local size = b.kind == "store" and 120 or 108
+    local atlasPainted=false
+    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,b.complete and 1 or 0.65) end
+    if (art and art > 0) or atlasPainted then
+        if art and art > 0 then
         nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
         nvgFillPaint(vg, nvgImagePattern(vg, x-size/2, y-size*0.76, size, size, 0, art, b.complete and 1 or 0.65)); nvgFill(vg)
+        end
         if b.kind == "kitchen" and b.complete then
             for i = 1, 3 do circle(vg, x+10+math.sin(clock+i)*3, y-50-i*7-clock%1*5, 3+i, {235,225,195,60}) end
         end
@@ -104,7 +108,7 @@ local function house(vg, b, selected, clock, art)
 end
 local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo)
     local sx, sy = iso(x, y); local step = math.sin(clock * 9 + x) * 2
-    local size = 34
+    local size = 42
     local name = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
     local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85+step*0.2, size, size)
     if not painted then
@@ -307,7 +311,7 @@ function WorldView.create(sim, onTile)
                     tile(vg, x, y, c)
                     local sx, sy = iso(x, y)
                     local ground = terrain == "water" and "ground-water" or ((terrain == "grass" or terrain == "forest") and "ground-grass" or nil)
-                    if ground then Art.draw(vg, ground, sx-30, sy-15, 60, 30) end
+                    if ground then Art.draw(vg, ground, sx-30, sy-15, 60, 30, terrain == "water" and 0.5 or 0.3) end
                     if (terrain == "grass" or terrain == "forest") and not Art.exists("ground-grass") then
                         for j = 1, 5 do
                             local dx, dy = ((x*31+y*13+j*17)%37)-18, ((x*11+y*23+j*7)%13)-6
