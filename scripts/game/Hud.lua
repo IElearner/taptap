@@ -45,9 +45,10 @@ function Hud.create(sim, world, actions)
     local buildItems = { label("先接通道路，再沿路营造。", 12, Skin.muted) }
     for _, kind in ipairs(D.order) do
         local k, def = kind, D.buildings[kind]
+        local width,height=D.footprint(k)
         buildItems[#buildItems + 1] = row {
             button(def.name, function() actions.setMode(k); close() end, { id = "build_" .. k, width = 100 }),
-            UI.Panel { flexGrow = 1, flexBasis = 0, minWidth = 0, gap = 3, children = { label(costText(def), 12, Skin.gold), label(def.output and ("生产 · " .. D.names[def.output]) or (k == "road" and "运输的命脉" or "村庄设施"), 11, Skin.muted) } },
+            UI.Panel { flexGrow = 1, flexBasis = 0, minWidth = 0, gap = 3, children = { label(costText(def), 12, Skin.gold), label("占地 " .. width .. "×" .. height .. " · " .. (def.output and ("生产 " .. D.names[def.output]) or (k == "road" and "运输的命脉" or "村庄设施")), 11, Skin.muted) } },
         }
     end
     local buildDrawer = drawer("build", "营 造 工 坊", buildItems)
@@ -109,7 +110,7 @@ function Hud.create(sim, world, actions)
         else open("village") end
     end, { id = "questChip", position = "absolute", top = 60, left = 12, height = 44, fontSize = 13 })
     local placementText = label("", 13)
-    local placement = panel { position = "absolute", bottom = 82, left = 12, padding = 10, gap = 8, visible = false,
+    local placement = panel { position = "absolute", bottom = 82, left = 12, width = 186, padding = 10, gap = 8, visible = false,
         children = { placementText, button("完成放置", function() actions.setMode("inspect") end, { id = "cancelPlacement" }) } }
     local toast = label("", 13)
     local notice = panel { position = "absolute", bottom = 84, left = "26%", maxWidth = "42%", padding = 12, visible = false, pointerEvents = "none", children = { toast } }
@@ -296,7 +297,10 @@ function Hud.create(sim, world, actions)
         world.minimap:SetVisible(not opened)
         for name, btn in pairs(mainButtons) do btn:SetBackgroundColor(opened == name and { 124, 96, 48 } or { 83, 69, 43 }) end
         placement:SetVisible(actions.mode ~= "inspect" and not opened)
-        if actions.mode ~= "inspect" then placementText:SetText(D.buildings[actions.mode].name .. " · 点击空地放置\n门前接路才能运输") end
+        if actions.mode ~= "inspect" then
+            local width,height=D.footprint(actions.mode)
+            placementText:SetText(D.buildings[actions.mode].name .. " · " .. width .. "×" .. height .. " 格\n拖动预览，松手建造\n绿色可建 · 红色不可建")
+        end
         ending:SetVisible(session.accepted and (sim.victory or sim.defeat))
         if sim.victory then resultTitle:SetText("炊烟又起，乡里安宁"); resultText:SetText("粮道已通，乡勇已成，清溪里再闻饭香。")
         elseif sim.defeat then resultTitle:SetText("义仓失守"); resultText:SetText("重新安排粮食生产与兵力，再守一次村。") end

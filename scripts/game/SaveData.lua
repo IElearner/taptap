@@ -67,11 +67,21 @@ local function restoreUnsafe(data, mode)
         assert(type(b.complete) == "boolean" and number(b.progress, 0, 1) and number(b.workers, 0, 2), "building state")
         assert(number(b.timer, 0, 1e12) and number(b.buffer, 0, 1e12) and number(b.inputs, 0, 1e12), "buffer")
         assert(type(b.incoming) == "boolean" and type(b.outgoing) == "boolean", "transit flags")
-        assert(not s:buildingAt(b.x, b.y), "duplicate position")
+        local width, height = b.footprintW or 1, b.footprintH or 1
+        local maxW, maxH = D.footprint(b.kind)
+        assert(number(width, 1, maxW) and width % 1 == 0 and number(height, 1, maxH) and height % 1 == 0, "building footprint")
+        for dx = 1-width, 0 do for dy = 1-height, 0 do
+            local tileX, tileY = b.x+dx, b.y+dy
+            assert(not s:buildingAt(tileX, tileY) and not s.roads[tileX .. ":" .. tileY], "building overlap")
+        end end
         assert(number(b.mealStock or 0,0,100) and (b.mealIncoming==nil or type(b.mealIncoming)=="boolean"),"dining inventory")
         local restored = clone(b); restored.cachedConnected, restored.networkRevision = nil, nil
         restored.mealStock,restored.mealIncoming=b.mealStock or 0,b.mealIncoming or false
-        s.buildings[i], s.buildingIndex[b.x .. ":" .. b.y] = restored, restored
+        restored.footprintW, restored.footprintH = width, height
+        s.buildings[i] = restored
+        for dx = 1-width, 0 do for dy = 1-height, 0 do
+            s.buildingIndex[b.x+dx .. ":" .. b.y+dy] = restored
+        end end
     end
     assert(s.buildings[1].kind == "store" and s.buildings[1].x == 10 and s.buildings[1].y == 8, "warehouse")
     local function restoreJob(job)

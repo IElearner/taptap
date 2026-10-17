@@ -135,21 +135,33 @@ function S:spend(cost)
     return true
 end
 function S:addBuilding(kind, x, y, complete)
+    local width, height = D.footprint(kind)
     local b = { id = #self.buildings + 1, kind = kind, x = x, y = y, complete = complete or false,
+        footprintW = width, footprintH = height,
         progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false, mealStock=0,mealIncoming=false }
     self.buildings[#self.buildings + 1] = b
-    self.buildingIndex[key(x, y)] = b
+    for dx = 1-width, 0 do for dy = 1-height, 0 do
+        self.buildingIndex[key(x+dx, y+dy)] = b
+    end end
     return b
 end
-function S:build(kind, x, y)
+function S:canBuild(kind, x, y)
     if self.defeat or self.victory then return false, "本局已结束，可重新选择模式。" end
-    if x ~= math.floor(x) or y ~= math.floor(y) then return false, "请在完整地块上营造。" end
-    if self:terrain(x, y) == "fog" then return false, "此处尚未勘探，点击「拓荒」发现新区域。" end
-    if self:terrain(x, y) ~= "grass" then return false, "此处是树林、水域或地图边界。" end
-    if self:buildingAt(x, y) or self.roads[key(x, y)] or self:roadSiteAt(x,y) then return false, "此处已有建筑或道路。" end
+    if type(x) ~= "number" or type(y) ~= "number" or x ~= math.floor(x) or y ~= math.floor(y) then return false, "请在完整地块上营造。" end
+    local def = D.buildings[kind]
+    if not def then return false, "未知建筑。" end
+    local width, height = D.footprint(kind)
+    for dx = 1-width, 0 do for dy = 1-height, 0 do
+        local tx, ty = x+dx, y+dy
+        if self:terrain(tx, ty) == "fog" then return false, "此处尚未勘探，点击「拓荒」发现新区域。" end
+        if self:terrain(tx, ty) ~= "grass" then return false, "建筑占地包含树林、水域或地图边界。" end
+        if self:buildingAt(tx, ty) or self.roads[key(tx, ty)] or self:roadSiteAt(tx,ty) then return false, "建筑占地与现有建筑或道路重叠。" end
+    end end
     -- Protect all existing doors; a door occupies the tile immediately south.
     for _, b in ipairs(self.buildings) do
-        if b.x == x and b.y + 1 == y and kind ~= "road" then return false, "请为建筑门前保留一格道路。" end
+        if kind ~= "road" and b.x >= x-width+1 and b.x <= x and b.y+1 >= y-height+1 and b.y+1 <= y then
+            return false, "请为建筑门前保留一格道路。"
+        end
     end
     if kind == "road" then
         local neighbor = false
@@ -157,18 +169,26 @@ function S:build(kind, x, y)
             if self.roads[key(x+d[1],y+d[2])] or self:roadSiteAt(x+d[1],y+d[2]) then neighbor=true;break end
         end
         if not neighbor then return false, "请从现有道路向外延伸。" end
-        local site={x=x,y=y,progress=0}
-        self.pendingRoads[#self.pendingRoads+1],self.roadPlanIndex[key(x,y)]=site,site
         return true, "已规划道路，空闲村民将取材到场铺设。"
     end
-    local def = D.buildings[kind]
-    if not def then return false, "未知建筑。" end
     if self:terrain(x, y + 1) ~= "grass" or self:buildingAt(x, y + 1) then return false, "建筑门前需要可通行的空地。" end
     if not self:connected({ x = x, y = y }) and not self:roadSiteAt(x,y+1) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
     if kind == "courier" and self:availableWorkers() < 1 then return false, "驿站需要 1 名空闲村民。" end
-    if not self:spend(def.cost) then return false, "物资不足，先让生产链补充库存。" end
+    if not self:canAfford(def.cost) then return false, "物资不足，先让生产链补充库存。" end
+    return true, def.name .. "开始修建。"
+end
+function S:build(kind, x, y)
+    local ok, message = self:canBuild(kind, x, y)
+    if not ok then return false, message end
+    if kind == "road" then
+        local site={x=x,y=y,progress=0}
+        self.pendingRoads[#self.pendingRoads+1],self.roadPlanIndex[key(x,y)]=site,site
+        return true, message
+    end
+    local def = D.buildings[kind]
+    self:spend(def.cost)
     local b = self:addBuilding(kind, x, y)
-    return true, def.name .. "开始修建。", b
+    return true, message, b
 end
 function S:count(kind)
     local n = 0; for _, b in ipairs(self.buildings) do if b.kind == kind and b.complete then n = n + 1 end end

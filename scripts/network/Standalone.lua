@@ -73,7 +73,7 @@ render = function()
     view = WorldView.create(state, function(x, y)
         if info.loading or info.settling or background then return end
         local b = state:buildingAt(x, y)
-        if b then actions.road=false; actions.selected = b; actions.mode = "inspect"; view.setMode("inspect"); view.select(b)
+        if actions.mode == "inspect" and b then actions.road=false; actions.selected = b; actions.mode = "inspect"; view.setMode("inspect"); view.select(b)
         elseif actions.mode == "inspect" and state:roadSiteAt(x,y) then
             actions.selected,actions.road=false,state:roadSiteAt(x,y);view.select(false)
         elseif actions.mode ~= "inspect" then

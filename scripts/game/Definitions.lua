@@ -14,23 +14,28 @@ D.names = { wood = "木料", stone = "石料", grain = "稻谷", flour = "米粉
 ---@field workers number
 ---@field color number[]
 ---@field description string
+---@field footprint number[]?
 ---@field input string?
 ---@field output string?
 ---@field amount number?
 ---@field period number?
 ---@type table<string,VillageBuildingDefinition>
 D.buildings = {
-    store = { name = "义仓", cost = {}, workers = 0, color = { 85, 103, 101 }, description = "村庄的中心。搬运工沿道路运送物资。" },
+    store = { name = "义仓", cost = {}, workers = 0, footprint = { 2, 2 }, color = { 85, 103, 101 }, description = "村庄的中心。搬运工沿道路运送物资。" },
     road = { name = "道路", cost = {}, workers = 0, color = { 190, 166, 116 }, description = "免费规划道路；空闲村民将到场铺设，完工后才能运输。拖动可移动地图。" },
     house = { name = "民居", cost = { wood = 8, stone = 2 }, workers = 0, color = { 97, 111, 114 }, description = "竣工后增加 4 名村民，无需另行招募。" },
-    farm = { name = "稻田", cost = { wood = 8 }, workers = 1, output = "grain", amount = 3, period = 7, color = { 187, 157, 69 }, description = "每 7 秒收获 3 份稻谷，由搬运工送入义仓。" },
+    farm = { name = "稻田", cost = { wood = 8 }, workers = 1, footprint = { 1, 2 }, output = "grain", amount = 3, period = 7, color = { 187, 157, 69 }, description = "每 7 秒收获 3 份稻谷，由搬运工送入义仓。" },
     mill = { name = "磨坊", cost = { wood = 10, stone = 4 }, workers = 1, input = "grain", output = "flour", amount = 2, period = 6, color = { 118, 100, 79 }, description = "搬入 1 份稻谷，加工为 2 份米粉。" },
     kitchen = { name = "炊坊", cost = { wood = 10, stone = 2 }, workers = 1, input = "flour", output = "food", amount = 4, period = 6, color = { 146, 78, 61 }, description = "搬入 1 份米粉，制作 4 份口粮。" },
-    woodcutter = { name = "伐木场", cost = { wood = 6 }, workers = 1, output = "wood", amount = 3, period = 8, color = { 100, 116, 74 }, description = "每 8 秒产出 3 份木料，为村庄持续供材。" },
-    quarry = { name = "采石场", cost = { wood = 8 }, workers = 1, output = "stone", amount = 3, period = 11, color = { 123, 129, 125 }, description = "开采本区域石料，每 11 秒产出 3 份；拓荒发现新储量。" },
+    woodcutter = { name = "伐木场", cost = { wood = 6 }, workers = 1, footprint = { 2, 1 }, output = "wood", amount = 3, period = 8, color = { 100, 116, 74 }, description = "每 8 秒产出 3 份木料，为村庄持续供材。" },
+    quarry = { name = "采石场", cost = { wood = 8 }, workers = 1, footprint = { 2, 1 }, output = "stone", amount = 3, period = 11, color = { 123, 129, 125 }, description = "开采本区域石料，每 11 秒产出 3 份；拓荒发现新储量。" },
     courier = { name = "驿站", cost = { wood = 10, stone = 2 }, workers = 0, color = { 152, 117, 74 }, description = "增加 1 名搬运工，占用 1 名村民。适合扩张后的长途运输。" },
-    barracks = { name = "乡勇营", cost = { wood = 12, stone = 6 }, workers = 0, color = { 144, 65, 53 }, description = "选中后训练乡勇：每人消耗 2 木料、2 口粮和 1 村民。" },
+    barracks = { name = "乡勇营", cost = { wood = 12, stone = 6 }, workers = 0, footprint = { 1, 2 }, color = { 144, 65, 53 }, description = "选中后训练乡勇：每人消耗 2 木料、2 口粮和 1 村民。" },
 }
+function D.footprint(kind)
+    local size = D.buildings[kind] and D.buildings[kind].footprint
+    return size and size[1] or 1, size and size[2] or 1
+end
 ---@type {title:string, lines:string[], complete:string, kind:string, target:number}[]
 D.lessons = {
     { title = "一 · 道通百业", lines = { "孩子，义仓虽在，路不通，百事都慢。", "点右下「营造」选「道路」，沿旧路规划四格。", "工人会取材、举锤；铺好才算通路。" }, complete="好，脚下有路，乡亲们就能送货了。", kind = "road", target = 4 },

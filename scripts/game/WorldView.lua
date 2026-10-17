@@ -42,13 +42,16 @@ local function tree(vg, sx, sy, seed)
         circle(vg, px-4, py-5, 6, {98+seed%18,112+seed%15,55})
     end
 end
-local function house(vg, b, selected, clock, art)
-    local x, y = iso(b.x, b.y)
+local function house(vg, b, selected, clock, art, ghost)
+    local width, height = b.footprintW or 1, b.footprintH or 1
+    local x, y = iso(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
     local def = D.buildings[b.kind]
-    if selected then tile(vg, b.x, b.y, { 239, 208, 115, 210 }) end
-    local size = b.kind == "store" and 120 or 108
+    if selected then
+        for dx = 1-width, 0 do for dy = 1-height, 0 do tile(vg, b.x+dx, b.y+dy, { 239, 208, 115, 120 }) end end
+    end
+    local size = 126 + 22*math.max(width-1,height-1) + (b.kind == "store" and 10 or 0)
     local atlasPainted=false
-    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,b.complete and 1 or 0.65) end
+    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,ghost and 0.47 or (b.complete and 1 or 0.65)) end
     if (art and art > 0) or atlasPainted then
         if art and art > 0 then
         nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
@@ -100,7 +103,7 @@ local function house(vg, b, selected, clock, art)
             for i = 0, 2 do circle(vg, x - 23 + i * 7, y + 5, 5, { 204, 170, 105 }) end
         end
     end
-    if not b.complete then
+    if not b.complete and not ghost then
         for i = -1, 1 do line(vg, x + i * 19, y + 10, x + i * 19, y - 48, { 174, 141, 86 }, 2) end
         line(vg, x - 22, y - 28, x + 22, y - 28, { 199, 169, 110 }, 2)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
@@ -172,6 +175,7 @@ function WorldView.create(sim, onTile)
     local mode = "inspect"
     local selected = false
     local pinchAnchor = nil
+    local ghost = nil
     local function projection()
         local l = panel:GetAbsoluteLayout()
         return l, l.x + l.w * 0.53 + camera.x, l.y + l.h * 0.52 - 270 * camera.zoom + camera.y
@@ -189,11 +193,23 @@ function WorldView.create(sim, onTile)
         camera.y=(0.5-0.52)*l.h+270*camera.zoom-sy*camera.zoom
         clampCamera()
     end
-    panel.props.onTap = function(event)
+    local function tileAt(event)
         local _, ox, oy = projection()
         local a, b = (event.x - ox) / camera.zoom / 30, (event.y - oy) / camera.zoom / 15
         local x, y = math.floor((a + b) / 2 + 0.5), math.floor((b - a) / 2 + 0.5)
+        return x, y
+    end
+    local function preview(event)
+        if mode == "inspect" or not event.x or not event.y then return end
+        local x, y = tileAt(event)
+        ghost = { x=x, y=y, kind=mode }
+    end
+    panel.props.onPointerDown = preview
+    panel.props.onPointerMove = preview
+    panel.props.onTap = function(event)
+        local x,y = tileAt(event)
         if mode == "inspect" then
+            local _,ox,oy=projection()
             local px, py = (event.x-ox)/camera.zoom, (event.y-oy)/camera.zoom
             local hit, depth = nil, -math.huge
             for _, building in ipairs(sim.buildings) do
@@ -204,14 +220,23 @@ function WorldView.create(sim, onTile)
             end
             if hit then x,y = hit.x,hit.y end
         end
+        preview(event)
         onTile(x, y)
     end
     panel.props.onPanStart = function() end
     panel.props.onPanMove = function(event)
+        if mode ~= "inspect" then preview(event); return end
         camera.x, camera.y = camera.x + event.deltaX, camera.y + event.deltaY
         clampCamera()
     end
+    panel.props.onPanEnd = function(event)
+        if mode ~= "inspect" and ghost and not pinchAnchor then
+            preview(event)
+            onTile(ghost.x, ghost.y)
+        end
+    end
     panel.props.onPinchStart = function(event)
+        ghost = nil
         camera.pinchZoom = camera.zoom
         local l,ox,oy=projection()
         local fx,fy=event.x or l.x+l.w/2,event.y or l.y+l.h/2
@@ -382,7 +407,7 @@ function WorldView.create(sim, onTile)
             for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
                 local y = sum - x
                 do
-                    if sim:terrain(x, y) == "forest" and (x + y) % 2 == 0 then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
+                    if sim:terrain(x, y) == "forest" and (x + y) % 2 == 0 and not sim:buildingAt(x,y) then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
                     local b = sim:buildingAt(x, y)
                     if not b and not sim.roads[x .. ":" .. y] then
                         local terrain = sim:terrain(x,y)
@@ -391,7 +416,17 @@ function WorldView.create(sim, onTile)
                         elseif terrain == "grass" and (x*11+y*7)%29 == 0 then Art.draw(vg, "bush-flowers",sx-22,sy-28,44,35)
                         elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
                     end
-                    if b then house(vg,b,selected==b,sim.elapsed,nil) end
+                    if b and b.x==x and b.y==y then house(vg,b,selected==b,sim.elapsed,nil) end
+                    if ghost and mode ~= "inspect" and ghost.x==x and ghost.y==y then
+                        local width,height=D.footprint(mode)
+                        local valid=sim:canBuild(mode,x,y)
+                        for dx=1-width,0 do for dy=1-height,0 do
+                            tile(vg,x+dx,y+dy,valid and {106,207,150,130} or {220,95,78,145},2)
+                        end end
+                        if mode ~= "road" then
+                            house(vg,{kind=mode,x=x,y=y,footprintW=width,footprintH=height,complete=false,progress=0},false,sim.elapsed,nil,true)
+                        end
+                    end
                 end
             end
             local bucket=agentsByDepth[sum]
@@ -415,7 +450,8 @@ function WorldView.create(sim, onTile)
         minimap = minimap,
         dispose = function() end,
 
-        setMode = function(value) mode = value end,
+        setMode = function(value) mode = value; ghost = nil end,
+        previewState = function() return ghost end,
         select = function(value) selected = value end,
         zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,
         home = function() camera.x, camera.y, camera.zoom = 0, 0, 1 end,
