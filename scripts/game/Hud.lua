@@ -34,7 +34,7 @@ function Hud.create(sim, world, actions)
     end
     ---@type Widget[]
     local top = { label("山 河 里", 19, Skin.gold) }
-    for _, r in ipairs(D.goods) do
+    for _, r in ipairs(D.topGoods) do
         resources[r] = label("", 13)
         top[#top + 1] = row({ Skin.icon(r, 22), resources[r] }, 3)
     end
@@ -42,7 +42,7 @@ function Hud.create(sim, world, actions)
     local topbar = panel { position = "absolute", top = 8, left = 12, right = 12, height = 42, paddingHorizontal = 15,
         flexDirection = "row", alignItems = "center", justifyContent = "space-between", gap = 8, children = top }
     ---@type Widget[]
-    local buildItems = { label("先接通道路，再沿路营造。", 12, Skin.muted) }
+    local buildItems = { label("先接通道路，再沿路营造。木料不足时，建伐木场并安排工人。", 12, Skin.muted) }
     for _, kind in ipairs(D.order) do
         local k, def = kind, D.buildings[kind]
         local width,height=D.footprint(k)
@@ -54,10 +54,13 @@ function Hud.create(sim, world, actions)
     local buildDrawer = drawer("build", "营 造 工 坊", buildItems)
     local title, line1, line2, line3 = label("", 17, Skin.gold), label("", 13), label("", 13), label("", 13)
     local progress, worldInfo = label("", 12, Skin.gold), label("", 12, Skin.muted)
+    local supplyInfo=label("",12,Skin.muted)
     local next = button("完成后继续 →", function() if sim:nextLesson() then close() end end, { id = "nextLesson" })
     local activityInfo=label("",12,Skin.muted)
     local villageDrawer = drawer("village", "乡 里 事 务", {
-        worldInfo, activityInfo, title, line1, line2, line3, progress, next,
+        worldInfo, supplyInfo, activityInfo, title, line1, line2, line3, progress, next,
+        label("木材获取：营造 → 伐木场 → 门前接路 → 安排伐木工 → 搬运工送回义仓。",12,Skin.gold),
+        label("肉食链：牧场养牲畜 → 屠宰场加工鲜肉 → 食堂烹制口粮。",12,Skin.gold),
         button("重新阅读教程", function() sim.lesson, sim.skipped = 1, false; mentorShownLesson=0; close() end,{id="restartMentor"}),
         button("结束教学 · 自由经营", function() sim.skipped, sim.lesson = true, #D.lessons + 1; close(); if dismissMentor then dismissMentor() end end),
     })
@@ -209,7 +212,7 @@ function Hud.create(sim, world, actions)
             mentorFade=math.max(0,mentorFade-(dt or 0))
             if mentorFade==0 then mentor:SetVisible(false) end
         end
-        for _, r in ipairs(D.goods) do resources[r]:SetText(D.names[r] .. "  " .. sim.stock[r]) end
+        for _, r in ipairs(D.topGoods) do resources[r]:SetText(D.names[r] .. "  " .. sim.stock[r]) end
         people:SetText("村民 " .. sim.population .. " / 闲 " .. sim:availableWorkers())
         status:SetText(info.status or "尚未保存"); menuStatus:SetText(info.status or "尚未保存")
         summary:SetText(info.summary or "离线生产最多累计 8 小时。")
@@ -249,6 +252,7 @@ function Hud.create(sim, world, actions)
         progress:SetText(lesson and ("进度  " .. value .. " / " .. target) or "已完成基础教学")
         next:SetVisible(lesson ~= nil); next:SetDisabled(value < target)
         worldInfo:SetText(sim.mode == "finite" and ("清溪河谷 · 义仓 " .. sim.health) or ("拓荒 " .. sim.map.expansion .. " 圈 · 已守 " .. sim.wavesDefeated .. " 波"))
+        supplyInfo:SetText("稻谷 " .. sim.stock.grain .. " · 米粉 " .. sim.stock.flour .. " · 牲畜 " .. sim.stock.livestock .. " · 鲜肉 " .. sim.stock.meat)
         military:SetText("乡勇 " .. sim.militia .. " 人 · 义仓 " .. sim.health .. "/100" .. (sim.mode == "infinite" and ("\n下次来袭 " .. math.ceil(sim.nextRaid) .. " 秒") or ""))
         raid:SetVisible(sim.lesson >= 8 and not sim.raid and (sim.mode == "infinite" or not sim.defended))
         toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0 and not opened and not mentor:IsVisible())
@@ -277,6 +281,11 @@ function Hud.create(sim, world, actions)
             local def = D.buildings[b.kind]
             selectedTitle:SetText(def.name); selectedInfo:SetText(def.description)
             selectedState:SetText(b.complete and ("岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
+            if b.kind=="farm" and b.complete then
+                selectedState:SetText("农夫 " .. (b.activeWorkers or 0) .. " 人 · 稻穗生长 " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n每次收获 3 袋稻谷，由搬运工运入义仓。")
+            elseif b.kind=="woodcutter" and b.complete then
+                selectedState:SetText("伐木工 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n木材余量 " .. sim.timber .. " · 门前接路后搬运工送回义仓。")
+            end
             if b.kind=="kitchen" and b.complete then
                 local inside,queue=0,0
                 local function visit(a)
@@ -288,7 +297,10 @@ function Hud.create(sim, world, actions)
                 end
                 for _,a in ipairs(sim.carriers) do visit(a) end
                 for _,a in pairs(sim.workers) do visit(a) end
-                selectedState:SetText("供餐席位 " .. inside .. "/2 · 门前候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. " · 搬运工补餐，入店消耗。")
+                for _,a in ipairs(sim.builders) do visit(a) end
+                for _,a in ipairs(sim.guards or {}) do visit(a) end
+                local Meals=require "game.Meals"
+                selectedState:SetText("供餐席位 " .. inside .. "/" .. Meals.seats .. " · 门前候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 米粉 " .. sim.stock.flour .. " / 鲜肉 " .. sim.stock.meat .. "\n搬运工送粮，村民入座吃饭。")
             end
             minus:SetVisible(def.output ~= nil); plus:SetVisible(def.output ~= nil)
             train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")

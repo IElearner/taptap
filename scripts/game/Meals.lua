@@ -1,5 +1,5 @@
 local Move = require "game.Movement"
-local Meals = {}
+local Meals = { seats = 2, pantryCapacity = 6 }
 local function floorFood(sim) return sim.mode == "finite" and not sim.skipped and 8 or 0 end
 local function occupancy(sim,id)
     local count=0
@@ -9,8 +9,11 @@ local function occupancy(sim,id)
     end
     for _,a in ipairs(sim.carriers) do visit(a) end
     for _,a in pairs(sim.workers) do visit(a) end
+    for _,a in ipairs(sim.builders) do visit(a) end
+    for _,a in ipairs(sim.guards or {}) do visit(a) end
     return count
 end
+Meals.occupancy=occupancy
 local function destination(sim,a)
     local best,distance=nil,math.huge
     for _,b in ipairs(sim.buildings) do
@@ -21,11 +24,15 @@ local function destination(sim,a)
     end
     return best or sim.buildings[1]
 end
-function Meals.tick(sim,a,dt,offline,busy)
+function Meals.tick(sim,a,dt,offline,busy,working)
     a.hunger=a.hunger or 0
-    if not offline then a.hunger=math.min(600,a.hunger+dt) end
+    a.energy=a.energy or 100
+    if not offline then
+        a.hunger=math.min(600,a.hunger+dt)
+        if not a.meal then a.energy=math.max(0,a.energy-dt*((busy or working) and 0.8 or 0.35)) end
+    end
     local m=a.meal
-    if not m and not offline and not busy and a.hunger >= 90 then
+    if not m and not offline and not busy and (a.hunger >= 90 or a.energy <= 25) then
         local target=destination(sim,a)
         local freeCarriers=0
         for _,c in ipairs(sim.carriers) do if not c.meal then freeCarriers=freeCarriers+1 end end
@@ -50,13 +57,14 @@ function Meals.tick(sim,a,dt,offline,busy)
         local available=target.kind=="kitchen" and (target.mealStock or 0) or math.max(0,sim.stock.food-floorFood(sim))
         if offline then
             m.phase="return";Move.route(sim,a,m.resumeX,m.resumeY)
-        elseif available>0 and occupancy(sim,m.target)<2 then
+        elseif available>0 and occupancy(sim,m.target)<Meals.seats then
             if target.kind=="kitchen" then target.mealStock=target.mealStock-1
             else sim.stock.food=sim.stock.food-1 end
             sim.mealsServed=sim.mealsServed+1
             m.phase,m.timer,m.paid="enter",0.5,true
         elseif target.kind=="kitchen" and available==0 and not target.mealIncoming and sim.stock.food>floorFood(sim) then
-            local amount=math.min(2,sim.stock.food-floorFood(sim))
+            local amount=math.min(2,Meals.pantryCapacity-(target.mealStock or 0),sim.stock.food-floorFood(sim))
+            if amount<=0 then return true end
             sim.stock.food,target.mealIncoming=sim.stock.food-amount,true
             sim.jobs[#sim.jobs+1]={b=target,inbound=true,resource="food",amount=amount,service=true}
         elseif available==0 and not target.mealIncoming and sim.stock.food<=floorFood(sim) then
@@ -66,7 +74,7 @@ function Meals.tick(sim,a,dt,offline,busy)
         m.timer=math.max(0,m.timer-dt)
         if m.timer == 0 then
             if m.phase == "enter" then m.phase,m.timer="eat",3.5
-            elseif m.phase == "eat" then m.phase,m.timer,a.hunger="exit",0.5,0
+            elseif m.phase == "eat" then m.phase,m.timer,a.hunger,a.energy="exit",0.5,0,100
             else m.phase="return"; Move.route(sim,a,m.resumeX,m.resumeY) end
         end
     elseif m.phase == "return" then
@@ -77,24 +85,27 @@ end
 function Meals.prepareWorkers(sim,dt,offline)
     local alive={}
     for _,b in ipairs(sim.buildings) do
-        b.activeWorkers=0
+        b.activeWorkers,b.workRate=0,0
         if b.complete then
             for slot=1,b.workers do
                 local key=b.id .. ":" .. slot
                 local a=sim.workers[key]
                 if not a then
-                    a={x=b.x,y=b.y+1,path={},index=1,hunger=(b.id+slot)%5*3,meal=false,building=b.id,slot=slot}
+                    a={x=b.x,y=b.y+1,path={},index=1,hunger=(b.id+slot)%5*3,energy=100,meal=false,building=b.id,slot=slot}
                     sim.workers[key]=a
                 end
                 alive[key]=true
-                if not Meals.tick(sim,a,dt,offline,false) then b.activeWorkers=b.activeWorkers+1 end
+                if not Meals.tick(sim,a,dt,offline,false,true) then
+                    b.activeWorkers=b.activeWorkers+1
+                    b.workRate=b.workRate+(a.energy<25 and 0.6 or 1)
+                    a.workClock=(a.workClock or 0)+dt
+                end
             end
         end
     end
     for key in pairs(sim.workers) do if not alive[key] then sim.workers[key]=nil end end
 end
 function Meals.hidden(sim,a)
-    local m=a.meal
-    return m and sim.buildings[m.target].kind == "kitchen" and (m.phase == "enter" or m.phase == "eat")
+    return false
 end
 return Meals

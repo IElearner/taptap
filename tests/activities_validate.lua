@@ -53,7 +53,7 @@ V.atFrame(8,function()
     end
     V.assert(carried and cargo.stock.wood>66,"Physical carriers pick up and deliver actual wood jobs")
 
-    local meal=fresh();meal:build("kitchen",8,8);meal:build("farm",9,8)
+    local meal=fresh();meal:build("kitchen",8,8);meal:build("farm",11,8)
     V.assert(untilTrue(meal,function() return meal:count("kitchen")==1 and meal:count("farm")==1 end,25),"Dining requires a completed kitchen and visiting worker")
     local kitchen=meal:buildingAt(8,8);meal:staff(kitchen,-1)
     V.assert(untilTrue(meal,function()
@@ -63,7 +63,7 @@ V.atFrame(8,function()
     meal.stock.food=10
     for i,c in ipairs(meal.carriers) do c.hunger=i<=2 and 90 or 0 end
     meal:update(0.1)
-    local farm=meal:buildingAt(9,8)
+    local farm=meal:buildingAt(11,8)
     local farmWorker=meal.workers[farm.id .. ":1"]
     V.assert(farmWorker~=nil,"A staffed building supplies a real worker visitor")
     farmWorker.hunger=90

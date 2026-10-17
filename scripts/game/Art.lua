@@ -3,7 +3,7 @@
 local Art = {}
 local textures, context = {}, nil
 local direct = {}
-for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment",
+for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-livestock-buildings","atlas-environment",
     "atlas-villagers","atlas-workers","atlas-loaded","atlas-combatants","atlas-icons",
     "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
     "atlas-builders-hammer-up","atlas-builders-hammer-down",
@@ -16,6 +16,7 @@ local function register(prefix,atlasName,names,cols,rows,options)
     end
 end
 register("building-","atlas-buildings",{"store","house","farm","mill","kitchen","woodcutter","quarry","courier","barracks"},3,3)
+register("building-","atlas-livestock-buildings",{"ranch","butcher"},2,2)
 register("","atlas-environment",{"tree-oak","tree-pine","tree-bamboo","rock-moss","bush-flowers","reeds",
     "ground-grass","ground-road","ground-water"},3,3)
 for _,name in ipairs({"tree-oak","tree-pine","tree-bamboo","rock-moss","bush-flowers","reeds"}) do atlas[name].stretch=true end

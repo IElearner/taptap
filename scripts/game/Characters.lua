@@ -16,7 +16,9 @@ C.civilians = {
 }
 local occupations = {
     farm = { id = "farmer", color = { 171, 139, 72 }, hat = "straw", gender = "female" },
+    ranch = { id = "farmer", color = { 171, 139, 72 }, hat = "straw", gender = "female" },
     mill = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "elder", gender = "male" },
+    butcher = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "adult", gender = "male" },
     kitchen = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "elder", gender = "male" },
     woodcutter = { id = "logger", color = { 133, 100, 67 }, hat = "scarf", gender = "male" },
     quarry = C.civilians[3],
@@ -46,6 +48,7 @@ function C.sprite(role, direction, walking, action, clock, phase)
     if action == "hammer" then
         return base .. (math.floor((clock or 0) * 4 + offset) % 2 == 0 and "-hammer-up" or "-hammer-down")
     end
+    if action == "farm" and math.floor((clock or 0)*3+offset)%2==1 then return base .. "-stride" end
     if walking and math.floor((clock or 0) * 6 + offset) % 2 == 1 then return base .. "-stride" end
     return base
 end

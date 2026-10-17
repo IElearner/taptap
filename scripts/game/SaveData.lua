@@ -18,7 +18,8 @@ end
 function Data.capture(s, savedAt, revision, idleEnabled)
     local world = { stock = clone(s.stock), produced = clone(s.produced), roads = clone(s.roads),
         buildings = {}, jobs = {}, carriers = {}, enemies = clone(s.enemies),
-        pendingRoads=clone(s.pendingRoads), builders=clone(s.builders), workers=clone(s.workers), mealsServed=s.mealsServed }
+        pendingRoads=clone(s.pendingRoads), builders=clone(s.builders), workers=clone(s.workers),
+        guards=clone(s.guards), mealsServed=s.mealsServed }
     for _, name in ipairs(fields) do world[name] = s[name] end
     for _, b in ipairs(s.buildings) do
         local entry = clone(b); entry.cachedConnected, entry.networkRevision, entry.activeWorkers = nil, nil, nil
@@ -27,7 +28,8 @@ function Data.capture(s, savedAt, revision, idleEnabled)
     for _, job in ipairs(s.jobs) do world.jobs[#world.jobs + 1] = jobData(job) end
     for _, c in ipairs(s.carriers) do
         world.carriers[#world.carriers + 1] = { x = c.x, y = c.y, path = clone(c.path), index = c.index,
-            job = jobData(c.job), carrying = c.carrying, hunger=c.hunger or 0, meal=clone(c.meal or false), facing=c.facing }
+            job = jobData(c.job), carrying = c.carrying, hunger=c.hunger or 0, energy=c.energy or 100,
+            meal=clone(c.meal or false), facing=c.facing }
     end
     return { version = Data.VERSION, mode = s.mode, seed = s.map.seed, expansion = s.map.expansion,
         savedAt = savedAt, revision = revision or 1, idleEnabled = idleEnabled ~= false, world = world }
@@ -40,7 +42,11 @@ local function restoreUnsafe(data, mode)
     assert(type(data.idleEnabled) == "boolean" and (mode == "infinite" or data.expansion == 0), "options")
     local w = data.world
     assert(type(w) == "table" and type(w.stock) == "table" and type(w.produced) == "table", "world")
-    for _, r in ipairs(D.goods) do assert(number(w.stock[r], 0, 1e12), "stock") end
+    for _, r in ipairs(D.goods) do
+        local value=w.stock[r]
+        if value==nil and (r=="livestock" or r=="meat") then value=0 end
+        assert(number(value, 0, 1e12), "stock")
+    end
     assert(number(w.produced.food, 0, 1e12), "production")
     for _, name in ipairs(fields) do
         local value = w[name]
@@ -60,6 +66,7 @@ local function restoreUnsafe(data, mode)
     s.map.expansion = data.expansion
     for _, name in ipairs(fields) do s[name] = w[name] end
     s.stock, s.produced, s.roads = clone(w.stock), clone(w.produced), clone(w.roads)
+    s.stock.livestock,s.stock.meat=s.stock.livestock or 0,s.stock.meat or 0
     s.buildings, s.buildingIndex, s.jobs, s.carriers = {}, {}, {}, {}
     for i, b in ipairs(w.buildings) do
         assert(type(b) == "table" and b.id == i and D.buildings[b.kind] and b.kind ~= "road", "building ID")
@@ -98,6 +105,7 @@ local function restoreUnsafe(data, mode)
         assert(type(c.carrying) == "boolean" and type(c.path) == "table" and #c.path <= 100000, "route")
         for _, p in ipairs(c.path) do assert(type(p) == "table" and number(p.x, -1e9, 1e9) and number(p.y, -1e9, 1e9), "path point") end
         local restored = clone(c); restored.job = restoreJob(c.job)
+        restored.energy=restored.energy or 100
         s.carriers[#s.carriers + 1] = restored
     end
     assert(type(w.enemies) == "table" and #w.enemies <= 10000, "enemies")
@@ -113,6 +121,7 @@ local function restoreUnsafe(data, mode)
     end
     local function validateMeal(a)
         assert(number(a.hunger or 0,0,600), "hunger")
+        assert(number(a.energy or 100,0,100), "energy")
         if not a.meal then return end
         local m=a.meal
         assert(type(m)=="table" and number(m.target,1,#s.buildings) and s.buildings[m.target], "dining target")
@@ -134,6 +143,8 @@ local function restoreUnsafe(data, mode)
         local claims={}
         for _,a in ipairs(s.builders) do
             validatePath(a)
+            validateMeal(a)
+            a.energy=a.energy or 100
             assert(type(a.active)=="boolean" and type(a.carrying)=="boolean" and number(a.timer,0,1e12), "builder state")
             assert(a.phase=="idle" or a.phase=="collect" or a.phase=="packing" or a.phase=="toSite" or a.phase=="hammer" or a.phase=="return", "builder phase")
             assert(a.active == (a.phase~="idle"), "builder occupancy")
@@ -159,12 +170,23 @@ local function restoreUnsafe(data, mode)
             count=count+1;assert(count<=20000 and type(k)=="string" and type(a)=="table", "worker limit")
             local b=s.buildings[a.building]
             assert(b and b.complete and number(a.slot,1,b.workers) and a.slot%1==0 and k==a.building .. ":" .. a.slot, "worker slot")
-            validatePath(a);validateMeal(a);s.workers[k]=clone(a)
+            validatePath(a);validateMeal(a);s.workers[k]=clone(a);s.workers[k].energy=a.energy or 100
         end
         for _,a in ipairs(s.carriers) do validatePath(a);validateMeal(a) end
     else
         -- V1 roads remain completed; actors start at their existing jobs without eating twice.
         for _,a in ipairs(s.carriers) do a.hunger,a.meal=0,false end
+    end
+    assert(w.guards==nil or (type(w.guards)=="table" and #w.guards==s.militia),"guards")
+    s.guards={}
+    if w.guards then
+        for _,a in ipairs(w.guards) do
+            validatePath(a);validateMeal(a)
+            local guard=clone(a);guard.energy=guard.energy or 100
+            s.guards[#s.guards+1]=guard
+        end
+    else
+        for _=1,s.militia do s.guards[#s.guards+1]={x=10,y=9,path={},index=1,meal=false,hunger=0,energy=100} end
     end
     assert(s:availableWorkers() >= 0, "workforce")
     return s

@@ -1,10 +1,11 @@
 local D = require "game.Definitions"
 local Move = require "game.Movement"
+local Meals = require "game.Meals"
 local C = {}
 local directions = { {1,0}, {-1,0}, {0,1}, {0,-1} }
 function C.busy(sim)
     local count = 0
-    for _, a in ipairs(sim.builders) do if a.active then count = count+1 end end
+    for _, a in ipairs(sim.builders) do if a.active or a.meal then count = count+1 end end
     return count
 end
 local function claimed(sim, kind, x, y, id)
@@ -37,24 +38,30 @@ local function finishBuilding(sim,b)
     b.complete,b.progress = true,1
     if b.kind == "house" then sim.population = sim.population+4 end
     if b.kind == "courier" then
-        sim.carriers[#sim.carriers+1] = {x=10,y=9,path={},index=1,job=false,carrying=false}
+        sim.carriers[#sim.carriers+1] = {x=10,y=9,path={},index=1,job=false,carrying=false,hunger=0,energy=100}
     end
     local def = D.buildings[b.kind]
     if def.workers > 0 and sim:availableWorkers() > 0 then b.workers = def.workers end
     sim:notify(def.name .. "已竣工。")
 end
-function C.update(sim,dt)
+function C.update(sim,dt,offline)
     -- Construction uses up to two genuinely idle villagers, never extra population.
     for index = 1,2 do
         local a = sim.builders[index]
-        if not a then a={x=10,y=9,path={},index=1,active=false,job=false,phase="idle",timer=0,carrying=false}; sim.builders[index]=a end
-        if not a.active and sim:availableWorkers() > 0 then
+        if not a then a={x=10,y=9,path={},index=1,active=false,job=false,phase="idle",timer=0,carrying=false,hunger=0,energy=100}; sim.builders[index]=a end
+        local dining=false
+        if not a.active then dining=Meals.tick(sim,a,dt,offline,false) end
+        if not a.active and not dining and sim:availableWorkers() > 0 then
             local job = nextJob(sim)
             if job and Move.route(sim,a,10,9) then
                 a.active,a.job,a.phase,a.timer = true,job,"collect",0
             end
         end
         if a.active then
+            if not offline then
+                a.hunger=math.min(600,(a.hunger or 0)+dt)
+                a.energy=math.max(0,(a.energy or 100)-dt*0.8)
+            end
             if a.phase == "collect" then
                 if Move.step(a,dt) then a.phase,a.timer="packing",0.5 end
             elseif a.phase == "packing" then

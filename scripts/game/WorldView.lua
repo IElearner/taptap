@@ -3,6 +3,7 @@ local D = require "game.Definitions"
 local Art = require "game.Art"
 local Characters = require "game.Characters"
 local Meals = require "game.Meals"
+local Theme = require "urhox-libs/UI/Core/Theme"
 local WorldView = {}
 local function color(c, alpha) return nvgRGBA(c[1], c[2], c[3], alpha or c[4] or 255) end
 local function polygon(vg, points, c)
@@ -115,14 +116,52 @@ local function house(vg, b, selected, clock, art, ghost)
         line(vg, x - 22, y - 28, x + 22, y - 28, { 199, 169, 110 }, 2)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
+    if b.kind == "farm" and b.complete then
+        local growth=math.min(1,(b.timer or 0)/D.buildings.farm.period)
+        for row=0,2 do for col=0,3 do
+            local px=x-29+col*14+row*3
+            local py=y-2+row*5
+            local stalk=3+growth*9
+            line(vg,px,py,px-1,py-stalk,{123,151,72},1.5)
+            if growth>0.3 then line(vg,px-1,py-stalk*0.6,px+3,py-stalk*0.85,{183,173,72},1) end
+            if growth>0.7 then circle(vg,px-2,py-stalk,2,{209,180,83}) end
+        end end
+    elseif b.kind == "kitchen" and b.complete then
+        -- A small open porch makes occupied dining seats visible without hiding guests.
+        rect(vg,x-24,y+5,48,4,{79,55,36})
+        polygon(vg,{x-18,y+3,x,y-5,x+18,y+3,x,y+11},{149,103,58})
+        circle(vg,x-5,y+2,3,{225,210,163});circle(vg,x+6,y+2,3,{225,210,163})
+    end
 end
-local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase)
+local function smallText(vg,x,y,value,size)
+    nvgFontSize(vg,size or 10);nvgFontFace(vg,Theme.FontFace())
+    nvgTextAlign(vg,NVG_ALIGN_CENTER_VISUAL+NVG_ALIGN_MIDDLE)
+    nvgFillColor(vg,color({247,233,193}));nvgText(vg,x,y,tostring(value))
+end
+local function thoughtBubble(vg,sx,sy,thought)
+    if not thought then return end
+    local bx,by=sx+15,sy-56
+    circle(vg,bx-8,by+20,2,{245,235,203,165})
+    circle(vg,bx-4,by+14,3,{245,235,203,195})
+    circle(vg,bx+3,by+2,15,{252,243,216,238})
+    nvgBeginPath(vg);nvgCircle(vg,bx+3,by+2,15)
+    nvgStrokeColor(vg,color({123,98,63,220}));nvgStrokeWidth(vg,1);nvgStroke(vg)
+    if thought=="rest" then smallText(vg,bx+3,by+3,"累",15)
+    elseif not Art.draw(vg,"icon-" .. thought,bx-7,by-8,20,20) then
+        smallText(vg,bx+3,by+3,thought=="livestock" and "畜" or thought=="meat" and "肉" or "?",14)
+    end
+end
+local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
     local sx, sy = iso(x, y)
     local step = walking and math.abs(math.sin(clock * 12 + (phase or 0))) * 1.6 or 0
-    local size = action == "hammer" and 47 or 42
+    local size = action == "hammer" and 47 or action == "eat" and 34 or 42
     local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
     local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
     nvgBeginPath(vg); nvgEllipse(vg, sx+2, sy+3, 8, 3); nvgFillColor(vg, color({ 26, 32, 24, 48 })); nvgFill(vg)
+    if action=="eat" then
+        rect(vg,sx-10,sy-11,20,13,{83,56,36})
+        rect(vg,sx-8,sy-10,16,8,{155,112,69})
+    end
     local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step, size, size)
     if not painted and name~=base then painted=Art.draw(vg,base,sx-size/2,sy-size*0.85-step,size,size) end
     if not painted then
@@ -156,6 +195,14 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
             end
         end
     end
+    if carrying and cargo and cargoAmount and cargoAmount>0 then
+        rect(vg,sx+5,sy-29,27,15,{63,48,32,215})
+        rect(vg,sx+6,sy-28,25,13,{143,109,59,220})
+        if not Art.draw(vg,"icon-" .. cargo,sx+6,sy-28,13,13) then
+            smallText(vg,sx+12,sy-21,cargo=="livestock" and "畜" or cargo=="meat" and "肉" or "货",10)
+        end
+        smallText(vg,sx+24,sy-21,math.floor(cargoAmount),10)
+    end
     if action=="hammer" and not painted then
         local angle=-0.8+math.sin(clock*9)*1.05
         local hx,hy=sx+5+math.sin(angle)*12,sy-11-math.cos(angle)*12
@@ -171,9 +218,18 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         line(vg,strikeX-5,sy-3,strikeX-8,sy-6,{217,194,139,150},1)
         line(vg,strikeX+4,sy-3,strikeX+7,sy-7,{217,194,139,150},1)
     elseif action=="eat" then
-        circle(vg,sx+5,sy-9,4,{223,213,179})
-        line(vg,sx+5,sy-9,sx+1,sy-12-math.sin(clock*5)*2,{145,115,67},1.5)
+        polygon(vg,{sx-13,sy-7,sx,sy-12,sx+13,sy-7,sx,sy-2},{137,92,52})
+        line(vg,sx-13,sy-7,sx,sy-2,{214,164,94},1)
+        circle(vg,sx+2,sy-7,4,{229,214,175})
+        circle(vg,sx+2,sy-7,2,{177,123,63})
+        line(vg,sx+8,sy-13,sx+3,sy-8-math.sin(clock*5)*2,{158,126,80},2)
+    elseif action=="farm" then
+        local swing=math.sin(clock*6)
+        line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
+        line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
+        if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
     end
+    thoughtBubble(vg,sx,sy,thought)
 end
 function WorldView.create(sim, onTile)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
@@ -375,13 +431,28 @@ function WorldView.create(sim, onTile)
             end
         end
         local agentsByDepth={}
-        local function addAgent(a,role,profile,action,cargo,queueSlot)
+        local function addAgent(a,role,profile,action,cargo,queueSlot,guardIndex)
             if Meals.hidden(sim,a) then return end
             local drawX,drawY=a.x,a.y
-            if a.meal and a.meal.phase=="queue" then
+            if a.meal and sim.buildings[a.meal.target] and sim.buildings[a.meal.target].kind=="kitchen"
+                and (a.meal.phase=="enter" or a.meal.phase=="eat" or a.meal.phase=="exit") then
+                local hall=sim.buildings[a.meal.target]
+                drawX=hall.x+((queueSlot or 1)%2==0 and -0.18 or 0.18)
+                drawY=hall.y+0.18
+            elseif a.meal and a.meal.phase=="queue" then
                 local place=(queueSlot or 1)%3
                 drawX=drawX+(place-1)*0.18
                 drawY=drawY+math.floor((queueSlot or 1)/3)*0.13
+            elseif action=="farm" and a.building then
+                local field=sim.buildings[a.building]
+                if field then
+                    local clock=a.workClock or 0
+                    drawX=field.x-0.22+math.sin(clock*0.8+(a.slot or 0))*0.16
+                    drawY=field.y-0.22+math.cos(clock*0.8+(a.slot or 0))*0.08
+                end
+            elseif guardIndex and not a.meal and not (a.path and a.path[a.index]) then
+                drawX=9.3+((guardIndex-1)%3)*0.28
+                drawY=9.25+math.floor((guardIndex-1)/3)*0.2
             end
             local depth=math.floor(drawX+drawY+0.5)
             local sx,sy=iso(drawX,drawY)
@@ -389,8 +460,22 @@ function WorldView.create(sim, onTile)
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
             agentsByDepth[depth]=agentsByDepth[depth] or {}
             local walking=a.path and a.path[a.index] ~= nil
-            local clock=(walking or action=="hammer" or action=="eat") and sim.elapsed or 0
-            table.insert(agentsByDepth[depth],{actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,clock=clock,walking=walking,phase=queueSlot or 0})
+            local clock=(walking or action=="hammer" or action=="eat" or action=="farm") and sim.elapsed or 0
+            local thought
+            if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
+                if (a.hunger or 0)>=65 then thought="food"
+                elseif (a.energy or 100)<=30 then thought="rest"
+                elseif a.building then
+                    local b=sim.buildings[a.building]
+                    local def=b and D.buildings[b.kind]
+                    if def and def.input and b.inputs==0 and not b.incoming and (sim.stock[def.input] or 0)==0
+                        and (not def.alternateInput or (sim.stock[def.alternateInput] or 0)==0) then thought=def.input
+                    elseif b and b.kind=="woodcutter" and sim.timber==0 then thought="wood"
+                    elseif b and b.kind=="quarry" and sim.rock==0 then thought="stone" end
+                end
+            end
+            table.insert(agentsByDepth[depth],{actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,
+                amount=a.job and a.job.amount or nil,thought=thought,clock=clock,walking=walking,phase=queueSlot or 0})
         end
         for index,a in ipairs(sim.carriers) do
             local role,profile=Characters.carrier(index,a.carrying)
@@ -400,13 +485,20 @@ function WorldView.create(sim, onTile)
         for _,a in pairs(sim.workers) do
             local b=sim.buildings[a.building]
             local role,profile=Characters.worker(b,a.slot)
-            if role then addAgent(a,role,profile,a.meal and a.meal.phase=="eat" and "eat" or nil,nil,a.building*2+a.slot) end
+            local action=a.meal and a.meal.phase=="eat" and "eat" or ((b.kind=="farm" or b.kind=="ranch") and not a.meal and "farm" or nil)
+            if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
         end
         for index,a in ipairs(sim.builders) do
-            if a.active then
+            if a.active or a.meal then
                 local role,profile=Characters.carrier(index,false)
-                addAgent(a,role,profile,a.phase=="hammer" and "hammer" or nil,a.carrying and "wood" or nil,index)
+                local action=a.meal and a.meal.phase=="eat" and "eat" or (a.phase=="hammer" and "hammer" or nil)
+                addAgent(a,role,profile,action,a.carrying and "wood" or nil,index)
             end
+        end
+        for index,a in ipairs(sim.guards or {}) do
+            local role,profile=Characters.militia(index)
+            local action=a.meal and a.meal.phase=="eat" and "eat" or nil
+            addAgent(a,role,profile,action,nil,index,index)
         end
         for sum = minX + minY, maxX + maxY do
             for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
@@ -438,13 +530,9 @@ function WorldView.create(sim, onTile)
             if bucket then
                 for _,entry in ipairs(bucket) do
                     local a=entry.actor
-                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo,entry.walking,entry.phase)
+                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo,entry.walking,entry.phase,entry.thought,entry.amount)
                 end
             end
-        end
-        for i = 1, sim.militia do
-            local role, profile = Characters.militia(i)
-            person(vg,8+(i%4)*0.4,10+math.floor((i-1)/4)*0.5,profile.color,false,0,role,"se",profile)
         end
         for _, e in ipairs(sim.enemies) do if e.hp > 0 then person(vg, e.x, e.y, { 74, 64, 73 }, false, sim.elapsed, "bandit", "sw") end end
         nvgRestore(vg)

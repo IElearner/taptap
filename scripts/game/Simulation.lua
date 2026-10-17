@@ -3,6 +3,7 @@ local D = require "game.Definitions"
 local WorldMap = require "game.WorldMap"
 local Construction = require "game.Construction"
 local Meals = require "game.Meals"
+local Move = require "game.Movement"
 ---@class VillageSimulation
 ---@field roads table<string,boolean>
 ---@field buildings table[]
@@ -43,6 +44,7 @@ local Meals = require "game.Meals"
 ---@field roadPlanIndex table<string,table>
 ---@field builders table[]
 ---@field workers table<string,table>
+---@field guards table[]
 ---@field mealsServed number
 local S = {}
 S.__index = S
@@ -62,9 +64,9 @@ function S:init(mode, seed)
     self.defended, self.timber, self.rock, self.score = false, 320, 180, 0
     self.roads, self.buildings, self.jobs, self.carriers = {}, {}, {}, {}
     self.buildingIndex = {}
-    self.pendingRoads,self.roadPlanIndex,self.builders,self.workers,self.mealsServed={},{},{},{},0
+    self.pendingRoads,self.roadPlanIndex,self.builders,self.workers,self.guards,self.mealsServed={},{},{},{},{},0
     ---@type table<string, number>
-    self.stock = { wood = 72, stone = 40, grain = 0, flour = 0, food = 28 }
+    self.stock = { wood = 72, stone = 40, grain = 0, flour = 0, livestock = 0, meat = 0, food = 28 }
     if self.mode == "infinite" then self.stock.food = 48 end
     self.produced = { food = 0 }
     self.population, self.militia, self.lesson = 10, 0, 1
@@ -77,7 +79,7 @@ function S:init(mode, seed)
     self:addBuilding("store", 10, 8, true)
     for x = 8, 12 do self.roads[key(x, 9)] = true end
     for i = 1, 3 do
-        self.carriers[i] = { x = 10, y = 9, path = {}, index = 1, job = false, carrying = false }
+        self.carriers[i] = { x = 10, y = 9, path = {}, index = 1, job = false, carrying = false, hunger = 0, energy = 100 }
     end
 end
 function S:notify(message)
@@ -174,7 +176,10 @@ function S:canBuild(kind, x, y)
     if self:terrain(x, y + 1) ~= "grass" or self:buildingAt(x, y + 1) then return false, "建筑门前需要可通行的空地。" end
     if not self:connected({ x = x, y = y }) and not self:roadSiteAt(x,y+1) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
     if kind == "courier" and self:availableWorkers() < 1 then return false, "驿站需要 1 名空闲村民。" end
-    if not self:canAfford(def.cost) then return false, "物资不足，先让生产链补充库存。" end
+    if not self:canAfford(def.cost) then
+        if (self.stock.wood or 0)<(def.cost.wood or 0) then return false, "木料不足：营造伐木场、门前接路，伐木工生产后由搬运工运回义仓。" end
+        return false, "物资不足，先让生产链补充库存。"
+    end
     return true, def.name .. "开始修建。"
 end
 function S:build(kind, x, y)
@@ -217,6 +222,7 @@ function S:train()
     if self:availableWorkers() < 1 then return false, "空闲村民不足，请建民居或减少生产岗位。" end
     if not self:spend({ wood = 2, food = 2 }) then return false, "训练需要 2 木料和 2 口粮。" end
     self.militia = self.militia + 1
+    self.guards[#self.guards+1]={x=10,y=9,path={},index=1,meal=false,hunger=0,energy=100}
     return true, "一名乡勇已在义仓前集结。"
 end
 function S:staff(b, change)
@@ -253,8 +259,8 @@ function S:repair()
     self.health = math.min(100, self.health + 30)
     return true, "义仓已修复 30 点耐久。"
 end
-function S:enqueue(b, inbound)
-    local resource = inbound and D.buildings[b.kind].input or D.buildings[b.kind].output
+function S:enqueue(b, inbound, selectedResource)
+    local resource = selectedResource or (inbound and D.buildings[b.kind].input or D.buildings[b.kind].output)
     if not resource then return end
     if inbound then
         if self.stock[resource] <= 0 then return end
@@ -275,11 +281,7 @@ function S:updateCarrier(c, dt, offline)
     if not c.job then return end
     local target = c.path[c.index]
     if target then
-        local dx, dy = target.x - c.x, target.y - c.y
-        local distance = math.sqrt(dx * dx + dy * dy)
-        local step = dt * 2.8
-        if distance <= step then c.x, c.y, c.index = target.x, target.y, c.index + 1
-        else c.x, c.y = c.x + dx / distance * step, c.y + dy / distance * step end
+        Move.step(c,dt,(c.energy or 100)<25 and 1.8 or 2.8)
         return
     end
     local job = c.job
@@ -293,7 +295,7 @@ function S:updateCarrier(c, dt, offline)
         elseif job.inbound then job.b.inputs, job.b.incoming = job.b.inputs + 1, false
         else
             self.stock[job.resource] = self.stock[job.resource] + job.amount
-            if job.resource == "food" then self.produced.food = self.produced.food + job.amount end
+            self.produced[job.resource] = (self.produced[job.resource] or 0) + job.amount
             job.b.outgoing = false
         end
         c.job, c.carrying = false, false
@@ -315,14 +317,21 @@ function S:update(dt, offline)
             if self.health == 0 then self.defeat = true end
         end
     end
-    Construction.update(self,dt)
+    while #self.guards<self.militia do self.guards[#self.guards+1]={x=10,y=9,path={},index=1,meal=false,hunger=0,energy=100} end
+    while #self.guards>self.militia do table.remove(self.guards) end
+    Construction.update(self,dt,offline)
     Meals.prepareWorkers(self,dt,offline)
+    for _,guard in ipairs(self.guards) do Meals.tick(self,guard,dt,offline,self.raid,true) end
     for _, b in ipairs(self.buildings) do
         local def = D.buildings[b.kind]
         if b.complete and def.output and self:connected(b) then
-            if def.input and b.inputs == 0 and not b.incoming and b.activeWorkers > 0 then self:enqueue(b, true) end
+            if def.input and b.inputs == 0 and not b.incoming and b.activeWorkers > 0 then
+                local resource=def.input
+                if def.alternateInput and (self.stock[def.alternateInput] or 0)>(self.stock[def.input] or 0) then resource=def.alternateInput end
+                self:enqueue(b,true,resource)
+            end
             if b.activeWorkers > 0 and b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
-                b.timer = b.timer + dt * b.activeWorkers
+                b.timer = b.timer + dt * (b.workRate or b.activeWorkers)
                 if b.timer >= def.period then
                     b.timer, b.buffer = 0, def.amount
                     if b.kind == "woodcutter" then
@@ -331,6 +340,13 @@ function S:update(dt, offline)
                         b.buffer = math.min(def.amount, self.rock); self.rock = self.rock - b.buffer
                     end
                     if def.input then b.inputs = b.inputs - 1 end
+                    if b.kind == "kitchen" then
+                        local incoming=b.mealIncoming and 2 or 0
+                        local pantrySpace=math.max(0,Meals.pantryCapacity-(b.mealStock or 0)-incoming)
+                        local served=math.min(tonumber(pantrySpace) or 0,tonumber(b.buffer) or 0)
+                        b.mealStock=(b.mealStock or 0)+served
+                        b.buffer=b.buffer-served
+                    end
                 end
             end
             if b.buffer > 0 and not b.outgoing then self:enqueue(b, false) end
