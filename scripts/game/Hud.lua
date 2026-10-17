@@ -99,8 +99,9 @@ function Hud.create(sim, world, actions)
         mainButtons[name] = b; dockItems[#dockItems + 1] = b
     end
     local dock = panel { position = "absolute", right = 12, bottom = 12, padding = 7, flexDirection = "row", gap = 5, children = dockItems }
-    local controls = panel { position = "absolute", left = 12, bottom = 12, padding = 6, flexDirection = "row", gap = 5, children = {
-        button("归村", function() world.home() end, { artIcon = "home" }), button("−", function() world.zoom(-0.15) end), button("+", function() world.zoom(0.15) end),
+    local controls = panel { id = "mapControls", position = "absolute", left = 12, bottom = 12, padding = 6,
+        flexDirection = "row", alignItems = "center", gap = 8, children = {
+        button("归村", function() world.home() end, { artIcon = "home" }), label("双指缩放", 12, Skin.muted),
     } }
     local quest = button("", function()
         if sim.started and not sim.skipped and D.lessons[sim.lesson] then showMentor()

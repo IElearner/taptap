@@ -20,9 +20,16 @@ for row,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
     for col,dir in ipairs(directions) do
         local spec={source="atlas-villagers",col=col-1,row=row-1,cols=4,rows=4}
         atlas["person-civilian-" .. id .. "-" .. dir]=spec
-        atlas["person-loaded-" .. id .. "-" .. dir]=spec
+        atlas["person-loaded-" .. id .. "-" .. dir]={source="atlas-loaded",col=col-1,row=row-1,cols=4,rows=4}
     end
 end
+for row,id in ipairs({"militia","bandit"}) do
+    for col,dir in ipairs(directions) do
+        atlas["person-" .. id .. "-" .. dir]={source="atlas-combatants",col=col-1,row=row-1,cols=4,rows=2}
+    end
+end
+register("icon-","atlas-icons",{"build","village","army","system","wood","stone","grain","flour",
+    "food","home","pause","save","idle","tutorial","map","supplies"},4,4)
 for row,id in ipairs({"farmer","artisan","logger","guard"}) do
     for col,dir in ipairs(directions) do
         atlas["person-occupation-" .. id .. "-" .. dir]={source="atlas-workers",col=col-1,row=row-1,cols=4,rows=4}

@@ -49,8 +49,7 @@ function Skin.button(text, action, props)
     p.fontColor = nil
     if Art.exists("button-painting") then
         p.backgroundImage = Art.path("button-painting")
-        p.backgroundFit = "sliced"
-        p.backgroundSlice = { 12, 12, 12, 12 }
+        p.backgroundFit = "fill"
         p.pressedBackgroundImageOpacity, p.hoverBackgroundImageOpacity = 0.72, 0.9
     end
     p.borderColor, p.borderWidth, p.borderRadius = { 157, 130, 77 }, 1, 2

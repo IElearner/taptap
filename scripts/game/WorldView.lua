@@ -127,7 +127,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
     if profile and profile.age == "elder" then line(vg,sx-1,sy-12,sx,sy-9,{215,212,190},2) end
     if profile and profile.gender == "female" then polygon(vg,{sx-2,sy-7,sx+2,sy-7,sx+4,sy-1,sx-4,sy-1},c) end
     end
-    if carrying then
+    if carrying and not painted then
         local good=cargo or "wood"
         if not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
             if good=="wood" then
