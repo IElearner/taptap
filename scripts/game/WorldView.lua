@@ -25,6 +25,13 @@ local function tile(vg, x, y, c, shrink)
     local sx, sy = iso(x, y); local a = 30 - (shrink or 0); local b = a / 2
     polygon(vg, { sx, sy - b, sx + a, sy, sx, sy + b, sx - a, sy }, c)
 end
+local function tileOutline(vg, x, y, c)
+    local sx, sy = iso(x, y)
+    nvgBeginPath(vg)
+    nvgMoveTo(vg, sx, sy-15); nvgLineTo(vg, sx+30, sy)
+    nvgLineTo(vg, sx, sy+15); nvgLineTo(vg, sx-30, sy)
+    nvgClosePath(vg); nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, 1); nvgStroke(vg)
+end
 local function tree(vg, sx, sy, seed)
     local kinds = { "tree-oak", "tree-pine", "tree-bamboo" }
     local size = 74 + seed % 9
@@ -328,20 +335,20 @@ function WorldView.create(sim, onTile)
                 do
                     local terrain = sim:terrain(x, y)
                     local variation = (x * 17 + y * 23) % 13
-                    local c = { 108 + variation, 122 + variation, 68 + variation }
-                    if terrain == "water" then c = { 73, 113 + variation, 112 + variation }
-                    elseif terrain == "fog" then c = { 66 + variation, 85 + variation, 66 + variation }
-                    elseif terrain == "forest" then c = { 87 + variation, 110 + variation, 60 + variation } end
-                    tile(vg, x, y, c)
+                    -- Neighboring ground tiles share one color. Terrain detail is scattered
+                    -- separately, so ordinary play has no checkerboard tile boundaries.
+                    local c = { 112, 126, 77 }
+                    if terrain == "water" then c = { 77, 116, 116 }
+                    elseif terrain == "fog" then c = { 69, 88, 68 } end
+                    -- Slight overlap hides antialiased hairlines between equal-color diamonds.
+                    tile(vg, x, y, c, -1)
                     local sx, sy = iso(x, y)
-                    local ground = terrain == "water" and "ground-water" or ((terrain == "grass" or terrain == "forest") and "ground-grass" or nil)
-                    if ground then Art.draw(vg, ground, sx-30, sy-15, 60, 30, terrain == "water" and 0.5 or 0.3) end
-                    if (terrain == "grass" or terrain == "forest") and not Art.exists("ground-grass") then
-                        for j = 1, 5 do
-                            local dx, dy = ((x*31+y*13+j*17)%37)-18, ((x*11+y*23+j*7)%13)-6
-                            line(vg, sx+dx, sy+dy, sx+dx-1, sy+dy-2, {76+variation,96+variation,48,100}, 1)
-                        end
+                    if (terrain == "grass" or terrain == "forest") and (x*13+y*19)%4 == 0 then
+                        local dx, dy = ((x*31+y*13)%27)-13, ((x*11+y*23)%9)-4
+                        line(vg, sx+dx, sy+dy, sx+dx-2, sy+dy-3, {76,101,52,85}, 1)
+                        circle(vg,sx+dx+3,sy+dy-1,1,{205,190,117,85})
                     end
+                    if mode ~= "inspect" and terrain == "grass" then tileOutline(vg,x,y,{239,225,167,105}) end
                     local site=sim:roadSiteAt(x,y)
                     if site then
                         tile(vg,x,y,{127,107,67},2)
@@ -358,10 +365,8 @@ function WorldView.create(sim, onTile)
                         Art.draw(vg, "ground-road", sx-30, sy-15, 60, 30)
                         line(vg, sx - 13, sy, sx + 3, sy + 7, { 168, 149, 110 }, 1)
                         line(vg, sx + 8, sy - 6, sx + 18, sy - 1, { 213, 194, 155 }, 1)
-                    elseif terrain == "water" then
+                    elseif terrain == "water" and (x*7+y*11)%3 == 0 then
                         line(vg, sx - 9, sy + math.sin(sim.elapsed + x) * 2, sx + 10, sy + 1, { 187, 210, 188, 95 }, 1)
-                    elseif mode ~= "inspect" and terrain == "grass" then
-                        polygon(vg, { sx, sy - 14, sx + 28, sy, sx, sy + 14, sx - 28, sy }, { 233, 224, 171, 18 })
                     elseif (x * 7 + y) % 9 == 0 then
                         line(vg, sx, sy, sx - 2, sy - 3, { 107, 137, 78 }, 1)
                         circle(vg, sx + 7, sy - 2, 1, { 223, 207, 141 })
