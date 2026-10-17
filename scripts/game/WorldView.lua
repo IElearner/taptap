@@ -3,6 +3,7 @@ local D = require "game.Definitions"
 local Art = require "game.Art"
 local Characters = require "game.Characters"
 local Meals = require "game.Meals"
+local Farm = require "game.FarmCycle"
 local Theme = require "urhox-libs/UI/Core/Theme"
 local WorldView = {}
 local function color(c, alpha) return nvgRGBA(c[1], c[2], c[3], alpha or c[4] or 255) end
@@ -59,7 +60,10 @@ local function house(vg, b, selected, clock, art, ghost)
     end
     local size = 126 + 22*math.max(width-1,height-1) + (b.kind == "store" and 10 or 0)
     local atlasPainted=false
-    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,ghost and 0.7 or (b.complete and 1 or 0.65)) end
+    if not art or art<=0 then
+        local sprite=b.kind=="farm" and ("field-" .. Farm.stage(b,D.buildings.farm.period)) or ("building-" .. b.kind)
+        atlasPainted=Art.draw(vg,sprite,x-size/2,y-size*0.9,size,size,ghost and 0.7 or (b.complete and 1 or 0.65))
+    end
     if (art and art > 0) or atlasPainted then
         if art and art > 0 then
         nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
@@ -69,13 +73,9 @@ local function house(vg, b, selected, clock, art, ghost)
             for i = 1, 3 do circle(vg, x+10+math.sin(clock+i)*3, y-50-i*7-clock%1*5, 3+i, {235,225,195,60}) end
         end
     elseif b.kind == "farm" then
-        tile(vg, b.x, b.y, { 132, 113, 65 })
-        for row = -2, 2 do
-            for col = -2, 2 do
-                local px, py = x + (col - row) * 5, y + (col + row) * 2.5
-                line(vg, px, py, px + 1, py - 9 - math.sin(clock + col) * 1.5, { 214, 188, 85 }, 2)
-                line(vg, px + 1, py - 4, px - 3, py - 7, { 167, 171, 68 }, 1)
-            end
+        tile(vg,b.x,b.y,{119,96,58})
+        for edge=-1,1 do
+            line(vg,x-34+edge*17,y-9+edge*8,x+edge*17,y-26+edge*8,{126,88,48},3)
         end
     else
         nvgBeginPath(vg); nvgEllipse(vg, x + 8, y + 4, 31, 11); nvgFillColor(vg, color({ 46, 53, 33, 60 })); nvgFill(vg)
@@ -116,17 +116,7 @@ local function house(vg, b, selected, clock, art, ghost)
         line(vg, x - 22, y - 28, x + 22, y - 28, { 199, 169, 110 }, 2)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
-    if b.kind == "farm" and b.complete then
-        local growth=math.min(1,(b.timer or 0)/D.buildings.farm.period)
-        for row=0,2 do for col=0,3 do
-            local px=x-29+col*14+row*3
-            local py=y-2+row*5
-            local stalk=3+growth*9
-            line(vg,px,py,px-1,py-stalk,{123,151,72},1.5)
-            if growth>0.3 then line(vg,px-1,py-stalk*0.6,px+3,py-stalk*0.85,{183,173,72},1) end
-            if growth>0.7 then circle(vg,px-2,py-stalk,2,{209,180,83}) end
-        end end
-    elseif b.kind == "kitchen" and b.complete then
+    if b.kind == "kitchen" and b.complete then
         -- A small open porch makes occupied dining seats visible without hiding guests.
         rect(vg,x-24,y+5,48,4,{79,55,36})
         polygon(vg,{x-18,y+3,x,y-5,x+18,y+3,x,y+11},{149,103,58})
@@ -497,7 +487,7 @@ function WorldView.create(sim, onTile)
             local b=sim.buildings[a.building]
             local role,profile=Characters.worker(b,a.slot)
             local action=a.meal and a.meal.phase=="eat" and "eat" or
-                (not a.meal and ((b.kind=="farm" or b.kind=="ranch") and "farm" or
+                (not a.meal and ((b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) or b.kind=="ranch") and "farm" or
                     b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
             if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
         end

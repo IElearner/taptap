@@ -1,6 +1,6 @@
 local Art=require "game.Art"
 V.atFrame(8,function()
-    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers","atlas-specialists",
+    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers","atlas-specialists","atlas-wheatfield",
         "atlas-loaded","atlas-combatants","atlas-icons","panel-wood","button-painting",
         "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
         "atlas-builders-hammer-up","atlas-builders-hammer-down"}) do
@@ -9,6 +9,7 @@ V.atFrame(8,function()
     end
     V.assert(Art.path("atlas-buildings")=="image/atlas-buildings.png","Runtime image path uses the resource root")
     for _,name in ipairs({"building-store","building-house","building-farm","building-mill","building-kitchen",
+        "field-seed","field-sprout","field-green","field-ripe",
         "building-woodcutter","building-quarry","building-courier","building-barracks",
         "ground-grass","ground-road","ground-water","tree-oak","tree-pine","tree-bamboo",
         "person-civilian-blue-man-se","person-civilian-ochre-woman-sw","person-civilian-grey-elder-ne",

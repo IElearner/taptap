@@ -73,6 +73,10 @@ local function restoreUnsafe(data, mode)
         assert(number(b.x, -1e9, 1e9) and b.x % 1 == 0 and number(b.y, -1e9, 1e9) and b.y % 1 == 0, "position")
         assert(type(b.complete) == "boolean" and number(b.progress, 0, 1) and number(b.workers, 0, 2), "building state")
         assert(number(b.timer, 0, 1e12) and number(b.buffer, 0, 1e12) and number(b.inputs, 0, 1e12), "buffer")
+        if b.kind=="farm" then
+            assert(b.farmStep==nil or (number(b.farmStep,0,3) and b.farmStep%1==0),"farm step")
+            assert(b.farmWork==nil or number(b.farmWork,0,1e12),"farm work")
+        end
         assert(type(b.incoming) == "boolean" and type(b.outgoing) == "boolean", "transit flags")
         local width, height = b.footprintW or 1, b.footprintH or 1
         local maxW, maxH = D.footprint(b.kind)
@@ -84,6 +88,10 @@ local function restoreUnsafe(data, mode)
         assert(number(b.mealStock or 0,0,100) and (b.mealIncoming==nil or type(b.mealIncoming)=="boolean"),"dining inventory")
         local restored = clone(b); restored.cachedConnected, restored.networkRevision = nil, nil
         restored.mealStock,restored.mealIncoming=b.mealStock or 0,b.mealIncoming or false
+        if b.kind=="farm" then
+            restored.farmStep=b.farmStep or (b.timer>0 and 1 or 0)
+            restored.farmWork=b.farmWork or 0
+        end
         restored.footprintW, restored.footprintH = width, height
         s.buildings[i] = restored
         for dx = 1-width, 0 do for dy = 1-height, 0 do

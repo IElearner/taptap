@@ -1,4 +1,5 @@
 local Move = require "game.Movement"
+local Farm = require "game.FarmCycle"
 local Meals = { seats = 2, pantryCapacity = 6 }
 local function floorFood(sim) return sim.mode == "finite" and not sim.skipped and 8 or 0 end
 local function occupancy(sim,id)
@@ -95,10 +96,11 @@ function Meals.prepareWorkers(sim,dt,offline)
                     sim.workers[key]=a
                 end
                 alive[key]=true
-                if not Meals.tick(sim,a,dt,offline,false,true) then
+                local working=b.kind~="farm" or Farm.needsWork(b,require("game.Definitions").buildings.farm.period)
+                if not Meals.tick(sim,a,dt,offline,false,working) then
                     b.activeWorkers=b.activeWorkers+1
                     b.workRate=b.workRate+(a.energy<25 and 0.6 or 1)
-                    a.workClock=(a.workClock or 0)+dt
+                    if working then a.workClock=(a.workClock or 0)+dt end
                 end
             end
         end

@@ -1,5 +1,6 @@
 local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
+local Farm = require "game.FarmCycle"
 local Skin = require "game.Skin"
 local Mentor = require "game.Mentor"
 local Art = require "game.Art"
@@ -248,12 +249,12 @@ function Hud.create(sim, world, actions)
         quest:SetText(lesson and ("里正手札  ·  " .. lesson.title .. "  ›") or "乡里近况  ›")
         title:SetText(lesson and lesson.title or "乡里安居，百业待兴")
         line1:SetText(lesson and lesson.lines[1] or "安排运输与岗位，保持粮食供给。")
-        line2:SetText(lesson and lesson.lines[2] or "稻田 → 磨坊 → 炊坊 → 义仓")
+        line2:SetText(lesson and lesson.lines[2] or "麦田 → 磨坊 → 食堂 → 义仓")
         line3:SetText(lesson and lesson.lines[3] or "点击建筑可调整岗位。")
         progress:SetText(lesson and ("进度  " .. value .. " / " .. target) or "已完成基础教学")
         next:SetVisible(lesson ~= nil); next:SetDisabled(value < target)
         worldInfo:SetText(sim.mode == "finite" and ("清溪河谷 · 义仓 " .. sim.health) or ("拓荒 " .. sim.map.expansion .. " 圈 · 已守 " .. sim.wavesDefeated .. " 波"))
-        supplyInfo:SetText("稻谷 " .. sim.stock.grain .. " · 米粉 " .. sim.stock.flour .. " · 牲畜 " .. sim.stock.livestock .. " · 鲜肉 " .. sim.stock.meat)
+        supplyInfo:SetText("麦粒 " .. sim.stock.grain .. " · 面粉 " .. sim.stock.flour .. " · 牲畜 " .. sim.stock.livestock .. " · 鲜肉 " .. sim.stock.meat)
         military:SetText("乡勇 " .. sim.militia .. " 人 · 义仓 " .. sim.health .. "/100" .. (sim.mode == "infinite" and ("\n下次来袭 " .. math.ceil(sim.nextRaid) .. " 秒") or ""))
         raid:SetVisible(sim.lesson >= 8 and not sim.raid and (sim.mode == "infinite" or not sim.defended))
         toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0 and not opened and not mentor:IsVisible())
@@ -293,7 +294,11 @@ function Hud.create(sim, world, actions)
             selectedTitle:SetText(def.name); selectedInfo:SetText(def.description)
             selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
             if b.kind=="farm" and b.complete then
-                selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · 稻穗生长 " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n每次收获 3 袋稻谷，由工人运入义仓。")
+                local stage=Farm.stage(b,D.buildings.farm.period)
+                local stageName=({seed="播种期",sprout="幼苗期",green="拔节期",ripe="成熟期"})[stage]
+                local task=Farm.needsWork(b,D.buildings.farm.period) and
+                    ({"等待播种","等待第一次照料","等待第二次照料","等待收割"})[Farm.step(b)+1] or "麦子生长中 · 工人在田边等待 / 休息"
+                selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · " .. stageName .. " " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n" .. task .. "\n每轮收获 3 袋麦粒，由工人送入义仓。")
             elseif b.kind=="woodcutter" and b.complete then
                 selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n木材余量 " .. sim.timber .. " · 门前接路后工人送回义仓。")
             end
@@ -311,7 +316,7 @@ function Hud.create(sim, world, actions)
                 for _,a in ipairs(sim.builders) do visit(a) end
                 for _,a in ipairs(sim.guards or {}) do visit(a) end
                 local Meals=require "game.Meals"
-                selectedState:SetText("厨师 " .. (b.activeWorkers or 0) .. " 人 · 供餐席位 " .. inside .. "/" .. Meals.seats .. " · 候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 米粉 " .. sim.stock.flour .. " / 鲜肉 " .. sim.stock.meat .. "\n工人送粮，村民入座吃饭。")
+                selectedState:SetText("厨师 " .. (b.activeWorkers or 0) .. " 人 · 供餐席位 " .. inside .. "/" .. Meals.seats .. " · 候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 面粉 " .. sim.stock.flour .. " / 鲜肉 " .. sim.stock.meat .. "\n工人送粮，村民入座吃饭。")
             end
             minus:SetVisible(def.output ~= nil); plus:SetVisible(def.output ~= nil)
             train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")

@@ -3,6 +3,7 @@ local D = require "game.Definitions"
 local WorldMap = require "game.WorldMap"
 local Construction = require "game.Construction"
 local Meals = require "game.Meals"
+local Farm = require "game.FarmCycle"
 local Move = require "game.Movement"
 ---@class VillageSimulation
 ---@field roads table<string,boolean>
@@ -140,7 +141,8 @@ function S:addBuilding(kind, x, y, complete)
     local width, height = D.footprint(kind)
     local b = { id = #self.buildings + 1, kind = kind, x = x, y = y, complete = complete or false,
         footprintW = width, footprintH = height,
-        progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false, mealStock=0,mealIncoming=false }
+        progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false, mealStock=0,mealIncoming=false,
+        farmStep=0,farmWork=0 }
     self.buildings[#self.buildings + 1] = b
     for dx = 1-width, 0 do for dy = 1-height, 0 do
         self.buildingIndex[key(x+dx, y+dy)] = b
@@ -330,10 +332,17 @@ function S:update(dt, offline)
                 if def.alternateInput and (self.stock[def.alternateInput] or 0)>(self.stock[def.input] or 0) then resource=def.alternateInput end
                 self:enqueue(b,true,resource)
             end
-            if b.activeWorkers > 0 and b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
-                b.timer = b.timer + dt * (b.workRate or b.activeWorkers)
-                if b.timer >= def.period then
-                    b.timer, b.buffer = 0, def.amount
+            if b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
+                local finished=false
+                if b.kind=="farm" then
+                    finished=Farm.update(b,dt,def.period,b.workRate or 0)
+                elseif b.activeWorkers > 0 then
+                    b.timer = b.timer + dt * (b.workRate or b.activeWorkers)
+                    finished=b.timer >= def.period
+                end
+                if finished then
+                    if b.kind~="farm" then b.timer=0 end
+                    b.buffer=def.amount
                     if b.kind == "woodcutter" then
                         b.buffer = math.min(def.amount, self.timber); self.timber = self.timber - b.buffer
                     elseif b.kind == "quarry" then
