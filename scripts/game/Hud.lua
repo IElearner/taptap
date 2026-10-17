@@ -1,6 +1,7 @@
 local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
 local Skin = require "game.Skin"
+local Mentor = require "game.Mentor"
 local label, button, panel = Skin.label, Skin.button, Skin.panel
 local Hud = {}
 local function row(children, gap) return UI.Panel { flexDirection = "row", alignItems = "center", gap = gap or 8, children = children } end
@@ -12,9 +13,14 @@ end
 function Hud.create(sim, world, actions)
     local info, session = actions.saveInfo, actions.session
     local opened, selectedLast, roadLast = nil, false, false
+    local mentor, mentorTitle, mentorLine1, mentorLine2, mentorLine3, mentorProgress, mentorGo
+    local mentorFade, mentorShownLesson, mentorCompleteShown = 0, 0, 0
+    local showMentor, dismissMentor
     local drawers, mainButtons, resources = {}, {}, {}
     local function close() opened = nil end
-    local function open(name) opened = opened == name and nil or name end
+    local function open(name)
+        if opened == name then opened = nil else opened = name end
+    end
     local function header(name)
         return row { label(name, 20, Skin.gold), UI.Panel { flexGrow = 1 }, button("×", close, { width = 44, id = "closeDrawer" .. name }) }
     end
@@ -46,12 +52,12 @@ function Hud.create(sim, world, actions)
     local buildDrawer = drawer("build", "营 造 工 坊", buildItems)
     local title, line1, line2, line3 = label("", 17, Skin.gold), label("", 13), label("", 13), label("", 13)
     local progress, worldInfo = label("", 12, Skin.gold), label("", 12, Skin.muted)
-    local next = button("完成后继续 →", function() sim:nextLesson() end, { id = "nextLesson" })
+    local next = button("完成后继续 →", function() if sim:nextLesson() then close() end end, { id = "nextLesson" })
     local activityInfo=label("",12,Skin.muted)
     local villageDrawer = drawer("village", "乡 里 事 务", {
         worldInfo, activityInfo, title, line1, line2, line3, progress, next,
-        button("重新阅读教程", function() sim.lesson, sim.skipped = 1, false end),
-        button("结束教学 · 自由经营", function() sim.skipped, sim.lesson = true, #D.lessons + 1; close() end),
+        button("重新阅读教程", function() sim.lesson, sim.skipped = 1, false; mentorShownLesson=0; close() end,{id="restartMentor"}),
+        button("结束教学 · 自由经营", function() sim.skipped, sim.lesson = true, #D.lessons + 1; close(); if dismissMentor then dismissMentor() end end),
     })
     local military = label("", 14)
     local raid = button("开始守村", function() local _, msg = sim:startRaid(); sim:notify(msg) end, { id = "startRaid" })
@@ -96,7 +102,10 @@ function Hud.create(sim, world, actions)
     local controls = panel { position = "absolute", left = 12, bottom = 12, padding = 6, flexDirection = "row", gap = 5, children = {
         button("归村", function() world.home() end, { artIcon = "home" }), button("−", function() world.zoom(-0.15) end), button("+", function() world.zoom(0.15) end),
     } }
-    local quest = button("", function() open("village") end, { id = "questChip", position = "absolute", top = 60, left = 12, height = 44, fontSize = 13 })
+    local quest = button("", function()
+        if sim.started and not sim.skipped and D.lessons[sim.lesson] then showMentor()
+        else open("village") end
+    end, { id = "questChip", position = "absolute", top = 60, left = 12, height = 44, fontSize = 13 })
     local placementText = label("", 13)
     local placement = panel { position = "absolute", bottom = 82, left = 12, padding = 10, gap = 8, visible = false,
         children = { placementText, button("完成放置", function() actions.setMode("inspect") end, { id = "cancelPlacement" }) } }
@@ -142,6 +151,41 @@ function Hud.create(sim, world, actions)
     } }
     login:SetVisible(not session.accepted)
     loginHint:SetText(session.userId > 0 and "已识别 TapTap 账号，可同步云存档。" or "从 TapTap 打开可使用账号；也可先游客试玩。")
+    mentorTitle,mentorLine1,mentorLine2,mentorLine3=label("",18,Skin.gold),label("",13),label("",13),label("",13)
+    mentorProgress=label("",12,Skin.muted)
+    for _,item in ipairs({mentorLine1,mentorLine2,mentorLine3}) do item:SetStyle({width="100%",whiteSpace="normal"}) end
+    mentorGo=button("",function()
+        local value,target=sim:lessonProgress()
+        if value>=target then
+            if sim:nextLesson() then
+                if D.lessons[sim.lesson] then mentorShownLesson=0
+                else dismissMentor() end
+            end
+        else dismissMentor() end
+    end,{id="mentorGo",height=44,flexGrow=1})
+    local mentorSkip=button("跳过教程",function()
+        sim.skipped,sim.lesson=true,#D.lessons+1
+        sim:notify("谢伯拱手作别。村庄交给你了，随时可在村务重读教程。")
+        dismissMentor()
+    end,{id="mentorSkip",height=44})
+    mentor=panel { id="mentorDialogue",position="absolute",left=12,bottom=76,width="70%",maxWidth=610,padding=12,
+        transition="opacity 0.45s easeInOut",opacity=0,visible=false,
+        children={ row({ Mentor.portrait(),UI.Panel { flexGrow=1,flexBasis=0,minWidth=0,gap=5,children={
+            mentorTitle,mentorLine1,mentorLine2,mentorLine3,mentorProgress,
+            row({mentorGo,mentorSkip},7),
+        } } },12) } }
+    dismissMentor=function()
+        if mentor:IsVisible() and mentorFade==0 then mentorFade=0.45;mentor:SetStyle({opacity=0}) end
+    end
+    showMentor=function()
+        local lesson=D.lessons[sim.lesson]
+        if not lesson or sim.skipped or not sim.started or sim.menuOpen then return end
+        mentorFade=0
+        mentor:SetVisible(true);mentor:SetStyle({opacity=1})
+        mentorShownLesson=sim.lesson
+        local value,target=sim:lessonProgress()
+        if value>=target then mentorCompleteShown=sim.lesson end
+    end
     local settlementText = label("读取存档中…", 18, Skin.gold)
     local settlement = UI.Panel { position = "absolute", left = 0, right = 0, top = 0, bottom = 0, alignItems = "center", justifyContent = "center", visible = false,
         backgroundColor = { 13, 21, 17, 210 }, children = { panel { width = "80%", maxWidth = 430, padding = 24, gap = 12, children = {
@@ -154,10 +198,14 @@ function Hud.create(sim, world, actions)
             button("切换模式", function() actions.changeMode(sim.mode == "finite" and "infinite" or "finite") end),
         } } } }
     local chrome = UI.SafeAreaView { width = "100%", height = "100%", pointerEvents = "box-none", children = {
-        topbar, quest, controls, dock, placement, notice, buildDrawer, villageDrawer, armyDrawer, systemDrawer, selectedDrawer, roadDrawer,
+        topbar, quest, world.minimap, controls, dock, placement, notice, buildDrawer, villageDrawer, armyDrawer, systemDrawer, selectedDrawer, roadDrawer,
     } }
-    local root = UI.Panel { width = "100%", height = "100%", pointerEvents = "box-none", children = { world.panel, chrome, intro, ending, confirmNew, login, settlement } }
-    local function update()
+    local root = UI.Panel { width = "100%", height = "100%", pointerEvents = "box-none", children = { world.panel, chrome, mentor, intro, ending, confirmNew, login, settlement } }
+    local function update(dt)
+        if mentorFade>0 then
+            mentorFade=math.max(0,mentorFade-(dt or 0))
+            if mentorFade==0 then mentor:SetVisible(false) end
+        end
         for _, r in ipairs(D.goods) do resources[r]:SetText(D.names[r] .. "  " .. sim.stock[r]) end
         people:SetText("村民 " .. sim.population .. " / 闲 " .. sim:availableWorkers())
         status:SetText(info.status or "尚未保存"); menuStatus:SetText(info.status or "尚未保存")
@@ -171,6 +219,25 @@ function Hud.create(sim, world, actions)
         settlementText:SetText(info.loading and "读取存档中…" or ("离线生产结算 " .. math.floor((info.progress or 0) * 100) .. "%"))
         local lesson = D.lessons[sim.lesson]
         local value, target = sim:lessonProgress()
+        local teaching=sim.started and not sim.menuOpen and not sim.skipped and lesson~=nil and not info.loading and not info.settling
+        if teaching then
+            if mentorShownLesson~=sim.lesson or (value>=target and mentorCompleteShown~=sim.lesson) then showMentor() end
+            mentorTitle:SetText("里正谢伯  ·  " .. lesson.title)
+            if value>=target then
+                mentorLine1:SetText(lesson.complete or "这一步做得好。")
+                mentorLine2:SetText("咱们接着把村子经营起来。")
+                mentorLine3:SetText("也可先看看地图，再来听下一步。")
+            else
+                ---@type string[]
+                local lines=lesson.lines
+                mentorLine1:SetText(lines[1]);mentorLine2:SetText(lines[2]);mentorLine3:SetText(lines[3])
+            end
+            mentorProgress:SetText("第 " .. sim.lesson .. " / " .. #D.lessons .. " 步  ·  " .. value .. " / " .. target)
+            mentorGo:SetText(value>=target and (sim.lesson==#D.lessons and "谢谢谢伯 · 开始经营" or "听下一步 →") or "明白，去做")
+        elseif mentor:IsVisible() then
+            if sim.menuOpen then mentor:SetVisible(false);mentorFade=0;mentorShownLesson=0
+            else dismissMentor() end
+        end
         quest:SetText(lesson and ("里正手札  ·  " .. lesson.title .. "  ›") or "乡里近况  ›")
         title:SetText(lesson and lesson.title or "乡里安居，百业待兴")
         line1:SetText(lesson and lesson.lines[1] or "安排运输与岗位，保持粮食供给。")
@@ -181,7 +248,7 @@ function Hud.create(sim, world, actions)
         worldInfo:SetText(sim.mode == "finite" and ("清溪河谷 · 义仓 " .. sim.health) or ("拓荒 " .. sim.map.expansion .. " 圈 · 已守 " .. sim.wavesDefeated .. " 波"))
         military:SetText("乡勇 " .. sim.militia .. " 人 · 义仓 " .. sim.health .. "/100" .. (sim.mode == "infinite" and ("\n下次来袭 " .. math.ceil(sim.nextRaid) .. " 秒") or ""))
         raid:SetVisible(sim.lesson >= 8 and not sim.raid and (sim.mode == "infinite" or not sim.defended))
-        toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0 and not opened)
+        toast:SetText(sim.message); notice:SetVisible(sim.messageTime > 0 and not opened and not mentor:IsVisible())
         if actions.selected ~= selectedLast then
             selectedLast = actions.selected
             if selectedLast then opened = "selected" elseif opened == "selected" then close() end
@@ -224,6 +291,7 @@ function Hud.create(sim, world, actions)
             train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")
         end
         for name, p in pairs(drawers) do p:SetVisible(opened == name) end
+        world.minimap:SetVisible(not opened)
         for name, btn in pairs(mainButtons) do btn:SetBackgroundColor(opened == name and { 124, 96, 48 } or { 83, 69, 43 }) end
         placement:SetVisible(actions.mode ~= "inspect" and not opened)
         if actions.mode ~= "inspect" then placementText:SetText(D.buildings[actions.mode].name .. " · 点击空地放置\n门前接路才能运输") end

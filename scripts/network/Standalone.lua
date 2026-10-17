@@ -168,7 +168,7 @@ function Game.Update(dt)
     lastWall = now
     info.status = store.status
     uiClock = uiClock + dt
-    if uiClock >= 0.15 then uiClock = 0; hud.update() end
+    if uiClock >= 0.15 then local elapsed = uiClock; uiClock = 0; hud.update(elapsed) end
 end
 function Game.Focus(focused)
     if not focused then

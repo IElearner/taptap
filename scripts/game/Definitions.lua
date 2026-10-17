@@ -31,15 +31,15 @@ D.buildings = {
     courier = { name = "驿站", cost = { wood = 10, stone = 2 }, workers = 0, color = { 152, 117, 74 }, description = "增加 1 名搬运工，占用 1 名村民。适合扩张后的长途运输。" },
     barracks = { name = "乡勇营", cost = { wood = 12, stone = 6 }, workers = 0, color = { 144, 65, 53 }, description = "选中后训练乡勇：每人消耗 2 木料、2 口粮和 1 村民。" },
 }
----@type {title:string, lines:string[], kind:string, target:number}[]
+---@type {title:string, lines:string[], complete:string, kind:string, target:number}[]
 D.lessons = {
-    { title = "一 · 道通百业", lines = { "里正：先接通义仓门前的路。", "打开营造选道路，点空地规划。", "从现有路接出 4 格，等待工人铺好。" }, kind = "road", target = 4 },
-    { title = "二 · 安居于此", lines = { "在道路上方建一栋民居。", "建筑下方一格须接路。", "竣工后增加 4 名村民。" }, kind = "house", target = 1 },
-    { title = "三 · 耕者有粮", lines = { "沿路建一块稻田，等待竣工。", "农夫自动上岗，搬运工运谷。", "点击建筑可调整岗位。" }, kind = "farm", target = 1 },
-    { title = "四 · 谷成细粉", lines = { "在路边建一座磨坊。", "搬运工从义仓送谷进坊。", "有稻谷后便会自动加工。" }, kind = "mill", target = 1 },
-    { title = "五 · 炊烟起处", lines = { "建炊坊：稻谷→米粉→口粮。", "等 4 份新口粮送回义仓。", "有限关卡保留教学救济粮。" }, kind = "food", target = 4 },
-    { title = "六 · 取材有度", lines = { "建伐木场，补充建设木料。", "门前必须通路才能生产。", "可暂停经营，慢慢规划。" }, kind = "woodcutter", target = 1 },
-    { title = "七 · 乡勇集结", lines = { "建乡勇营，选中后训练三人。", "每人需 2 木、2 粮、1 村民。", "乡勇在义仓附近自动集结。" }, kind = "militia", target = 3 },
-    { title = "八 · 守住炊烟", lines = { "备齐乡勇后点击开始守村。", "乡勇自动迎敌，可随时补员。", "无限模式守住后继续拓荒。" }, kind = "victory", target = 1 },
+    { title = "一 · 道通百业", lines = { "孩子，义仓虽在，路不通，百事都慢。", "点右下「营造」选「道路」，沿旧路规划四格。", "工人会取材、举锤；铺好才算通路。" }, complete="好，脚下有路，乡亲们就能送货了。", kind = "road", target = 4 },
+    { title = "二 · 安居于此", lines = { "有路了，先为新来的乡亲盖间屋吧。", "在道路上方放一栋民居，门前留一格路。", "等工人建好，就能多住四个人。" }, complete="屋里有了灯火，咱们的人手也宽裕了。", kind = "house", target = 1 },
+    { title = "三 · 耕者有粮", lines = { "人要吃饭，田里的谷子得先种起来。", "沿路建一块稻田，等农夫上岗。", "有谷子后，搬运工才有东西可送。" }, complete="稻穗起来了，接着得把谷磨细。", kind = "farm", target = 1 },
+    { title = "四 · 谷成细粉", lines = { "光有稻谷还不够，得有磨坊。", "在路边建一座磨坊，门前接上道路。", "搬运工会送谷进去，磨好后再运出来。" }, complete="磨坊转起来，村里离热饭又近一步。", kind = "mill", target = 1 },
+    { title = "五 · 炊烟起处", lines = { "炊坊里有火，乡亲们才吃得上热饭。", "建炊坊，让稻谷经磨坊变成口粮。", "等四份新口粮运回义仓，再来找我。" }, complete="炊烟又起，先让大家吃饱。", kind = "food", target = 4 },
+    { title = "六 · 取材有度", lines = { "营造离不开木料，林木也要慢慢取。", "建一座伐木场，记得门前通路。", "有工人和搬运工，木料才进得了仓。" }, complete="木料有了来路，后面的工程有底气了。", kind = "woodcutter", target = 1 },
+    { title = "七 · 乡勇集结", lines = { "山外不总太平，得让村里有人守望。", "建乡勇营，选中后训练三名乡勇。", "每人要两木、两粮，还要一名空闲村民。" }, complete="三名乡勇已齐，村口总算有了守护。", kind = "militia", target = 3 },
+    { title = "八 · 守住炊烟", lines = { "最后一关，咱们一起守住这片炊烟。", "备齐乡勇，在军务里点「开始守村」。", "守住后，这方水土就交给你经营了。" }, complete="这回守住了。山河里，往后托付给你。", kind = "victory", target = 1 },
 }
 return D

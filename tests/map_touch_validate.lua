@@ -1,0 +1,43 @@
+local Game=require "network.Standalone"
+local Store=require "game.SaveStore"
+local function worldPixel(view,sx,sy)
+    local l=view.panel:GetAbsoluteLayout()
+    local c=view.cameraState()
+    local ox=l.x+l.w*0.53+c.x
+    local oy=l.y+l.h*0.52-270*c.zoom+c.y
+    return (sx-ox)/c.zoom,(sy-oy)/c.zoom
+end
+V.atFrame(6,function()
+    Game.UseStore(Store.new({now=function() return 1000 end,read=function() return nil end,
+        write=function() return true end}))
+end)
+V.atFrame(9,function()
+    local _,view,hud=Game.Inspect()
+    hud.root:FindById("enterVillage").props.onClick();hud.update()
+    local mini=hud.root:FindById("miniMap")
+    V.assert(mini and mini:IsVisible(),"Corner map is visible in landscape gameplay")
+    local l=view.panel:GetAbsoluteLayout()
+    local fx,fy=l.x+l.w*0.56,l.y+l.h*0.48
+    local px,py=worldPixel(view,fx,fy)
+    view.panel.props.onPinchStart({x=fx,y=fy})
+    view.panel.props.onPinchMove({x=fx,y=fy,scale=1.4})
+    local qx,qy=worldPixel(view,fx,fy)
+    V.assert(math.abs(px-qx)<0.001 and math.abs(py-qy)<0.001,"Two-finger zoom keeps the map point beneath the fingers")
+    V.assert(view.cameraState().zoom>1.35,"Two-finger spread zooms in")
+    view.panel.props.onPinchEnd({})
+    view.panel.props.onPinchStart({x=fx,y=fy})
+    view.panel.props.onPinchMove({x=fx,y=fy,scale=0.1})
+    V.assert(view.cameraState().zoom==0.55,"Pinch zoom obeys readable lower bound")
+    view.panel.props.onPinchEnd({})
+    local before=view.cameraState()
+    local m=mini:GetAbsoluteLayout()
+    mini.props.onTap({x=m.x+20+106*0.62,y=m.y+12+106*0.56})
+    local after=view.cameraState()
+    V.assert(after.x~=before.x or after.y~=before.y,"Tapping the corner map repositions the world camera")
+    V.assert(after.zoom==before.zoom,"Corner navigation preserves chosen zoom")
+    hud.root:FindById("open_build").props.onClick();hud.update()
+    V.assert(not mini:IsVisible(),"Corner map yields its space to an open drawer")
+    hud.root:FindById("open_build").props.onClick();hud.update()
+    V.assert(mini:IsVisible(),"Closing the drawer brings the corner map back build=" .. tostring(hud.root:FindById("drawer_build"):IsVisible()) .. " mini=" .. tostring(mini:IsVisible()))
+end)
+V.atFrame(25,function() V.finish() end)

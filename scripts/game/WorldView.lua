@@ -168,9 +168,23 @@ function WorldView.create(sim, onTile)
     end
     local mode = "inspect"
     local selected = false
+    local pinchAnchor = nil
     local function projection()
         local l = panel:GetAbsoluteLayout()
         return l, l.x + l.w * 0.53 + camera.x, l.y + l.h * 0.52 - 270 * camera.zoom + camera.y
+    end
+    local function clampCamera()
+        if sim.mode == "finite" then
+            camera.x = math.max(-600, math.min(600, camera.x))
+            camera.y = math.max(-350, math.min(350, camera.y))
+        end
+    end
+    local function centerOn(x,y)
+        local l=panel:GetAbsoluteLayout()
+        local sx,sy=iso(x,y)
+        camera.x=(0.5-0.53)*l.w-sx*camera.zoom
+        camera.y=(0.5-0.52)*l.h+270*camera.zoom-sy*camera.zoom
+        clampCamera()
     end
     panel.props.onTap = function(event)
         local _, ox, oy = projection()
@@ -192,13 +206,78 @@ function WorldView.create(sim, onTile)
     panel.props.onPanStart = function() end
     panel.props.onPanMove = function(event)
         camera.x, camera.y = camera.x + event.deltaX, camera.y + event.deltaY
-        if sim.mode == "finite" then
-            camera.x = math.max(-600, math.min(600, camera.x))
-            camera.y = math.max(-350, math.min(350, camera.y))
-        end
+        clampCamera()
     end
-    panel.props.onPinchStart = function() camera.pinchZoom = camera.zoom end
-    panel.props.onPinchMove = function(event) camera.zoom = math.max(0.55, math.min(1.8, camera.pinchZoom * event.scale)) end
+    panel.props.onPinchStart = function(event)
+        camera.pinchZoom = camera.zoom
+        local l,ox,oy=projection()
+        local fx,fy=event.x or l.x+l.w/2,event.y or l.y+l.h/2
+        pinchAnchor={x=(fx-ox)/camera.zoom,y=(fy-oy)/camera.zoom,screenX=fx,screenY=fy}
+    end
+    panel.props.onPinchMove = function(event)
+        local l=panel:GetAbsoluteLayout()
+        local anchor=pinchAnchor
+        if not anchor then panel.props.onPinchStart(event);anchor=pinchAnchor end
+        local zoom=math.max(0.55,math.min(1.8,camera.pinchZoom*(event.scale or 1)))
+        camera.zoom=zoom
+        camera.x=anchor.screenX-anchor.x*zoom-l.x-l.w*0.53
+        camera.y=anchor.screenY-anchor.y*zoom-l.y-l.h*0.52+270*zoom
+        clampCamera()
+    end
+    panel.props.onPinchEnd = function() pinchAnchor=nil;camera.pinchZoom=camera.zoom end
+    local minimap=UI.Panel { id="miniMap",position="absolute",right=12,top=58,width=146,height=126,pointerEvents="auto" }
+    local function miniGeometry()
+        local l=minimap:GetAbsoluteLayout()
+        local low,high=sim.map:bounds()
+        return l,low,high,l.x+20,l.y+12,106,106
+    end
+    minimap.props.onTap=function(event)
+        local _,low,high,x0,y0,w,h=miniGeometry()
+        local nx=math.max(0,math.min(1,(event.x-x0)/w))
+        local ny=math.max(0,math.min(1,(event.y-y0)/h))
+        centerOn(low+nx*(high-low),low+ny*(high-low))
+    end
+    function minimap:Render(vg)
+        local l,low,high,x0,y0,w,h=miniGeometry()
+        rect(vg,l.x+2,l.y+3,l.w,l.h,{0,0,0,75})
+        rect(vg,l.x,l.y,l.w,l.h,{37,34,27})
+        rect(vg,l.x+2,l.y+2,l.w-4,l.h-4,{130,106,64})
+        rect(vg,l.x+5,l.y+5,l.w-10,l.h-10,{62,65,47})
+        local span=high-low+1
+        local step=math.max(1,math.ceil(span/32))
+        for gy=low,high,step do
+            for gx=low,high,step do
+                local kind=sim:terrain(gx,gy)
+                local c=kind=="water" and {74,111,120} or kind=="forest" and {54,88,58} or {132,143,91}
+                local px=x0+(gx-low)/span*w
+                local py=y0+(gy-low)/span*h
+                rect(vg,px,py,math.max(1,w*step/span+0.5),math.max(1,h*step/span+0.5),c)
+            end
+        end
+        for k in pairs(sim.roads) do
+            local rx,ry=k:match("^(%-?%d+):(%-?%d+)$")
+            rx,ry=tonumber(rx),tonumber(ry)
+            if rx and rx>=low and rx<=high and ry>=low and ry<=high then
+                rect(vg,x0+(rx-low+0.5)/span*w-1,y0+(ry-low+0.5)/span*h-1,2,2,{224,198,138})
+            end
+        end
+        for _,b in ipairs(sim.buildings) do
+            if b.x>=low and b.x<=high and b.y>=low and b.y<=high then
+                local px=x0+(b.x-low+0.5)/span*w
+                local py=y0+(b.y-low+0.5)/span*h
+                rect(vg,px-2,py-2,4,4,b.kind=="store" and {245,212,117} or {199,116,81})
+            end
+        end
+        local world,ox,oy=projection()
+        local a=(world.x+world.w/2-ox)/camera.zoom/30
+        local b=(world.y+world.h/2-oy)/camera.zoom/15
+        local cx,cy=(a+b)/2,(b-a)/2
+        local px=x0+(cx-low+0.5)/span*w
+        local py=y0+(cy-low+0.5)/span*h
+        line(vg,px-6,py,px+6,py,{255,234,170},1.5)
+        line(vg,px,py-6,px,py+6,{255,234,170},1.5)
+        rect(vg,l.x+6,l.y+6,l.w-12,1,{219,184,115,105})
+    end
     function panel:Render(vg)
         local l, ox, oy = projection()
         rect(vg, l.x, l.y, l.w, l.h, { 63, 77, 48 })
@@ -330,6 +409,7 @@ function WorldView.create(sim, onTile)
     ---@class VillageWorldView
     local result = {
         panel = panel,
+        minimap = minimap,
         dispose = function()
             if imageContext then for _, handle in pairs(images) do if handle > 0 then nvgDeleteImage(imageContext, handle) end end end
             images, checked, imageContext = {}, {}, nil
@@ -339,6 +419,7 @@ function WorldView.create(sim, onTile)
         select = function(value) selected = value end,
         zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,
         home = function() camera.x, camera.y, camera.zoom = 0, 0, 1 end,
+        cameraState = function() return {x=camera.x,y=camera.y,zoom=camera.zoom} end,
         frontier = function()
             local _, high = sim.map:bounds()
             local sx, sy = iso(high - 2, 9)
