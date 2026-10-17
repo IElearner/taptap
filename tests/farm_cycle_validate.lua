@@ -7,9 +7,20 @@ V.atFrame(8,function()
     local walker={x=0,y=0,path={{x=1,y=0}},index=1}
     Move.step(walker,0.1)
     V.assert(math.abs(walker.x-0.18)<0.001,"Villagers walk at the slower default pace")
+    local planned=Sim.new("finite",23)
+    planned.started,planned.skipped=true,true
+    V.assert(planned:build("road",7,9) and planned:build("road",6,9),
+        "Connected roads can reach the two adjacent wheat fields")
+    V.assert(planned:build("farm",8,8) and planned:build("farm",6,8),
+        "Players can place two adjacent wheat fields through the normal build action")
     local s=Sim.new("finite",23)
     s.started,s.skipped=true,true
     local b=s:addBuilding("farm",8,8,true)
+    V.assert(b.footprintW==2 and b.footprintH==2 and #Farm.exposedEdges(s,b)==8,
+        "New wheat field occupies four tiles with one outer fence per boundary edge")
+    local neighbor=s:addBuilding("farm",6,8,true)
+    V.assert(#Farm.exposedEdges(s,b)==6 and #Farm.exposedEdges(s,neighbor)==6,
+        "Two adjacent fields omit the shared fence and keep their outer boundary")
     V.assert(s:staff(b,1),"Assign a worker to the wheat field")
     local stages,steps,actions={},{},{}
     local function tick(count)
@@ -49,5 +60,7 @@ V.atFrame(8,function()
     old.world.buildings[b.id].farmStep=nil
     old.world.buildings[b.id].farmWork=nil
     V.assert(Data.restore(old,s.mode)~=nil,"Older farm saves load with default growth state")
+    old.world.buildings[b.id].footprintW=1
+    V.assert(Data.restore(old,s.mode)~=nil,"Legacy narrow wheat fields remain loadable")
     V.finish()
 end)

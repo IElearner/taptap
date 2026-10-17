@@ -53,45 +53,58 @@ V.atFrame(8,function()
     end
     V.assert(carried and cargo.stock.wood>66,"Physical carriers pick up and deliver actual wood jobs")
 
-    local meal=fresh();meal:build("kitchen",8,8);meal:build("farm",11,8)
-    V.assert(untilTrue(meal,function() return meal:count("kitchen")==1 and meal:count("farm")==1 end,25),"Dining requires a completed kitchen and visiting worker")
-    local kitchen=meal:buildingAt(8,8);meal:staff(kitchen,-1)
+    local meal=fresh();meal:build("kitchen",8,8)
+    meal.roads["13:9"]=true;meal.roadCount=meal.roadCount+1
+    meal:build("farm",13,8)
+    V.assert(untilTrue(meal,function() return meal:count("kitchen")==1 and meal:count("farm")==1 end,35),"Dining requires a completed kitchen and visiting worker")
+    local kitchen=meal:buildingAt(8,8)
     V.assert(untilTrue(meal,function()
         for _,c in ipairs(meal.carriers) do if c.job then return false end end
         return #meal.jobs==0
     end,12),"Existing delivery jobs settle before the dining visit")
-    meal.stock.food=10
-    for i,c in ipairs(meal.carriers) do c.hunger=i<=2 and 90 or 0 end
+    meal.stock.food=10;kitchen.mealStock=8
+    for _,c in ipairs(meal.carriers) do c.hunger=90 end
     meal:update(0.1)
-    local farm=meal:buildingAt(11,8)
+    local farm=meal:buildingAt(13,8)
     local farmWorker=meal.workers[farm.id .. ":1"]
     V.assert(farmWorker~=nil,"A staffed building supplies a real worker visitor")
     farmWorker.hunger=90
+    local kitchenWorker=meal.workers[kitchen.id .. ":1"]
+    V.assert(kitchenWorker~=nil,"Cook can also visit the dining room")
+    kitchenWorker.hunger=90
     local queued=untilTrue(meal,function()
-        local occupied,waiting=0,0
-        for _,a in ipairs({meal.carriers[1],meal.carriers[2],farmWorker}) do
+        local occupied,waiting,seats=0,0,{}
+        for _,a in ipairs({meal.carriers[1],meal.carriers[2],meal.carriers[3],farmWorker,kitchenWorker}) do
             local m=a.meal
             if m then
                 if m.phase=="queue" then waiting=waiting+1 end
-                if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then occupied=occupied+1 end
+                if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then
+                    occupied=occupied+1
+                    if not m.seat or seats[m.seat] then return false end
+                    seats[m.seat]=true
+                end
             end
         end
-        return occupied==2 and waiting==1
-    end,15)
+        return occupied==4 and waiting==1
+    end,18)
     local diningState={}
     for i,c in ipairs(meal.carriers) do diningState[#diningState+1]=i .. ":" .. (c.meal and c.meal.phase or "none") .. "/" .. (c.job and c.job.resource or "idle") end
     diningState[#diningState+1]="w:" .. (farmWorker.meal and farmWorker.meal.phase or "none")
-    V.assert(queued,"Two diners enter the kitchen while the third queues outside " .. table.concat(diningState,",") .. " served=" .. meal.mealsServed .. " food=" .. foodTotal(meal))
-    V.assert(foodTotal(meal)==8 and meal.mealsServed==2,"Transport reserves rations; only two admitted diners consume two meals")
+    V.assert(queued,"Four diners occupy distinct seats while the fifth queues " .. table.concat(diningState,",") .. " served=" .. meal.mealsServed .. " food=" .. foodTotal(meal))
+    V.assert(foodTotal(meal)==14 and meal.mealsServed==4,"Four visible seats admit four diners and charge four meals")
     local saved=Data.capture(meal,1000,1,true)
     local resumed=Data.restore(cjson.decode(cjson.encode(saved)),"finite")
-    V.assert(resumed and resumed.mealsServed==2,"Paid dining state survives a save inside the kitchen")
+    V.assert(resumed and resumed.mealsServed==4,"Paid four-seat dining state survives a save inside the kitchen")
+    local oldFootprint=cjson.decode(cjson.encode(saved))
+    oldFootprint.world.buildings[kitchen.id].footprintW=1
+    oldFootprint.world.buildings[kitchen.id].footprintH=1
+    V.assert(Data.restore(oldFootprint,"finite")~=nil,"Legacy one-tile canteens remain loadable")
     advance(meal,20);advance(resumed,20)
-    V.assert(foodTotal(meal)==7 and foodTotal(resumed)==7 and resumed.mealsServed==3,"Resume does not charge diners a second time")
+    V.assert(foodTotal(meal)==13 and foodTotal(resumed)==13 and resumed.mealsServed==5,"Resume does not charge diners a second time")
     V.assert(not resumed.carriers[1].meal and resumed.carriers[1].hunger<60,"Diners leave the kitchen and resume their normal activity")
     local idle=Data.restore(saved,"finite");local task=Offline.new(idle,1000,1030,true)
     while not task:step(1024) do end
-    V.assert(foodTotal(idle)==8 and idle.mealsServed==2,"Offline completes already-paid meals without consuming new rations")
+    V.assert(foodTotal(idle)==14 and idle.mealsServed==4,"Offline completes already-paid meals without consuming new rations")
     local legacy=cjson.decode(cjson.encode(saved));legacy.version=1
     legacy.world.builders,legacy.world.pendingRoads,legacy.world.workers,legacy.world.mealsServed=nil,nil,nil,nil
     for _,c in ipairs(legacy.world.carriers) do c.meal,c.hunger=nil,nil end

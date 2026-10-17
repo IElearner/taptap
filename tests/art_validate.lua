@@ -1,6 +1,6 @@
 local Art=require "game.Art"
 V.atFrame(8,function()
-    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers","atlas-specialists","atlas-wheatfield",
+    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers","atlas-specialists","atlas-seated-villagers","atlas-seated-specialists","atlas-wheatfield","atlas-wheat-interior",
         "atlas-loaded","atlas-combatants","atlas-icons","panel-wood","button-painting",
         "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
         "atlas-builders-hammer-up","atlas-builders-hammer-down"}) do
@@ -9,11 +9,13 @@ V.atFrame(8,function()
     end
     V.assert(Art.path("atlas-buildings")=="image/atlas-buildings.png","Runtime image path uses the resource root")
     for _,name in ipairs({"building-store","building-house","building-farm","building-mill","building-kitchen",
-        "field-seed","field-sprout","field-green","field-ripe",
+        "field-seed","field-sprout","field-green","field-ripe","crop-seed","crop-sprout","crop-green","crop-ripe",
         "building-woodcutter","building-quarry","building-courier","building-barracks",
         "ground-grass","ground-road","ground-water","tree-oak","tree-pine","tree-bamboo",
         "person-civilian-blue-man-se","person-civilian-ochre-woman-sw","person-civilian-grey-elder-ne",
         "person-civilian-green-woman-nw","person-loaded-green-woman-se",
+        "person-seated-blue-man","person-seated-ochre-woman","person-seated-grey-elder","person-seated-green-woman",
+        "person-seated-chef","person-seated-butcher","person-seated-guard","person-seated-militia",
         "person-occupation-farmer-se","person-occupation-artisan-sw","person-occupation-logger-ne","person-occupation-guard-nw",
         "person-occupation-chef-se","person-occupation-chef-nw","person-occupation-butcher-sw","person-occupation-butcher-ne",
         "person-civilian-blue-man-se-stride","person-loaded-green-woman-sw-stride",

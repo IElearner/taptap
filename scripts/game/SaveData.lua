@@ -136,7 +136,8 @@ local function restoreUnsafe(data, mode)
         local target=s.buildings[m.target]
         assert(target.complete and (target.kind=="kitchen" or target.kind=="store"), "dining building")
         assert(m.phase=="walk" or m.phase=="queue" or m.phase=="enter" or m.phase=="eat" or m.phase=="exit" or m.phase=="return", "meal phase")
-        assert(number(m.timer,0,4) and number(m.resumeX,-1e9,1e9) and number(m.resumeY,-1e9,1e9) and type(m.paid)=="boolean", "meal state")
+        assert(number(m.timer,0,6) and number(m.resumeX,-1e9,1e9) and number(m.resumeY,-1e9,1e9) and type(m.paid)=="boolean", "meal state")
+        assert(m.seat==nil or (number(m.seat,1,4) and m.seat%1==0),"dining seat")
         if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then assert(m.paid,"reserved meal") end
     end
     if data.version >= 2 then

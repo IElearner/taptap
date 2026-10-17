@@ -6,6 +6,26 @@ function Farm.step(b)
     return b.farmStep or ((b.timer or 0) > 0 and 1 or 0)
 end
 function Farm.action(b) return actions[Farm.step(b)+1] end
+-- Only the outline of a connected cluster gets fence rails. This works with
+-- legacy 1x2 farms as well as newly built 2x2 farms.
+function Farm.exposedEdges(sim,b)
+    local edges={}
+    local width,height=b.footprintW or 1,b.footprintH or 1
+    local sides={{dx=-1,dy=0,name="west"},{dx=0,dy=-1,name="north"},
+        {dx=1,dy=0,name="east"},{dx=0,dy=1,name="south"}}
+    for dx=1-width,0 do for dy=1-height,0 do
+        local x,y=b.x+dx,b.y+dy
+        for _,side in ipairs(sides) do
+            local nx,ny=x+side.dx,y+side.dy
+            local same=nx>=b.x-width+1 and nx<=b.x and ny>=b.y-height+1 and ny<=b.y
+            local neighbor=sim and sim:buildingAt(nx,ny)
+            if not same and not (neighbor and neighbor.kind=="farm" and neighbor.complete) then
+                edges[#edges+1]={x=x,y=y,side=side.name}
+            end
+        end
+    end end
+    return edges
+end
 function Farm.needsWork(b, period)
     if not b.complete or (b.buffer or 0) > 0 or b.outgoing then return false end
     local step=Farm.step(b)

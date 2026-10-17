@@ -39,6 +39,15 @@ end
 -- A pose is selected from simulation time, so pausing and restoring a save do
 -- not require storing any visual animation state in the world data.
 function C.sprite(role, direction, walking, action, clock, phase)
+    if action=="eat" then
+        local civilian=role:match("^civilian%-(.+)$") or role:match("^loaded%-(.+)$")
+        if civilian then return "person-seated-" .. civilian end
+        local occupation=role:match("^occupation%-(.+)$")
+        if occupation=="chef" or occupation=="butcher" or occupation=="guard" then
+            return "person-seated-" .. occupation
+        end
+        if role=="militia" then return "person-seated-militia" end
+    end
     local base = "person-" .. role .. "-" .. (direction or "se")
     local offset = (phase or 0) * 0.7
     if action == "hammer" then

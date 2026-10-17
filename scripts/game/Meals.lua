@@ -1,20 +1,36 @@
 local Move = require "game.Movement"
 local Farm = require "game.FarmCycle"
-local Meals = { seats = 2, pantryCapacity = 6 }
+local Meals = { seats = 4, pantryCapacity = 8 }
 local function floorFood(sim) return sim.mode == "finite" and not sim.skipped and 8 or 0 end
-local function occupancy(sim,id)
-    local count=0
-    local function visit(a)
-        local m=a.meal
-        if m and m.target == id and (m.phase == "enter" or m.phase == "eat" or m.phase == "exit") then count=count+1 end
-    end
+local function visitors(sim,visit)
     for _,a in ipairs(sim.carriers) do visit(a) end
     for _,a in pairs(sim.workers) do visit(a) end
     for _,a in ipairs(sim.builders) do visit(a) end
     for _,a in ipairs(sim.guards or {}) do visit(a) end
+end
+local function inside(m,id)
+    return m and m.target==id and (m.phase=="enter" or m.phase=="eat" or m.phase=="exit")
+end
+local function occupancy(sim,id)
+    local count=0
+    visitors(sim,function(a) if inside(a.meal,id) then count=count+1 end end)
     return count
 end
 Meals.occupancy=occupancy
+function Meals.seatPosition(b,seat)
+    -- Four different screen-space columns keep faces visible at mobile scale.
+    local offset={{-0.55,0.55},{0.283,0.65},{0.65,0.283},{0.55,-0.55}}
+    local p=offset[seat] or offset[1]
+    return b.x-((b.footprintW or 1)-1)*0.5+p[1],b.y-((b.footprintH or 1)-1)*0.5+p[2]
+end
+local function freeSeat(sim,id,actor)
+    local taken={}
+    visitors(sim,function(a)
+        local m=a.meal
+        if a~=actor and inside(m,id) and m.seat then taken[m.seat]=true end
+    end)
+    for seat=1,Meals.seats do if not taken[seat] then return seat end end
+end
 local function destination(sim,a)
     local best,distance=nil,math.huge
     for _,b in ipairs(sim.buildings) do
@@ -59,10 +75,12 @@ function Meals.tick(sim,a,dt,offline,busy,working)
         if offline then
             m.phase="return";Move.route(sim,a,m.resumeX,m.resumeY)
         elseif available>0 and occupancy(sim,m.target)<Meals.seats then
+            local seat=freeSeat(sim,m.target,a)
+            if not seat then return true end
             if target.kind=="kitchen" then target.mealStock=target.mealStock-1
             else sim.stock.food=sim.stock.food-1 end
             sim.mealsServed=sim.mealsServed+1
-            m.phase,m.timer,m.paid="enter",0.5,true
+            m.phase,m.timer,m.paid,m.seat="enter",0.7,true,seat
         elseif target.kind=="kitchen" and available==0 and not target.mealIncoming and sim.stock.food>floorFood(sim) then
             local amount=math.min(2,Meals.pantryCapacity-(target.mealStock or 0),sim.stock.food-floorFood(sim))
             if amount<=0 then return true end
@@ -72,11 +90,13 @@ function Meals.tick(sim,a,dt,offline,busy,working)
             m.phase="return";Move.route(sim,a,m.resumeX,m.resumeY)
         end
     elseif m.phase == "enter" or m.phase == "eat" or m.phase == "exit" then
+        -- Saves from the earlier two-seat version have no seat index.
+        if not m.seat then m.seat=freeSeat(sim,m.target,a) end
         m.timer=math.max(0,m.timer-dt)
         if m.timer == 0 then
-            if m.phase == "enter" then m.phase,m.timer="eat",3.5
-            elseif m.phase == "eat" then m.phase,m.timer,a.hunger,a.energy="exit",0.5,0,100
-            else m.phase="return"; Move.route(sim,a,m.resumeX,m.resumeY) end
+            if m.phase == "enter" then m.phase,m.timer="eat",5
+            elseif m.phase == "eat" then m.phase,m.timer,a.hunger,a.energy="exit",0.7,0,100
+            else m.phase,m.seat="return",nil; Move.route(sim,a,m.resumeX,m.resumeY) end
         end
     elseif m.phase == "return" then
         if Move.step(a,dt) then a.meal=false;a.path={};a.index=1 end

@@ -13,7 +13,7 @@ V.atFrame(6, function()
     local state, _, hud = Game.Inspect()
     hud.dismissIntro()
     state.population=20
-    for _, item in ipairs({ {"farm",8}, {"kitchen",11}, {"butcher",12}, {"barracks",13} }) do
+    for _, item in ipairs({ {"farm",8}, {"kitchen",12}, {"butcher",13}, {"barracks",14} }) do
         local b=state:addBuilding(item[1],item[2],8,true)
         if item[1]~="barracks" then b.workers=1 end
     end
@@ -29,6 +29,11 @@ V.atFrame(6, function()
     end
     local idle=Characters.sprite("civilian-blue-man","se",false,nil,0,0)
     V.assert(idle=="person-civilian-blue-man-se","Stationary villagers use their resting pose")
+    V.assert(Characters.sprite("civilian-blue-man","se",false,"eat",0,0)=="person-seated-blue-man",
+        "Eating switches the same civilian to a painted sitting pose")
+    V.assert(Characters.sprite("occupation-chef","sw",false,"eat",0,0)=="person-seated-chef" and
+        Characters.sprite("occupation-guard","se",false,"eat",0,0)=="person-seated-guard",
+        "Specialists and guards retain their identity when sitting down")
     V.assert(Characters.sprite("civilian-blue-man","se",true,nil,0,0)==idle and
         Characters.sprite("civilian-blue-man","se",true,nil,0.2,0)==idle .. "-stride",
         "Walking villagers alternate two drawn stride frames")
