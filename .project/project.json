@@ -13,11 +13,21 @@
     "screen_orientation": "landscape",
     "collection_type": "sce",
     "trial_note": "横屏试玩。先选有限关卡或无限拓荒，再点入村；点底部按钮后点空地营造，建筑下方一格须接路；单指拖动、双指缩放。当前为测试原型，未启用存档。",
-    "app_platforms": "1,2"
+    "app_platforms": "1,2",
+    "app_id": 981728,
+    "miniapp_id": "tapmc9ckaeqbkquaxy",
+    "developer_id": 496735
   },
   "assets": {
     "icon": "",
     "screenshots": [],
     "promotional_image": ""
+  },
+  "test_qrcode": {
+    "url": "https://tapcode-sce.spark.xd.com/qrcode/m_jg7f_1792233881160.png",
+    "generated_at": "2026-10-17T10:44:41.289Z"
+  },
+  "metadata": {
+    "updated_at": "2026-10-17T10:44:41.289Z"
   }
 }
