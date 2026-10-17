@@ -110,8 +110,8 @@ function Hud.create(sim, world, actions)
         else open("village") end
     end, { id = "questChip", position = "absolute", top = 60, left = 12, height = 44, fontSize = 13 })
     local placementText = label("", 13)
-    local placement = panel { position = "absolute", bottom = 82, left = 12, width = 186, padding = 10, gap = 8, visible = false,
-        children = { placementText, button("完成放置", function() actions.setMode("inspect") end, { id = "cancelPlacement" }) } }
+    local placement = panel { position = "absolute", bottom = 82, left = 12, width = 206, padding = 10, gap = 8, visible = false,
+        children = { placementText, button("结束营造", function() actions.setMode("inspect") end, { id = "cancelPlacement", width = 120 }) } }
     local toast = label("", 13)
     local notice = panel { position = "absolute", bottom = 84, left = "26%", maxWidth = "42%", padding = 12, visible = false, pointerEvents = "none", children = { toast } }
     local menuStatus = label("", 12, Skin.muted)
@@ -299,7 +299,7 @@ function Hud.create(sim, world, actions)
         placement:SetVisible(actions.mode ~= "inspect" and not opened)
         if actions.mode ~= "inspect" then
             local width,height=D.footprint(actions.mode)
-            placementText:SetText(D.buildings[actions.mode].name .. " · " .. width .. "×" .. height .. " 格\n拖动预览，松手建造\n绿色可建 · 红色不可建")
+            placementText:SetText(D.buildings[actions.mode].name .. " " .. width .. "×" .. height .. "\n拖动选址，松手建造\n绿：可建  红：不可建")
         end
         ending:SetVisible(session.accepted and (sim.victory or sim.defeat))
         if sim.victory then resultTitle:SetText("炊烟又起，乡里安宁"); resultText:SetText("粮道已通，乡勇已成，清溪里再闻饭香。")

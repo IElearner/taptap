@@ -51,7 +51,7 @@ local function house(vg, b, selected, clock, art, ghost)
     end
     local size = 126 + 22*math.max(width-1,height-1) + (b.kind == "store" and 10 or 0)
     local atlasPainted=false
-    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,ghost and 0.47 or (b.complete and 1 or 0.65)) end
+    if not art or art<=0 then atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,ghost and 0.7 or (b.complete and 1 or 0.65)) end
     if (art and art > 0) or atlasPainted then
         if art and art > 0 then
         nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
@@ -421,7 +421,7 @@ function WorldView.create(sim, onTile)
                         local width,height=D.footprint(mode)
                         local valid=sim:canBuild(mode,x,y)
                         for dx=1-width,0 do for dy=1-height,0 do
-                            tile(vg,x+dx,y+dy,valid and {106,207,150,130} or {220,95,78,145},2)
+                            tile(vg,x+dx,y+dy,valid and {106,207,150,180} or {220,95,78,185},2)
                         end end
                         if mode ~= "road" then
                             house(vg,{kind=mode,x=x,y=y,footprintW=width,footprintH=height,complete=false,progress=0},false,sim.elapsed,nil,true)
