@@ -7,12 +7,12 @@
   "entry": "main.lua",
   "version": "1.0.0",
   "taptap_publish": {
-    "title": "",
-    "description": "",
-    "category": "",
+    "title": "山河里",
+    "description": "中式等距城镇经营策略原型。有限模式跟随教学重建清溪里、打通粮食链并守村；无限模式逐圈拓荒、补给乡勇、抵御持续来袭。",
+    "category": "strategy",
     "screen_orientation": "landscape",
     "collection_type": "sce",
-    "trial_note": "",
+    "trial_note": "横屏试玩。先选有限关卡或无限拓荒，再点入村；点底部按钮后点空地营造，建筑下方一格须接路；单指拖动、双指缩放。当前为测试原型，未启用存档。",
     "app_platforms": "1,2"
   },
   "assets": {
