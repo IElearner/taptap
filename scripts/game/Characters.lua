@@ -14,25 +14,21 @@ C.civilians = {
     { id = "grey-elder", color = { 124, 121, 108 }, hat = "cap", age = "elder", gender = "male" },
     { id = "green-woman", color = { 88, 128, 91 }, hat = "braid", age = "young-adult", gender = "female" },
 }
-local occupations = {
-    farm = { id = "farmer", color = { 171, 139, 72 }, hat = "straw", gender = "female" },
-    ranch = { id = "farmer", color = { 171, 139, 72 }, hat = "straw", gender = "female" },
-    mill = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "elder", gender = "male" },
-    butcher = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "adult", gender = "male" },
-    kitchen = { id = "artisan", color = { 119, 131, 146 }, hat = "cap", age = "elder", gender = "male" },
-    woodcutter = { id = "logger", color = { 133, 100, 67 }, hat = "scarf", gender = "male" },
-    quarry = C.civilians[3],
+local specialists = {
+    kitchen = { id = "chef", color = { 74, 91, 116 }, hat = "scarf", age = "adult", gender = "female" },
+    butcher = { id = "butcher", color = { 132, 79, 57 }, hat = "cap", age = "adult", gender = "male" },
 }
 function C.carrier(index, carrying)
     local profile = C.civilians[(index - 1) % #C.civilians + 1]
     return (carrying and "loaded-" or "civilian-") .. profile.id, profile
 end
 function C.worker(building, index)
-    if not building.complete or index > building.workers or index < 1 then return nil end
-    local profile = occupations[building.kind]
-    if not profile then return nil end
-    local role = building.kind == "quarry" and "civilian-grey-elder" or ("occupation-" .. profile.id)
-    return role, profile
+    if not building or not building.complete or index > building.workers or index < 1 then return nil end
+    local specialist = specialists[building.kind]
+    if specialist then return "occupation-" .. specialist.id, specialist end
+    -- Carrying, construction and ordinary production are assignments of the
+    -- same civilian profession. A stable building/slot seed keeps each face.
+    return C.carrier((building.id or 1) + index - 1, false)
 end
 function C.militia(index)
     if index % 2 == 0 then

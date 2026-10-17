@@ -1,6 +1,6 @@
 local Art=require "game.Art"
 V.atFrame(8,function()
-    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers",
+    for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment","atlas-villagers","atlas-workers","atlas-specialists",
         "atlas-loaded","atlas-combatants","atlas-icons","panel-wood","button-painting",
         "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
         "atlas-builders-hammer-up","atlas-builders-hammer-down"}) do
@@ -14,6 +14,7 @@ V.atFrame(8,function()
         "person-civilian-blue-man-se","person-civilian-ochre-woman-sw","person-civilian-grey-elder-ne",
         "person-civilian-green-woman-nw","person-loaded-green-woman-se",
         "person-occupation-farmer-se","person-occupation-artisan-sw","person-occupation-logger-ne","person-occupation-guard-nw",
+        "person-occupation-chef-se","person-occupation-chef-nw","person-occupation-butcher-sw","person-occupation-butcher-ne",
         "person-civilian-blue-man-se-stride","person-loaded-green-woman-sw-stride",
         "person-occupation-farmer-ne-stride","person-civilian-grey-elder-nw-hammer-up",
         "person-civilian-ochre-woman-se-hammer-down",

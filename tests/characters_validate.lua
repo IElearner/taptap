@@ -12,8 +12,10 @@ V.atFrame(6, function()
         read = function() return nil end, write = function() return true end }))
     local state, _, hud = Game.Inspect()
     hud.dismissIntro()
-    for _, item in ipairs({ {"farm",8}, {"mill",9}, {"woodcutter",11}, {"barracks",12} }) do
-        V.assert(state:build(item[1],item[2],8), "Build staffed scene: " .. item[1])
+    state.population=20
+    for _, item in ipairs({ {"farm",8}, {"kitchen",11}, {"butcher",12}, {"barracks",13} }) do
+        local b=state:addBuilding(item[1],item[2],8,true)
+        if item[1]~="barracks" then b.workers=1 end
     end
     for _ = 1, 300 do state:update(0.1) end
     V.assert(state:train() and state:train(), "Male and female militia can be presented from real training")
@@ -37,20 +39,28 @@ V.atFrame(6, function()
         "Builders alternate raised and striking hammer frames")
     V.assert(Characters.worker({kind="farm",complete=false,workers=1},1) == nil, "No phantom worker before construction completes")
     V.assert(Characters.worker({kind="farm",complete=true,workers=0},1) == nil, "Unstaffed buildings have no decorative production worker")
+    local farmRole, farmProfile = Characters.worker({id=4,kind="farm",complete=true,workers=1},1)
+    local porterRole, porterProfile = Characters.carrier(4,false)
+    V.assert(farmRole==porterRole and farmProfile==porterProfile,"Farm production and carrying share the civilian worker profession")
+    local cookRole = Characters.worker({id=5,kind="kitchen",complete=true,workers=1},1)
+    local butcherRole = Characters.worker({id=6,kind="butcher",complete=true,workers=1},1)
+    V.assert(cookRole=="occupation-chef" and butcherRole=="occupation-butcher","Kitchen and slaughterhouse use distinct skilled professions")
 end)
 V.atFrame(30, function()
     local s = Game.Inspect()
-    local civilians, farmer, logger, guard = {}, false, false, false
+    local civilians, guard, cook, butcher = {}, false, false, false
     for name in pairs(seen) do
         if name:find("blue%-man") then civilians.blue = true end
         if name:find("ochre%-woman") then civilians.ochre = true end
         if name:find("grey%-elder") then civilians.grey = true end
-        farmer = farmer or name:find("occupation%-farmer") ~= nil
-        logger = logger or name:find("occupation%-logger") ~= nil
         guard = guard or name:find("occupation%-guard") ~= nil
+        cook = cook or name:find("occupation%-chef") ~= nil
+        butcher = butcher or name:find("occupation%-butcher") ~= nil
     end
     V.assert(civilians.blue and civilians.ochre and civilians.grey, "Actual renderer requests distinct carrier identities")
-    V.assert(farmer and logger, "Actual renderer presents farmers and loggers at staffed buildings")
+    V.assert(not seen["person-occupation-farmer-se"] and not seen["person-occupation-logger-se"],
+        "Farm and timber workers are rendered as ordinary villagers")
+    V.assert(cook and butcher,"Actual renderer shows distinct chef and butcher at their workplaces")
     V.assert(guard, "Actual renderer includes female militia alongside existing militia")
     for resource, amount in pairs(snapshot.world.stock) do
         V.assert(s.stock[resource] == amount, "Presentation preserves saved economy: " .. resource)

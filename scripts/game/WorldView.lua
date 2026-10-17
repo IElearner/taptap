@@ -228,6 +228,17 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
         line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
         if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
+    elseif action=="cook" then
+        local stir=math.sin(clock*6)
+        nvgBeginPath(vg);nvgEllipse(vg,sx+10,sy-1,8,4);nvgFillColor(vg,color({82,68,51,220}));nvgFill(vg)
+        nvgBeginPath(vg);nvgEllipse(vg,sx+10,sy-3,6,2);nvgFillColor(vg,color({176,137,78,230}));nvgFill(vg)
+        line(vg,sx+8,sy-13,sx+10+stir*4,sy-5,{180,145,86},2)
+        if stir>0 then circle(vg,sx+13,sy-18-stir*2,2,{233,222,191,100}) end
+    elseif action=="butcher" then
+        local swing=math.sin(clock*7)
+        rect(vg,sx+3,sy-2,17,4,{108,75,45,225})
+        line(vg,sx+4,sy-10,sx+12+swing*3,sy-17+swing*8,{139,98,58},2)
+        line(vg,sx+10+swing*3,sy-17+swing*8,sx+17+swing*3,sy-15+swing*8,{171,172,157},3)
     end
     thoughtBubble(vg,sx,sy,thought)
 end
@@ -460,7 +471,7 @@ function WorldView.create(sim, onTile)
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
             agentsByDepth[depth]=agentsByDepth[depth] or {}
             local walking=a.path and a.path[a.index] ~= nil
-            local clock=(walking or action=="hammer" or action=="eat" or action=="farm") and sim.elapsed or 0
+            local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="cook" or action=="butcher") and sim.elapsed or 0
             local thought
             if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
                 if (a.hunger or 0)>=65 then thought="food"
@@ -485,7 +496,9 @@ function WorldView.create(sim, onTile)
         for _,a in pairs(sim.workers) do
             local b=sim.buildings[a.building]
             local role,profile=Characters.worker(b,a.slot)
-            local action=a.meal and a.meal.phase=="eat" and "eat" or ((b.kind=="farm" or b.kind=="ranch") and not a.meal and "farm" or nil)
+            local action=a.meal and a.meal.phase=="eat" and "eat" or
+                (not a.meal and ((b.kind=="farm" or b.kind=="ranch") and "farm" or
+                    b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
             if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
         end
         for index,a in ipairs(sim.builders) do

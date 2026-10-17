@@ -57,9 +57,10 @@ function Hud.create(sim, world, actions)
     local supplyInfo=label("",12,Skin.muted)
     local next = button("完成后继续 →", function() if sim:nextLesson() then close() end end, { id = "nextLesson" })
     local activityInfo=label("",12,Skin.muted)
+    local jobInfo=label("",12,Skin.gold)
     local villageDrawer = drawer("village", "乡 里 事 务", {
-        worldInfo, supplyInfo, activityInfo, title, line1, line2, line3, progress, next,
-        label("木材获取：营造 → 伐木场 → 门前接路 → 安排伐木工 → 搬运工送回义仓。",12,Skin.gold),
+        worldInfo, supplyInfo, jobInfo, activityInfo, title, line1, line2, line3, progress, next,
+        label("木材获取：营造 → 伐木场 → 门前接路 → 安排工人 → 工人运回义仓。",12,Skin.gold),
         label("肉食链：牧场养牲畜 → 屠宰场加工鲜肉 → 食堂烹制口粮。",12,Skin.gold),
         button("重新阅读教程", function() sim.lesson, sim.skipped = 1, false; mentorShownLesson=0; close() end,{id="restartMentor"}),
         button("结束教学 · 自由经营", function() sim.skipped, sim.lesson = true, #D.lessons + 1; close(); if dismissMentor then dismissMentor() end end),
@@ -276,15 +277,25 @@ function Hud.create(sim, world, actions)
             roadState:SetText("地块 " .. p.x .. "," .. p.y .. "\n进度 " .. math.floor(p.progress*100) .. "%\n" .. status)
         end
         activityInfo:SetText("待铺路 " .. #sim.pendingRoads .. " · 施工 " .. require("game.Construction").busy(sim) .. " 人 · 供餐 " .. sim.mealsServed)
+        local labor,chefs,butchers=0,0,0
+        for _,job in ipairs(sim.buildings) do
+            if job.complete then
+                if job.kind=="kitchen" then chefs=chefs+job.workers
+                elseif job.kind=="butcher" then butchers=butchers+job.workers
+                else labor=labor+job.workers end
+            end
+        end
+        jobInfo:SetText("工人 " .. (#sim.carriers+labor+require("game.Construction").busy(sim)) ..
+            "（搬运 " .. #sim.carriers .. " / 生产 " .. labor .. "） · 厨师 " .. chefs .. " · 屠夫 " .. butchers .. " · 空闲 " .. sim:availableWorkers())
         local b = actions.selected
         if b then
             local def = D.buildings[b.kind]
             selectedTitle:SetText(def.name); selectedInfo:SetText(def.description)
-            selectedState:SetText(b.complete and ("岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
+            selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
             if b.kind=="farm" and b.complete then
-                selectedState:SetText("农夫 " .. (b.activeWorkers or 0) .. " 人 · 稻穗生长 " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n每次收获 3 袋稻谷，由搬运工运入义仓。")
+                selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · 稻穗生长 " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n每次收获 3 袋稻谷，由工人运入义仓。")
             elseif b.kind=="woodcutter" and b.complete then
-                selectedState:SetText("伐木工 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n木材余量 " .. sim.timber .. " · 门前接路后搬运工送回义仓。")
+                selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n木材余量 " .. sim.timber .. " · 门前接路后工人送回义仓。")
             end
             if b.kind=="kitchen" and b.complete then
                 local inside,queue=0,0
@@ -300,7 +311,7 @@ function Hud.create(sim, world, actions)
                 for _,a in ipairs(sim.builders) do visit(a) end
                 for _,a in ipairs(sim.guards or {}) do visit(a) end
                 local Meals=require "game.Meals"
-                selectedState:SetText("供餐席位 " .. inside .. "/" .. Meals.seats .. " · 门前候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 米粉 " .. sim.stock.flour .. " / 鲜肉 " .. sim.stock.meat .. "\n搬运工送粮，村民入座吃饭。")
+                selectedState:SetText("厨师 " .. (b.activeWorkers or 0) .. " 人 · 供餐席位 " .. inside .. "/" .. Meals.seats .. " · 候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 米粉 " .. sim.stock.flour .. " / 鲜肉 " .. sim.stock.meat .. "\n工人送粮，村民入座吃饭。")
             end
             minus:SetVisible(def.output ~= nil); plus:SetVisible(def.output ~= nil)
             train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")

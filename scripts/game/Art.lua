@@ -4,7 +4,7 @@ local Art = {}
 local textures, context = {}, nil
 local direct = {}
 for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-livestock-buildings","atlas-environment",
-    "atlas-villagers","atlas-workers","atlas-loaded","atlas-combatants","atlas-icons",
+    "atlas-villagers","atlas-workers","atlas-specialists","atlas-loaded","atlas-combatants","atlas-icons",
     "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
     "atlas-builders-hammer-up","atlas-builders-hammer-down",
     "panel-wood","button-painting"}) do direct[name]=true end
@@ -49,6 +49,11 @@ for row,id in ipairs({"farmer","artisan","logger","guard"}) do
         local worker="person-occupation-" .. id .. "-" .. dir
         atlas[worker]={source="atlas-workers",col=col-1,row=row-1,cols=4,rows=4}
         atlas[worker .. "-stride"]={source="atlas-workers-stride",col=col-1,row=row-1,cols=4,rows=4}
+    end
+end
+for row,id in ipairs({"chef","butcher"}) do
+    for col,dir in ipairs(directions) do
+        atlas["person-occupation-" .. id .. "-" .. dir]={source="atlas-specialists",col=col-1,row=row-1,cols=4,rows=2}
     end
 end
 function Art.path(name) return "image/" .. name .. ".png" end
