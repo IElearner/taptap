@@ -25,6 +25,16 @@ V.atFrame(6, function()
         local after, p2 = Characters.carrier(index,true)
         V.assert(p1 == p2 and before ~= after, "Carrying changes pose without changing identity")
     end
+    local idle=Characters.sprite("civilian-blue-man","se",false,nil,0,0)
+    V.assert(idle=="person-civilian-blue-man-se","Stationary villagers use their resting pose")
+    V.assert(Characters.sprite("civilian-blue-man","se",true,nil,0,0)==idle and
+        Characters.sprite("civilian-blue-man","se",true,nil,0.2,0)==idle .. "-stride",
+        "Walking villagers alternate two drawn stride frames")
+    V.assert(Characters.sprite("loaded-green-woman","nw",true,nil,0.2,0)=="person-loaded-green-woman-nw-stride",
+        "Carrying villagers retain their load while walking")
+    V.assert(Characters.sprite("civilian-ochre-woman","sw",false,"hammer",0,0)=="person-civilian-ochre-woman-sw-hammer-up" and
+        Characters.sprite("civilian-ochre-woman","sw",false,"hammer",0.3,0)=="person-civilian-ochre-woman-sw-hammer-down",
+        "Builders alternate raised and striking hammer frames")
     V.assert(Characters.worker({kind="farm",complete=false,workers=1},1) == nil, "No phantom worker before construction completes")
     V.assert(Characters.worker({kind="farm",complete=true,workers=0},1) == nil, "Unstaffed buildings have no decorative production worker")
 end)

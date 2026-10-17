@@ -106,11 +106,15 @@ local function house(vg, b, selected, clock, art)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
 end
-local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo)
-    local sx, sy = iso(x, y); local step = math.sin(clock * 9 + x) * 2
-    local size = 42
-    local name = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
-    local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85+step*0.2, size, size)
+local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase)
+    local sx, sy = iso(x, y)
+    local step = walking and math.abs(math.sin(clock * 12 + (phase or 0))) * 1.6 or 0
+    local size = action == "hammer" and 47 or 42
+    local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
+    local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
+    nvgBeginPath(vg); nvgEllipse(vg, sx+2, sy+3, 8, 3); nvgFillColor(vg, color({ 26, 32, 24, 48 })); nvgFill(vg)
+    local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step, size, size)
+    if not painted and name~=base then painted=Art.draw(vg,base,sx-size/2,sy-size*0.85-step,size,size) end
     if not painted then
     nvgBeginPath(vg); nvgEllipse(vg, sx, sy + 2, 5, 2); nvgFillColor(vg, color({ 30, 42, 28, 65 })); nvgFill(vg)
     line(vg, sx - 1, sy - 2, sx - 3, sy + 3 + step, { 62, 64, 56 }, 2)
@@ -142,7 +146,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
             end
         end
     end
-    if action=="hammer" then
+    if action=="hammer" and not painted then
         local angle=-0.8+math.sin(clock*9)*1.05
         local hx,hy=sx+5+math.sin(angle)*12,sy-11-math.cos(angle)*12
         line(vg,sx+3,sy-10,hx,hy,{173,133,78},2)
@@ -151,6 +155,11 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
             line(vg,sx+11,sy-2,sx+15,sy-5,{224,201,116},1)
             line(vg,sx+12,sy-1,sx+17,sy,{224,201,116},1)
         end
+    elseif action=="hammer" and name:sub(-11)=="hammer-down" then
+        local strikeX = (direction == "sw" or direction == "nw") and sx+10 or sx-10
+        circle(vg,strikeX,sy-1,3,{185,169,126,95})
+        line(vg,strikeX-5,sy-3,strikeX-8,sy-6,{217,194,139,150},1)
+        line(vg,strikeX+4,sy-3,strikeX+7,sy-7,{217,194,139,150},1)
     elseif action=="eat" then
         circle(vg,sx+5,sy-9,4,{223,213,179})
         line(vg,sx+5,sy-9,sx+1,sy-12-math.sin(clock*5)*2,{145,115,67},1.5)
@@ -351,7 +360,7 @@ function WorldView.create(sim, onTile)
             agentsByDepth[depth]=agentsByDepth[depth] or {}
             local walking=a.path and a.path[a.index] ~= nil
             local clock=(walking or action=="hammer" or action=="eat") and sim.elapsed or 0
-            table.insert(agentsByDepth[depth],{actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,clock=clock})
+            table.insert(agentsByDepth[depth],{actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,clock=clock,walking=walking,phase=queueSlot or 0})
         end
         for index,a in ipairs(sim.carriers) do
             local role,profile=Characters.carrier(index,a.carrying)
@@ -366,7 +375,7 @@ function WorldView.create(sim, onTile)
         for index,a in ipairs(sim.builders) do
             if a.active then
                 local role,profile=Characters.carrier(index,false)
-                addAgent(a,role,profile,a.phase=="hammer" and "hammer" or nil,a.carrying and "wood" or nil)
+                addAgent(a,role,profile,a.phase=="hammer" and "hammer" or nil,a.carrying and "wood" or nil,index)
             end
         end
         for sum = minX + minY, maxX + maxY do
@@ -389,7 +398,7 @@ function WorldView.create(sim, onTile)
             if bucket then
                 for _,entry in ipairs(bucket) do
                     local a=entry.actor
-                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo)
+                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo,entry.walking,entry.phase)
                 end
             end
         end

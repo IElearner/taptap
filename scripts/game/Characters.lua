@@ -38,4 +38,15 @@ function C.militia(index)
     end
     return "militia", { color = { 125, 64, 53 }, hat = "cap", gender = "male" }
 end
+-- A pose is selected from simulation time, so pausing and restoring a save do
+-- not require storing any visual animation state in the world data.
+function C.sprite(role, direction, walking, action, clock, phase)
+    local base = "person-" .. role .. "-" .. (direction or "se")
+    local offset = (phase or 0) * 0.7
+    if action == "hammer" then
+        return base .. (math.floor((clock or 0) * 4 + offset) % 2 == 0 and "-hammer-up" or "-hammer-down")
+    end
+    if walking and math.floor((clock or 0) * 6 + offset) % 2 == 1 then return base .. "-stride" end
+    return base
+end
 return C

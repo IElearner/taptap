@@ -5,6 +5,8 @@ local textures, context = {}, nil
 local direct = {}
 for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-environment",
     "atlas-villagers","atlas-workers","atlas-loaded","atlas-combatants","atlas-icons",
+    "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
+    "atlas-builders-hammer-up","atlas-builders-hammer-down",
     "panel-wood","button-painting"}) do direct[name]=true end
 local atlas = {}
 local function register(prefix,atlasName,names,cols,rows,options)
@@ -24,8 +26,14 @@ local directions={"se","sw","ne","nw"}
 for row,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
     for col,dir in ipairs(directions) do
         local spec={source="atlas-villagers",col=col-1,row=row-1,cols=4,rows=4}
-        atlas["person-civilian-" .. id .. "-" .. dir]=spec
-        atlas["person-loaded-" .. id .. "-" .. dir]={source="atlas-loaded",col=col-1,row=row-1,cols=4,rows=4}
+        local civilian="person-civilian-" .. id .. "-" .. dir
+        local loaded="person-loaded-" .. id .. "-" .. dir
+        atlas[civilian]=spec
+        atlas[loaded]={source="atlas-loaded",col=col-1,row=row-1,cols=4,rows=4}
+        atlas[civilian .. "-stride"]={source="atlas-villagers-stride",col=col-1,row=row-1,cols=4,rows=4}
+        atlas[loaded .. "-stride"]={source="atlas-loaded-stride",col=col-1,row=row-1,cols=4,rows=4}
+        atlas[civilian .. "-hammer-up"]={source="atlas-builders-hammer-up",col=col-1,row=row-1,cols=4,rows=4}
+        atlas[civilian .. "-hammer-down"]={source="atlas-builders-hammer-down",col=col-1,row=row-1,cols=4,rows=4}
     end
 end
 for row,id in ipairs({"militia","bandit"}) do
@@ -37,7 +45,9 @@ register("icon-","atlas-icons",{"build","village","army","system","wood","stone"
     "food","home","pause","save","idle","tutorial","map","supplies"},4,4)
 for row,id in ipairs({"farmer","artisan","logger","guard"}) do
     for col,dir in ipairs(directions) do
-        atlas["person-occupation-" .. id .. "-" .. dir]={source="atlas-workers",col=col-1,row=row-1,cols=4,rows=4}
+        local worker="person-occupation-" .. id .. "-" .. dir
+        atlas[worker]={source="atlas-workers",col=col-1,row=row-1,cols=4,rows=4}
+        atlas[worker .. "-stride"]={source="atlas-workers-stride",col=col-1,row=row-1,cols=4,rows=4}
     end
 end
 function Art.path(name) return "image/" .. name .. ".png" end

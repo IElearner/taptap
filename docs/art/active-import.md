@@ -1,6 +1,6 @@
 # 已接入游戏的图片
 
-2026-10-17 在本工作区重新生成并实际导入十一张原画。原始输出保留在 `/workspace/generated_images/`，项目副本在 `assets/image/`；没有使用先前无法下载的 Maker 图集 URL。图集的实际尺寸及内容已经逐张目视检查，游戏直接按图集格子读取，不依赖预设的 101 张裁切文件。
+2026-10-17 在本工作区重新生成并实际导入十六张原画。原始输出保留在 `/workspace/generated_images/`，项目副本在 `assets/image/`；没有使用先前无法下载的 Maker 图集 URL。图集的实际尺寸及内容已经逐张目视检查，游戏直接按图集格子读取，不依赖预设的 101 张裁切文件。
 
 | 游戏资源 | 图集内容 | 源文件 |
 |---|---|---|
@@ -15,9 +15,14 @@
 | `atlas-icons.png` | 4×4 菜单、物资及状态图标 | `exec-55a83b0a-3791-43bf-b90c-2bfe811e1a56.png` |
 | `panel-wood.png` | 手绘深色木纹面板 | `exec-b8028b65-9a21-4312-8298-c67c3fa818a6.png` |
 | `button-painting.png` | 铜饰木质按钮 | `exec-99b3e56b-52d6-4d1c-b578-6c429910bb22.png` |
+| `atlas-villagers-stride.png` | 四种村民的迈步姿态 | `exec-893356b3-282c-44eb-9637-dec6977df5a2.png` |
+| `atlas-loaded-stride.png` | 四种负重村民的迈步姿态 | `exec-8dfdb813-6371-40fd-bb7d-4f98fac8ec45.png` |
+| `atlas-workers-stride.png` | 在岗工人的迈步姿态 | `exec-a801c819-d094-41ec-9dc1-c4aafcde0095.png` |
+| `atlas-builders-hammer-up.png` | 村民举锤施工帧 | `exec-b7ecced7-1c81-4eff-ada4-751230baf52c.png` |
+| `atlas-builders-hammer-down.png` | 村民落锤施工帧 | `exec-1d385536-0a28-48b3-8cff-c2addf41e7bc.png` |
 
-十一张图已有 Maker 官方 `.meta`。`Art.lua` 按实际图集位置和尺寸取样；搬运人物、界面图标、木纹面板和按钮均读取图片。当前登录页、教程和地图截图已在真实引擎中核对；地图地面图集为减少重复纹理以较低透明度覆盖基础地块。
+十六张图已有 Maker 官方 `.meta`。`Art.lua` 按实际图集位置和尺寸取样；搬运人物、界面图标、木纹面板和按钮均读取图片。行走时按身份、方向在原图与迈步图之间切换，真实施工阶段在举锤与落锤图之间切换；暂停游戏时动画时钟同步暂停。当前登录页、教程和地图截图已在真实引擎中核对；地图地面图集为减少重复纹理以较低透明度覆盖基础地块。
 
 手机测试包的资源路径从 `asset_dirs` 根目录开始，使用 `image/*.png`，不能使用工作区文件路径 `assets/image/*.png` 或 `fileSystem:FileExists` 判断资源是否可用。`.project/resources.json` 把 `default` 加入 `preload_groups`，保证这些界面与地图图片在游戏启动前下载；生成测试二维码后应核对线上 manifest 的 `preload_groups` 和图片条目。
 
-先前 `handpaint-layout.json` 对应的 Maker 输出仍未下载，`dev/check_art.py` 是那套完整裁切素材的验收脚本，不能用其缺失报告代替本次六张图片是否已接入的验证。
+先前 `handpaint-layout.json` 对应的 Maker 输出仍未下载，`dev/check_art.py` 是那套完整裁切素材的验收脚本，不能用其缺失报告代替本次十六张图片是否已接入的验证。
