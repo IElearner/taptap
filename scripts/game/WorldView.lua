@@ -22,14 +22,13 @@ local function line(vg, x1, y1, x2, y2, c, width)
     nvgBeginPath(vg); nvgMoveTo(vg, x1, y1); nvgLineTo(vg, x2, y2)
     nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, width or 1); nvgStroke(vg)
 end
--- Knights & Merchants-like map: world X runs across the screen and world Y
--- runs down it. Buildings retain a painted facade, but roads are orthogonal.
+-- Bird's-eye map: world X runs across the screen and world Y runs down it.
 local TILE_W,TILE_H=56,42
 local function project(x,y) return (x-10)*TILE_W,(y-9)*TILE_H end
 local function unproject(x,y) return x/TILE_W+10,y/TILE_H+9 end
 local function buildingVisualSize(b)
     local width,height=b.footprintW or 1,b.footprintH or 1
-    return math.min(width*TILE_W-4,height*TILE_H+48)
+    return math.min(width*TILE_W+4,height*TILE_H+54)
 end
 local function tile(vg, x, y, c, shrink)
     local sx,sy=project(x,y)
@@ -160,11 +159,13 @@ local function house(vg, b, selected, clock, art, ghost, sim)
         for dx = 1-width, 0 do for dy = 1-height, 0 do tile(vg, b.x+dx, b.y+dy, { 239, 208, 115, 120 }) end end
     end
     if b.kind=="farm" then drawFarm(vg,b,sim,ghost);return end
-    -- Anchor each painted facade at the south edge of its rectangular site.
+    -- Anchor each roof at the south edge of its rectangular site.
     local size = buildingVisualSize(b)
+    local dining=b.kind=="kitchen" and b.complete and sim and Meals.occupancy(sim,b.id)>0
     local atlasPainted=false
     if not art or art<=0 then
-        atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,ghost and 0.7 or (b.complete and 1 or 0.65))
+        atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,
+            ghost and 0.7 or dining and 0.22 or (b.complete and 1 or 0.65))
     end
     if (art and art > 0) or atlasPainted then
         if art and art > 0 then
@@ -217,21 +218,18 @@ end
 local function diningFloor(vg,b,side)
     local width,height=b.footprintW or 1,b.footprintH or 1
     local x,y=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-    -- Open cutaway in the kitchen facade: four seats stay within its footprint.
-    rect(vg,x-43,y+7,86,51,{72,51,32,245})
-    rect(vg,x-39,y+10,78,43,{173,125,68,248})
-    for i=0,5 do line(vg,x-37+i*14,y+10,x-37+i*14,y+53,{207,155,90,90},1) end
-    line(vg,x-44,y+8,x+44,y+8,{95,64,39,245},4)
-    line(vg,x-44,y+8,x-44,y+57,{94,62,37,245},3)
-    line(vg,x+44,y+8,x+44,y+57,{94,62,37,245},3)
-    rect(vg,x-12,y+25,24,19,{103,70,43,245})
-    rect(vg,x-10,y+26,20,15,{217,174,101,245})
+    -- Roof lifts while occupied, revealing a complete four-seat room.
+    rect(vg,x-52,y-39,104,80,{76,51,32,250})
+    rect(vg,x-48,y-35,96,72,{166,119,66,250})
+    for i=0,6 do line(vg,x-47+i*15,y-35,x-47+i*15,y+37,{211,165,95,90},1) end
+    rect(vg,x-20,y-10,40,20,{94,59,37,245})
+    rect(vg,x-18,y-8,36,16,{218,173,91,245})
+    for i=-1,1 do circle(vg,x+i*11,y,3,{226,206,153,215}) end
     for seat=1,Meals.seats do
         local wx,wy=Meals.seatPosition(b,seat,side)
         local sx,sy=project(wx,wy)
-        nvgBeginPath(vg);nvgEllipse(vg,sx,sy+2,8,4);nvgFillColor(vg,color({66,45,30,230}));nvgFill(vg)
-        nvgBeginPath(vg);nvgEllipse(vg,sx,sy,6,3);nvgFillColor(vg,color({180,127,70,245}));nvgFill(vg)
-        circle(vg,sx+3,sy-5,2.3,{229,208,164})
+        nvgBeginPath(vg);nvgEllipse(vg,sx,sy+3,10,5);nvgFillColor(vg,color({67,45,29,235}));nvgFill(vg)
+        nvgBeginPath(vg);nvgEllipse(vg,sx,sy,8,4);nvgFillColor(vg,color({184,130,72,245}));nvgFill(vg)
     end
 end
 local function smallText(vg,x,y,value,size)
@@ -344,6 +342,27 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
         line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
         if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
+    elseif action=="feed" then
+        local reach=math.sin(clock*2.3)
+        nvgBeginPath(vg);nvgEllipse(vg,sx+13,sy+1,9,4)
+        nvgFillColor(vg,color({98,67,39,220}));nvgFill(vg)
+        for i=-1,1 do line(vg,sx+13+i*4,sy+1,sx+13+i*4,sy-2,{178,169,93,215},2) end
+        line(vg,sx+3,sy-10,sx+10+reach*4,sy-3,{180,137,85},2.5)
+    elseif action=="mill" then
+        local turn=clock*2
+        circle(vg,sx+13,sy,8,{116,111,94,235})
+        circle(vg,sx+13,sy,5,{179,172,146,235})
+        line(vg,sx+13,sy,sx+13+math.cos(turn)*7,sy+math.sin(turn)*7,{91,75,49},2)
+    elseif action=="quarry" then
+        local swing=math.sin(clock*2.6)
+        polygon(vg,{sx+7,sy-2,sx+14,sy-9,sx+20,sy-4,sx+18,sy+2},{148,146,127,235})
+        line(vg,sx+2,sy-10,sx+11+swing*4,sy-20+swing*9,{135,96,55},2.5)
+        line(vg,sx+7+swing*4,sy-22+swing*9,sx+17+swing*4,sy-18+swing*9,{185,185,169},3)
+    elseif action=="pack" then
+        local reach=math.sin(clock*2)
+        rect(vg,sx+7,sy-5,16,8,{145,109,61,245})
+        line(vg,sx+8,sy-3,sx+21,sy-3,{225,190,115,210},1.5)
+        line(vg,sx+3,sy-10,sx+11+reach*3,sy-4,{175,137,83},2.5)
     elseif (action=="plow" or action=="tend") and name:sub(1,12)~="person-farm-" then
         local swing=math.sin(clock*2.2)
         local hx,hy=sx+11+swing*3,sy-20+swing*6
@@ -496,8 +515,8 @@ function WorldView.create(sim, onTile)
                 local bottom=18+(height-1)*TILE_H/2
                 local facade=building.kind~="farm" and px>=bx-size*0.48 and px<=bx+size*0.48 and
                     py>=by+bottom-size and py<=by+bottom
-                local porch=building.kind=="kitchen" and building.complete and
-                    px>=bx-44 and px<=bx+44 and py>=by+8 and py<=by+58
+                    local porch=building.kind=="kitchen" and building.complete and
+                    px>=bx-52 and px<=bx+52 and py>=by-39 and py<=by+41
                 if (facade or porch) and building.y+building.x*0.001 > depth then
                     hit, depth = building, building.y+building.x*0.001
                 end
@@ -692,6 +711,16 @@ function WorldView.create(sim, onTile)
                     drawX=a.x+(centerX+math.sin(clock*0.8+(a.slot or 0))*0.22-a.x)*presence
                     drawY=a.y+(centerY+0.42+math.cos(clock*0.8+(a.slot or 0))*0.14-a.y)*presence
                 end
+            elseif a.building and not a.meal and not (a.path and a.path[a.index]) and not a.woodPhase then
+                local workshop=sim.buildings[a.building]
+                if workshop and workshop.kind~="farm" then
+                    local w,h=workshop.footprintW or 1,workshop.footprintH or 1
+                    drawX=workshop.x-(w-1)*0.5+((a.slot or 1)-1)*0.2
+                    drawY=workshop.y-(h-1)*0.5+0.55
+                    if workshop.kind=="kitchen" and Meals.occupancy(sim,workshop.id)>0 then
+                        drawX=workshop.x-(w-1)*0.5+1.12
+                    end
+                end
             elseif guardIndex and not a.meal and not (a.path and a.path[a.index]) then
                 drawX=9.3+((guardIndex-1)%3)*0.28
                 drawY=9.25+math.floor((guardIndex-1)/3)*0.2
@@ -709,7 +738,8 @@ function WorldView.create(sim, onTile)
             local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1) or
                 (a.meal and (a.meal.phase=="enter" or a.meal.phase=="exit"))
             local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="plow" or
-                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher" or action=="chop") and sim.elapsed or 0
+                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher" or action=="chop" or action=="feed" or
+                action=="mill" or action=="quarry" or action=="pack") and sim.elapsed or 0
             local thought
             if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
                 if (a.hunger or 0)>=65 then thought="food"
@@ -737,9 +767,12 @@ function WorldView.create(sim, onTile)
             local role,profile=Characters.worker(b,a.slot)
             local action=a.meal and a.meal.phase=="eat" and "eat" or
                 (not a.meal and (b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.95 and Farm.action(b) or
-                    b.kind=="ranch" and "farm" or
+                    b.kind=="ranch" and "feed" or
                     b.kind=="woodcutter" and a.woodPhase=="chop" and "chop" or
                     b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
+            if not action and not a.meal and b.kind=="mill" then action="mill" end
+            if not action and not a.meal and b.kind=="quarry" then action="quarry" end
+            if not action and not a.meal and b.kind=="courier" then action="pack" end
             if role then addAgent(a,role,profile,action,a.carrying and "wood" or nil,a.building*2+a.slot) end
         end
         for index,a in ipairs(sim.builders) do
@@ -768,7 +801,7 @@ function WorldView.create(sim, onTile)
                     end
                     if b and b.x==x and b.y==y then
                         house(vg,b,selected==b,sim.elapsed,nil,false,sim)
-                        if b.kind=="kitchen" and b.complete then diningFloor(vg,b,diningSide(b)) end
+                        if b.kind=="kitchen" and b.complete and Meals.occupancy(sim,b.id)>0 then diningFloor(vg,b,diningSide(b)) end
                     end
                     if ghost and mode ~= "inspect" and ghost.x==x and ghost.y==y then
                         local width,height=D.footprint(mode)

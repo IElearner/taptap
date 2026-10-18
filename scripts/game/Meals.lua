@@ -43,8 +43,8 @@ end
 function Meals.seatPosition(b,seat,side)
     local column=(seat-1)%2
     local row=math.floor((seat-1)/2)
-    return b.x-((b.footprintW or 1)-1)*0.5+(column-0.5)*0.62,
-        b.y-((b.footprintH or 1)-1)*0.5+0.48+row*0.52
+    return b.x-((b.footprintW or 1)-1)*0.5+(column-0.5)*0.94,
+        b.y-((b.footprintH or 1)-1)*0.5+(row-0.5)*0.72
 end
 local function freeSeat(sim,id,actor)
     local taken={}

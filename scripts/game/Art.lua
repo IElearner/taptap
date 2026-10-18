@@ -25,6 +25,7 @@ for _,name in ipairs({"tree-oak","tree-pine","tree-bamboo","rock-moss","bush-flo
 for _,name in ipairs({"ground-grass","ground-road","ground-water"}) do
     atlas[name].stretch=true;atlas[name].crop={0,42,1,0.79}
 end
+-- Movement keeps legacy direction keys; atlas columns are east, south, north, west.
 local directions={"se","sw","ne","nw"}
 for row,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
     for col,dir in ipairs(directions) do
@@ -39,8 +40,8 @@ for row,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
         atlas[civilian .. "-hammer-down"]={source="atlas-builders-hammer-down",col=col-1,row=row-1,cols=4,rows=4}
     end
 end
-register("person-seated-","atlas-seated-villagers",{"blue-man","ochre-woman","grey-elder","green-woman"},4,1)
-register("person-seated-","atlas-seated-specialists",{"chef","butcher","guard","militia"},4,1)
+register("person-seated-","atlas-seated-eating",{"blue-man","ochre-woman","grey-elder","green-woman"},4,2)
+register("person-seated-","atlas-specialists-eating",{"chef","butcher","guard","militia"},4,2)
 for col,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
     for frame=1,2 do
         atlas["person-eating-" .. id .. "-" .. frame]={source="atlas-seated-eating",col=col-1,row=frame-1,cols=4,rows=2}
