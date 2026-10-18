@@ -29,11 +29,15 @@ V.atFrame(6, function()
     end
     local idle=Characters.sprite("civilian-blue-man","se",false,nil,0,0)
     V.assert(idle=="person-civilian-blue-man-se","Stationary villagers use their resting pose")
-    V.assert(Characters.sprite("civilian-blue-man","se",false,"eat",0,0)=="person-seated-blue-man",
-        "Eating switches the same civilian to a painted sitting pose")
-    V.assert(Characters.sprite("occupation-chef","sw",false,"eat",0,0)=="person-seated-chef" and
-        Characters.sprite("occupation-guard","se",false,"eat",0,0)=="person-seated-guard",
-        "Specialists and guards retain their identity when sitting down")
+    V.assert(Characters.sprite("civilian-blue-man","se",false,"eat",0,0)=="person-eating-blue-man-1" and
+        Characters.sprite("civilian-blue-man","se",false,"eat",0.8,0)=="person-eating-blue-man-2",
+        "Eating animates the same civilian between lowered and raised chopsticks")
+    V.assert(Characters.sprite("occupation-chef","sw",false,"eat",0,0)=="person-eating-chef-1" and
+        Characters.sprite("occupation-guard","se",false,"eat",0.8,0)=="person-eating-guard-2",
+        "Specialists and guards keep their identity through eating frames")
+    V.assert(Characters.sprite("civilian-blue-man","se",false,"plow",0,0)=="person-farm-plow-1" and
+        Characters.sprite("civilian-blue-man","se",false,"plow",0.5,0)=="person-farm-plow-2",
+        "Plowing switches actual illustrated action frames")
     V.assert(Characters.sprite("civilian-blue-man","se",true,nil,0,0)==idle and
         Characters.sprite("civilian-blue-man","se",true,nil,0.2,0)==idle .. "-stride",
         "Walking villagers alternate two drawn stride frames")

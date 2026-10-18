@@ -23,6 +23,10 @@ local function line(vg, x1, y1, x2, y2, c, width)
     nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, width or 1); nvgStroke(vg)
 end
 local function iso(x, y) return (x - y) * 30, (x + y) * 15 end
+local function buildingVisualSize(b)
+    local width,height=b.footprintW or 1,b.footprintH or 1
+    return 104+18*math.max(width-1,height-1)+(b.kind=="store" and 6 or 0)+(b.kind=="kitchen" and 6 or 0)
+end
 local function tile(vg, x, y, c, shrink)
     local sx, sy = iso(x, y); local a = 30 - (shrink or 0); local b = a / 2
     polygon(vg, { sx, sy - b, sx + a, sy, sx, sy + b, sx - a, sy }, c)
@@ -58,7 +62,8 @@ local function drawFarm(vg,b,sim,ghost)
     for dx=1-width,0 do for dy=1-height,0 do
         local tx,ty=b.x+dx,b.y+dy
         local sx,sy=iso(tx,ty)
-        if not Art.draw(vg,"crop-" .. stage,sx-37,sy-37,74,60,alpha) then tile(vg,tx,ty,{121,100,60}) end
+        local sway=(stage=="green" or stage=="ripe") and math.sin((sim and sim.elapsed or 0)*1.1+tx*0.9+ty*0.6)*1.5 or 0
+        if not Art.draw(vg,"crop-" .. stage,sx-37+sway,sy-37,74,60,alpha) then tile(vg,tx,ty,{121,100,60}) end
     end end
     local points={west={-30,0,0,-15},north={0,-15,30,0},east={30,0,0,15},south={0,15,-30,0}}
     for _,edge in ipairs(Farm.exposedEdges(sim,b)) do
@@ -103,19 +108,26 @@ local function house(vg, b, selected, clock, art, ghost, sim)
     local width, height = b.footprintW or 1, b.footprintH or 1
     local x, y = iso(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
     local def = D.buildings[b.kind]
+    if b.kind~="farm" then
+        for dx=1-width,0 do for dy=1-height,0 do
+            tile(vg,b.x+dx,b.y+dy,{111,108,78,180},3)
+        end end
+    end
     if selected then
         for dx = 1-width, 0 do for dy = 1-height, 0 do tile(vg, b.x+dx, b.y+dy, { 239, 208, 115, 120 }) end end
     end
     if b.kind=="farm" then drawFarm(vg,b,sim,ghost);return end
-    local size = 136 + 24*math.max(width-1,height-1) + (b.kind == "store" and 10 or 0) + (b.kind=="kitchen" and 24 or 0)
+    -- Keep roofs within the footprint silhouette; oversized roofs hid roads
+    -- and made close workshops merge into a single painted shape.
+    local size = buildingVisualSize(b)
     local atlasPainted=false
     if not art or art<=0 then
-        atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size*0.9,size,size,ghost and 0.7 or (b.complete and 1 or 0.65))
+        atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,ghost and 0.7 or (b.complete and 1 or 0.65))
     end
     if (art and art > 0) or atlasPainted then
         if art and art > 0 then
-        nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size*0.76, size, size)
-        nvgFillPaint(vg, nvgImagePattern(vg, x-size/2, y-size*0.76, size, size, 0, art, b.complete and 1 or 0.65)); nvgFill(vg)
+        nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size+6, size, size)
+        nvgFillPaint(vg, nvgImagePattern(vg, x-size/2, y-size+6, size, size, 0, art, b.complete and 1 or 0.65)); nvgFill(vg)
         end
         if b.kind == "kitchen" and b.complete then
             for i = 1, 3 do circle(vg, x+10+math.sin(clock+i)*3, y-50-i*7-clock%1*5, 3+i, {235,225,195,60}) end
@@ -160,17 +172,26 @@ local function house(vg, b, selected, clock, art, ghost, sim)
         rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
 end
-local function diningFloor(vg,b)
+local function diningFloor(vg,b,side)
     local width,height=b.footprintW or 1,b.footprintH or 1
     local x,y=iso(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-    -- Raised open-front dining room. Drawn after the roofs so all four seats
-    -- and their occupants remain readable beside adjacent buildings.
-    polygon(vg,{x-48,y+5,x,y-20,x+48,y+5,x,y+32},{92,61,39,245})
-    polygon(vg,{x-42,y+5,x,y-15,x+42,y+5,x,y+26},{169,119,67,250})
-    polygon(vg,{x-24,y+4,x,y-7,x+24,y+4,x,y+15},{103,66,37})
-    polygon(vg,{x-21,y+3,x,y-5,x+21,y+3,x,y+12},{190,145,81})
+    x=x+(side or -1)*60
+    -- The open dining platform is in front of the facade, not painted on the roof.
+    polygon(vg,{x-61,y+18,x,y+1,x+61,y+18,x,y+46},{93,65,40,248})
+    polygon(vg,{x-56,y+17,x,y+5,x+56,y+17,x,y+40},{190,140,79,250})
+    line(vg,x-48,y+22,x+48,y+22,{222,174,103,220},2)
+    polygon(vg,{x-33,y+27,x,y+15,x+33,y+27,x,y+39},{88,59,36,250})
+    polygon(vg,{x-29,y+26,x,y+18,x+29,y+26,x,y+35},{187,143,80,250})
+    -- Low open-front roof and posts make the annex read as a room while its
+    -- occupants remain in front of the roof plane.
+    if not Art.draw(vg,"dining-pavilion",x-68,y-43,136,69) then
+        line(vg,x-53,y-12,x-53,y+18,{101,71,42,240},3)
+        line(vg,x+53,y-12,x+53,y+18,{101,71,42,240},3)
+        polygon(vg,{x-59,y-12,x,y-32,x+59,y-12,x,y-3},{66,69,66,245})
+    end
+    line(vg,x+47,y+7,x+65,y-2,{168,123,68,230},3)
     for seat=1,Meals.seats do
-        local wx,wy=Meals.seatPosition(b,seat)
+        local wx,wy=Meals.seatPosition(b,seat,side)
         local sx,sy=iso(wx,wy)
         nvgBeginPath(vg);nvgEllipse(vg,sx,sy+2,8,4);nvgFillColor(vg,color({66,45,30,230}));nvgFill(vg)
         nvgBeginPath(vg);nvgEllipse(vg,sx,sy,6,3);nvgFillColor(vg,color({180,127,70,245}));nvgFill(vg)
@@ -198,12 +219,19 @@ end
 local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
     local sx, sy = iso(x, y)
     local step = walking and math.abs(math.sin(clock * 7 + (phase or 0))) * 1.4 or 0
-    local size = action == "hammer" and 47 or action == "eat" and 32 or 42
+    local size = action == "hammer" and 47 or action == "eat" and 30 or 42
     local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
     local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
     nvgBeginPath(vg); nvgEllipse(vg, sx+2, sy+3, 8, 3); nvgFillColor(vg, color({ 26, 32, 24, 48 })); nvgFill(vg)
     local poseY=action=="eat" and math.sin(clock*2.2)*0.8 or 0
-    local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step+poseY, size, size)
+    local painted
+    if name:sub(1,12)=="person-farm-" then
+        -- Action cells are twice as wide as high; fit by height rather than
+        -- squeezing the whole frame into the usual square portrait box.
+        painted=Art.draw(vg,name,sx-42,sy-43,84,43)
+    else
+        painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step+poseY, size, size)
+    end
     if not painted and name~=base then painted=Art.draw(vg,base,sx-size/2,sy-size*0.85-step+poseY,size,size) end
     if not painted then
     nvgBeginPath(vg); nvgEllipse(vg, sx, sy + 2, 5, 2); nvgFillColor(vg, color({ 30, 42, 28, 65 })); nvgFill(vg)
@@ -259,7 +287,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         line(vg,strikeX-5,sy-3,strikeX-8,sy-6,{217,194,139,150},1)
         line(vg,strikeX+4,sy-3,strikeX+7,sy-7,{217,194,139,150},1)
     elseif action=="eat" then
-        if name:sub(1,14)=="person-seated-" then
+        if name:sub(1,14)=="person-eating-" or name:sub(1,14)=="person-seated-" then
             circle(vg,sx+4,sy-20-math.sin(clock*2)*2,1.3,{246,234,202,110})
         else
             circle(vg,sx+5,sy-5,4,{229,214,175})
@@ -271,14 +299,14 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
         line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
         if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
-    elseif action=="plow" or action=="tend" then
+    elseif (action=="plow" or action=="tend") and name:sub(1,12)~="person-farm-" then
         local swing=math.sin(clock*2.2)
         local hx,hy=sx+11+swing*3,sy-20+swing*6
         line(vg,sx+3,sy-9,hx,hy,{132,91,52},2.5)
         line(vg,hx-2,hy,hx+7,hy+4,{130,139,126},3)
         line(vg,hx+7,hy+4,hx+8,hy+9,{130,139,126},2)
         if swing>0.6 then circle(vg,sx+12,sy-1,2,{142,112,67,145}) end
-    elseif action=="water" then
+    elseif action=="water" and name:sub(1,12)~="person-farm-" then
         local tilt=math.sin(clock*2)*2
         line(vg,sx+3,sy-9,sx+9,sy-12,{141,103,61},2)
         polygon(vg,{sx+8,sy-15+tilt,sx+18,sy-14+tilt,sx+16,sy-6+tilt,sx+10,sy-6+tilt},{120,103,78,230})
@@ -287,7 +315,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         for i=0,2 do
             line(vg,sx+18+i*2,sy-8+tilt,sx+20+i*3,sy-1+math.sin(clock*2+i)*2,{116,167,181,190},1.4)
         end
-    elseif action=="harvest" then
+    elseif action=="harvest" and name:sub(1,12)~="person-farm-" then
         local swing=math.sin(clock*2.3)
         line(vg,sx+3,sy-9,sx+11+swing*3,sy-15+swing*4,{144,100,53},2)
         line(vg,sx+11+swing*3,sy-15+swing*4,sx+17+swing*3,sy-17+swing*4,{189,188,164},2.4)
@@ -309,11 +337,14 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
 end
 function WorldView.create(sim, onTile)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
-    local camera = { x = 0, y = 0, zoom = 1, pinchZoom = 1 }
+    local camera = { x = 0, y = 0, zoom = 1.15, pinchZoom = 1.15 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
     local mode = "inspect"
     local selected = false
     local pinchAnchor = nil
+    -- The bundled UI gesture recognizer does not currently emit pinch events.
+    -- Track actual pointer IDs here so two physical touches work on iOS.
+    local touches, physicalPinch, pinched = {}, nil, false
     local ghost = nil
     local function projection()
         local l = panel:GetAbsoluteLayout()
@@ -343,17 +374,87 @@ function WorldView.create(sim, onTile)
         local x, y = tileAt(event)
         ghost = { x=x, y=y, kind=mode }
     end
-    panel.props.onPointerDown = preview
-    panel.props.onPointerMove = preview
+    local function point(event)
+        local l=panel:GetAbsoluteLayout()
+        return (event.x or 0)+l.x,(event.y or 0)+l.y
+    end
+    local function beginPhysicalPinch()
+        local pair={}
+        for _,p in pairs(touches) do pair[#pair+1]=p end
+        if #pair<2 then return end
+        local ax,ay,bx,by=pair[1].x,pair[1].y,pair[2].x,pair[2].y
+        local fx,fy=(ax+bx)*0.5,(ay+by)*0.5
+        local l,ox,oy=projection()
+        physicalPinch={distance=math.max(1,math.sqrt((ax-bx)^2+(ay-by)^2)),zoom=camera.zoom,
+            worldX=(fx-ox)/camera.zoom,worldY=(fy-oy)/camera.zoom}
+        ghost=nil;pinched=true
+    end
+    local function movePhysicalPinch()
+        if not physicalPinch then return end
+        local pair={}
+        for _,p in pairs(touches) do pair[#pair+1]=p end
+        if #pair<2 then return end
+        local ax,ay,bx,by=pair[1].x,pair[1].y,pair[2].x,pair[2].y
+        local distance=math.sqrt((ax-bx)^2+(ay-by)^2)
+        local fx,fy=(ax+bx)*0.5,(ay+by)*0.5
+        local l=panel:GetAbsoluteLayout()
+        camera.zoom=math.max(0.55,math.min(1.8,physicalPinch.zoom*distance/physicalPinch.distance))
+        camera.x=fx-physicalPinch.worldX*camera.zoom-l.x-l.w*0.53
+        camera.y=fy-physicalPinch.worldY*camera.zoom-l.y-l.h*0.52+270*camera.zoom
+        clampCamera()
+    end
+    panel.props.onPointerDown = function(event)
+        if event.pointerId~=nil then
+            if not next(touches) then pinched=false end
+            local x,y=point(event)
+            touches[event.pointerId]={x=x,y=y,startX=x,startY=y,moved=false}
+            local count=0;for _ in pairs(touches) do count=count+1 end
+            if count>=2 then beginPhysicalPinch();return end
+        end
+        preview(event)
+    end
+    panel.props.onPointerMove = function(event)
+        local p=event.pointerId and touches[event.pointerId]
+        if not p then preview(event);return end
+        local x,y=point(event)
+        local dx,dy=x-p.x,y-p.y
+        p.x,p.y=x,y
+        if (x-p.startX)^2+(y-p.startY)^2>64 then p.moved=true end
+        if physicalPinch then movePhysicalPinch();return end
+        if pinched then return end
+        if mode=="inspect" then
+            if p.moved then camera.x,camera.y=camera.x+dx,camera.y+dy;clampCamera() end
+        else preview(event) end
+    end
+    local function endPointer(event)
+        local p=event.pointerId and touches[event.pointerId]
+        if not p then return end
+        touches[event.pointerId]=nil
+        if physicalPinch then physicalPinch=nil;return end
+        if not pinched and mode~="inspect" and p.moved and ghost then
+            preview(event);onTile(ghost.x,ghost.y)
+        end
+    end
+    panel.props.onPointerUp=endPointer
+    panel.props.onPointerCancel=endPointer
     panel.props.onTap = function(event)
+        if pinched then return end
         local x,y = tileAt(event)
         if mode == "inspect" then
             local _,ox,oy=projection()
             local px, py = (event.x-ox)/camera.zoom, (event.y-oy)/camera.zoom
             local hit, depth = nil, -math.huge
             for _, building in ipairs(sim.buildings) do
-                local bx, by = iso(building.x, building.y)
-                if px >= bx-27 and px <= bx+27 and py >= by-54 and py <= by+10 and building.x+building.y > depth then
+                local width,height=building.footprintW or 1,building.footprintH or 1
+                local bx, by = iso(building.x-(width-1)*0.5,building.y-(height-1)*0.5)
+                local size=buildingVisualSize(building)
+                local facade=building.kind~="farm" and px>=bx-size*0.44 and px<=bx+size*0.44 and
+                    py>=by-size*0.86 and py<=by+8
+                local porchSide=building.kind=="kitchen" and Meals.diningSide(sim,building) or -1
+                local porchX=bx+porchSide*60
+                local porch=building.kind=="kitchen" and building.complete and
+                    px>=porchX-68 and px<=porchX+68 and py>=by-43 and py<=by+46
+                if (facade or porch) and building.x+building.y > depth then
                     hit, depth = building, building.x+building.y
                 end
             end
@@ -364,12 +465,13 @@ function WorldView.create(sim, onTile)
     end
     panel.props.onPanStart = function() end
     panel.props.onPanMove = function(event)
+        if event.pointerId~=nil then return end -- physical pointer move already handled above
         if mode ~= "inspect" then preview(event); return end
         camera.x, camera.y = camera.x + event.deltaX, camera.y + event.deltaY
         clampCamera()
     end
     panel.props.onPanEnd = function(event)
-        if mode ~= "inspect" and ghost and not pinchAnchor then
+        if mode ~= "inspect" and ghost and not pinchAnchor and event.pointerId==nil then
             preview(event)
             onTile(ghost.x, ghost.y)
         end
@@ -506,7 +608,11 @@ function WorldView.create(sim, onTile)
                 end
             end
         end
-        local agentsByDepth,diningAgents={},{}
+        local agentsByDepth,diningSides={},{}
+        local function diningSide(b)
+            if not diningSides[b.id] then diningSides[b.id]=Meals.diningSide(sim,b) end
+            return diningSides[b.id]
+        end
         local function addAgent(a,role,profile,action,cargo,queueSlot,guardIndex)
             if Meals.hidden(sim,a) then return end
             local drawX,drawY=a.x,a.y
@@ -514,7 +620,7 @@ function WorldView.create(sim, onTile)
             if a.meal and sim.buildings[a.meal.target] and sim.buildings[a.meal.target].kind=="kitchen"
                 and (a.meal.phase=="enter" or a.meal.phase=="eat" or a.meal.phase=="exit") then
                 diningHall=sim.buildings[a.meal.target]
-                local sx,sy=Meals.seatPosition(diningHall,a.meal.seat or 1)
+                local sx,sy=Meals.seatPosition(diningHall,a.meal.seat or 1,diningSide(diningHall))
                 local progress=a.meal.phase=="enter" and (1-a.meal.timer/0.7) or
                     a.meal.phase=="exit" and (a.meal.timer/0.7) or 1
                 progress=math.max(0,math.min(1,progress))
@@ -531,15 +637,19 @@ function WorldView.create(sim, onTile)
                     local presence=a.farmPresence
                     local centerX=field.x-((field.footprintW or 1)-1)*0.5
                     local centerY=field.y-((field.footprintH or 1)-1)*0.5
-                    drawX=a.x+(centerX+math.sin(clock*0.8+(a.slot or 0))*0.32-a.x)*presence
-                    drawY=a.y+(centerY+math.cos(clock*0.8+(a.slot or 0))*0.24-a.y)*presence
+                    drawX=a.x+(centerX+math.sin(clock*0.8+(a.slot or 0))*0.22-a.x)*presence
+                    drawY=a.y+(centerY+0.42+math.cos(clock*0.8+(a.slot or 0))*0.14-a.y)*presence
                 end
             elseif guardIndex and not a.meal and not (a.path and a.path[a.index]) then
                 drawX=9.3+((guardIndex-1)%3)*0.28
                 drawY=9.25+math.floor((guardIndex-1)/3)*0.2
             end
             local depth=math.floor(drawX+drawY+0.5)
-            if diningHall then depth=math.max(depth,diningHall.x+ diningHall.y+1) end
+            if diningHall then depth=diningHall.x+diningHall.y end
+            if (a.farmPresence or 0)>0 and a.building then
+                local field=sim.buildings[a.building]
+                if field and field.kind=="farm" then depth=math.max(depth,field.x+field.y) end
+            end
             local sx,sy=iso(drawX,drawY)
             if depth < minX+minY or depth > maxX+maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
@@ -563,7 +673,7 @@ function WorldView.create(sim, onTile)
             end
             local entry={actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,
                 amount=a.job and a.job.amount or nil,thought=thought,clock=clock,walking=walking,phase=queueSlot or 0}
-            if diningHall then diningAgents[#diningAgents+1]=entry else table.insert(agentsByDepth[depth],entry) end
+            table.insert(agentsByDepth[depth],entry)
         end
         for index,a in ipairs(sim.carriers) do
             local role,profile=Characters.carrier(index,a.carrying)
@@ -604,7 +714,10 @@ function WorldView.create(sim, onTile)
                         elseif terrain == "grass" and (x*11+y*7)%29 == 0 then Art.draw(vg, "bush-flowers",sx-22,sy-28,44,35)
                         elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
                     end
-                    if b and b.x==x and b.y==y then house(vg,b,selected==b,sim.elapsed,nil,false,sim) end
+                    if b and b.x==x and b.y==y then
+                        house(vg,b,selected==b,sim.elapsed,nil,false,sim)
+                        if b.kind=="kitchen" and b.complete then diningFloor(vg,b,diningSide(b)) end
+                    end
                     if ghost and mode ~= "inspect" and ghost.x==x and ghost.y==y then
                         local width,height=D.footprint(mode)
                         local valid=sim:canBuild(mode,x,y)
@@ -625,14 +738,6 @@ function WorldView.create(sim, onTile)
                 end
             end
         end
-        for _,b in ipairs(sim.buildings) do
-            if b.kind=="kitchen" and b.complete then diningFloor(vg,b) end
-        end
-        for _,entry in ipairs(diningAgents) do
-            local a=entry.actor
-            person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,
-                entry.action,entry.cargo,entry.walking,entry.phase,entry.thought,entry.amount)
-        end
         for _, e in ipairs(sim.enemies) do if e.hp > 0 then person(vg, e.x, e.y, { 74, 64, 73 }, false, sim.elapsed, "bandit", "sw") end end
         nvgRestore(vg)
     end
@@ -645,8 +750,9 @@ function WorldView.create(sim, onTile)
         setMode = function(value) mode = value; ghost = nil end,
         previewState = function() return ghost end,
         select = function(value) selected = value end,
+        selectedBuilding = function() return selected end,
         zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,
-        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1 end,
+        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1.15 end,
         cameraState = function() return {x=camera.x,y=camera.y,zoom=camera.zoom} end,
         frontier = function()
             local _, high = sim.map:bounds()

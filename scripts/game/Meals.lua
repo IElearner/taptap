@@ -17,11 +17,36 @@ local function occupancy(sim,id)
     return count
 end
 Meals.occupancy=occupancy
-function Meals.seatPosition(b,seat)
-    -- Four different screen-space columns keep faces visible at mobile scale.
-    local offset={{-0.55,0.55},{0.283,0.65},{0.65,0.283},{0.55,-0.55}}
+function Meals.diningSide(sim,b)
+    -- Prefer the door side, but place the open dining bay on the clearer side
+    -- when another building crowds it. Compare projected roof centers.
+    local function center(building)
+        local x=building.x-((building.footprintW or 1)-1)*0.5
+        local y=building.y-((building.footprintH or 1)-1)*0.5
+        return (x-y)*30,(x+y)*15
+    end
+    local hx,hy=center(b)
+    local function crowd(side)
+        local score=0
+        for _,other in ipairs(sim.buildings) do
+            if other~=b and other.kind~="farm" then
+                local ox,oy=center(other)
+                local dx=math.abs(ox-(hx+side*60))
+                local dy=math.abs(oy-(hy+18))
+                score=score+math.max(0,105-dx)*math.max(0,65-dy)
+            end
+        end
+        return score
+    end
+    return crowd(1)+500<crowd(-1) and 1 or -1
+end
+function Meals.seatPosition(b,seat,side)
+    -- Four distinct screen-space columns in the clearer front-facing bay.
+    local offset={{-0.1,1.3},{0.365,0.835},{0.835,0.365},{1.3,-0.1}}
     local p=offset[seat] or offset[1]
-    return b.x-((b.footprintW or 1)-1)*0.5+p[1],b.y-((b.footprintH or 1)-1)*0.5+p[2]
+    side=side or -1
+    return b.x-((b.footprintW or 1)-1)*0.5+p[1]+side,
+        b.y-((b.footprintH or 1)-1)*0.5+p[2]-side
 end
 local function freeSeat(sim,id,actor)
     local taken={}

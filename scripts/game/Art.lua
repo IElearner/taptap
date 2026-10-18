@@ -3,8 +3,8 @@
 local Art = {}
 local textures, context = {}, nil
 local direct = {}
-for _,name in ipairs({"login-painting","portrait-elder","atlas-buildings","atlas-livestock-buildings","atlas-environment",
-    "atlas-villagers","atlas-workers","atlas-specialists","atlas-seated-villagers","atlas-seated-specialists","atlas-wheatfield","atlas-wheat-interior","atlas-loaded","atlas-combatants","atlas-icons",
+for _,name in ipairs({"login-painting","portrait-elder","dining-pavilion","atlas-buildings","atlas-livestock-buildings","atlas-environment",
+    "atlas-villagers","atlas-workers","atlas-specialists","atlas-seated-villagers","atlas-seated-specialists","atlas-seated-eating","atlas-specialists-eating","atlas-farm-actions","atlas-wheatfield","atlas-wheat-interior","atlas-loaded","atlas-combatants","atlas-icons",
     "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
     "atlas-builders-hammer-up","atlas-builders-hammer-down",
     "panel-wood","button-painting"}) do direct[name]=true end
@@ -41,6 +41,21 @@ for row,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
 end
 register("person-seated-","atlas-seated-villagers",{"blue-man","ochre-woman","grey-elder","green-woman"},4,1)
 register("person-seated-","atlas-seated-specialists",{"chef","butcher","guard","militia"},4,1)
+for col,id in ipairs({"blue-man","ochre-woman","grey-elder","green-woman"}) do
+    for frame=1,2 do
+        atlas["person-eating-" .. id .. "-" .. frame]={source="atlas-seated-eating",col=col-1,row=frame-1,cols=4,rows=2}
+    end
+end
+for col,id in ipairs({"chef","butcher","guard","militia"}) do
+    for frame=1,2 do
+        atlas["person-eating-" .. id .. "-" .. frame]={source="atlas-specialists-eating",col=col-1,row=frame-1,cols=4,rows=2}
+    end
+end
+for row,action in ipairs({"plow","water","tend","harvest"}) do
+    for frame=1,2 do
+        atlas["person-farm-" .. action .. "-" .. frame]={source="atlas-farm-actions",col=frame-1,row=row-1,cols=2,rows=4}
+    end
+end
 for row,id in ipairs({"militia","bandit"}) do
     for col,dir in ipairs(directions) do
         atlas["person-" .. id .. "-" .. dir]={source="atlas-combatants",col=col-1,row=row-1,cols=4,rows=2}
