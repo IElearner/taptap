@@ -59,6 +59,9 @@ V.atFrame(12,function()
         V.assert(a.modelId~=oldId,"Civilian mesh identities remain distinct through the meal")
         oldId=a.modelId
     end
+    local guard=model.actors.guard1
+    V.assert(guard and guard.action=="eat" and guard.bowl.enabled and guard.tools.chopsticks.enabled,
+        "A militia diner sits and uses meal props just like civilian diners")
     poseBefore=model.actors.carrier1.shoulders[2].rotation.x
     sim.elapsed=sim.elapsed+0.35
     -- The stage models are different geometry, not a complete house under an overlay.

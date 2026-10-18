@@ -339,7 +339,10 @@ function World.new(sim)
                 add("worker" .. key,a,p,action,b.id+a.slot)
             end
         end
-        for i,a in ipairs(sim.guards or {}) do local _,p=Characters.militia(i);add("guard" .. i,a,p,nil,i) end
+        for i,a in ipairs(sim.guards or {}) do
+            local _,p=Characters.militia(i)
+            add("guard" .. i,a,p,a.meal and a.meal.phase=="eat" and "eat",i)
+        end
         for i,a in ipairs(sim.enemies or {}) do
             if a.hp>0 then self:person("enemy" .. i,a,{color={114,67,58},hat="cap"},nil,a.x,a.y,i) end
         end
