@@ -60,6 +60,7 @@ V.atFrame(8,function()
     old.world.buildings[b.id].farmStep=nil
     old.world.buildings[b.id].farmWork=nil
     V.assert(Data.restore(old,s.mode)~=nil,"Older farm saves load with default growth state")
+    old.world.buildings[b.id].footprintCells=nil
     old.world.buildings[b.id].footprintW=1
     V.assert(Data.restore(old,s.mode)~=nil,"Legacy narrow wheat fields remain loadable")
     V.finish()

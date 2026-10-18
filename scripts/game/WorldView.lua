@@ -233,6 +233,16 @@ function WorldView.create(sim, onTile)
     function panel:Render(vg)
         local l,ox,oy=projection()
         modelWorld:update(camera,l,mode,ghost,selected)
+        for _,b in ipairs(sim.buildings) do
+            if not b.complete and b.progress==0 then
+                local at=modelWorld.camera:WorldToScreenPoint(Vector3(b.x-10-((b.footprintW or 1)-1)*0.5,0.08,9-b.y+((b.footprintH or 1)-1)*0.5))
+                if at.x>0 and at.x<1 and at.y>0 and at.y<1 then
+                    local x,y=l.x+at.x*l.w,l.y+at.y*l.h
+                    rect(vg,x-63,y-12,126,24,{55,48,34,215})
+                    smallText(vg,x,y,sim:connected(b) and "待修建 · 等待工人" or "待修建 · 等待接路",12)
+                end
+            end
+        end
         -- Only interaction guides and thought bubbles use the HUD canvas.
         if mode~="inspect" then
             nvgSave(vg);nvgTranslate(vg,ox,oy);nvgScale(vg,camera.zoom,camera.zoom)

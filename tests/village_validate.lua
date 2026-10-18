@@ -27,7 +27,7 @@ V.atFrame(8, function()
     local road = hud.root:FindById("build_road")
     road.props.onClick(road)
     local layout = view.panel:GetAbsoluteLayout()
-    local sx = layout.x + layout.w * 0.5 - 3*56
+    local sx = layout.x + layout.w * 0.5 - 3*56*view.cameraState().zoom
     local sy = layout.y + layout.h * 0.5
     view.panel.props.onTap({ x = sx, y = sy }) -- tile (7,9) at default camera
     V.assert(live:roadSiteAt(7,9) ~= nil and live.roadCount==0, "Map tap plans the intended road tile without instant completion")
@@ -40,29 +40,37 @@ V.atFrame(8, function()
     local s = Sim.new()
     s.started = true
     local stock = s.stock.wood
-    V.assert(not s:build("house", 6, 6), "Disconnected building rejected")
-    V.assert(s.stock.wood == stock, "Rejected build never spends supplies")
+    local planning=Sim.new();planning.started=true
+    local planned,_,waiting=planning:build("house",6,6)
+    V.assert(planned and waiting.progress==0,"Disconnected buildings can be surveyed before roads")
+    V.assert(planning.stock.wood==stock-D.buildings.house.cost.wood,"A plan reserves its materials once")
     V.assert(not s:build("road", 20, 8), "Water placement rejected")
     V.assert(not s:nextLesson(), "Tutorial cannot advance without completing objective")
     for x = 7, 4, -1 do build(s, "road", x, 9) end
     V.assert(s:nextLesson(), "Road tutorial completed with four connected tiles")
     local home = build(s, "house", 7, 8)
-    V.assert(home.footprintW==2 and home.footprintH==2 and s:buildingAt(6,7)==home,
-        "New homes reserve a two-by-two courtyard")
+    V.assert(home.footprintW==3 and home.footprintH==2 and s:buildingAt(5,7)==home,
+        "New homes reserve a three-by-two footprint")
     advance(s, 20)
     V.assert(home.complete and s.population == 14, "Housing completes and adds villagers once")
     V.assert(s:nextLesson(), "Housing tutorial advances")
-    build(s, "farm", 5, 8); advance(s, 20)
+    for y=10,13 do build(s,"road",9,y) end
+    build(s,"road",8,13)
+    build(s, "farm", 8, 12); advance(s, 30)
     V.assert(s:nextLesson(), "Farm tutorial advances")
-    build(s, "mill", 8, 8); advance(s, 20)
+    build(s,"road",13,9)
+    build(s, "mill", 13, 8); advance(s, 30)
     V.assert(s:nextLesson(), "Mill tutorial advances")
-    build(s, "kitchen", 12, 8)
+    build(s,"road",14,9);build(s,"road",15,9)
+    for y=10,13 do build(s,"road",15,y) end
+    build(s,"road",14,13)
+    build(s, "kitchen", 14, 12)
     advance(s, 150)
     V.assert(s.produced.food >= 4, "Grain is transported, milled, cooked and delivered as food")
     V.assert(s:nextLesson(), "Food tutorial counts delivered food, not starter inventory")
-    build(s, "road", 13, 9); build(s, "road", 14, 9); build(s, "woodcutter", 14, 8); advance(s, 20)
+    build(s,"road",16,9);build(s,"road",17,9);build(s,"woodcutter",17,8);advance(s,30)
     V.assert(s:nextLesson(), "Woodcutter tutorial advances")
-    build(s, "road", 15, 9); build(s, "barracks", 15, 8); advance(s, 20)
+    build(s,"road",8,8);build(s,"road",8,7);build(s,"barracks",8,6);advance(s,30)
     for _ = 1, 3 do V.assert(s:train(), "Train a militia from available workers") end
     V.assert(s:nextLesson(), "Militia tutorial advances")
     local before = s.elapsed
@@ -120,7 +128,8 @@ V.atFrame(8, function()
     V.assert(starving:repair() and starving.health == 100, "Warehouse can be repaired with real supplies")
     local supply = Sim.new(); supply.started = true
     local quarry = build(supply, "quarry", 8, 8)
-    local courier = build(supply, "courier", 12, 8)
+    build(supply,"road",13,9);build(supply,"road",14,9)
+    local courier = build(supply, "courier", 14, 8)
     local startStone = supply.stock.stone
     advance(supply, 45)
     V.assert(quarry.complete and supply.stock.stone > startStone, "Stone production reaches warehouse")

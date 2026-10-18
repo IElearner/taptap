@@ -29,6 +29,11 @@ local function workSite(sim,b)
     local left,right,top,bottom=b.x-w,b.x+1,b.y-h,b.y+1
     local candidates={{x=b.x,y=bottom,side="south"},{x=left,y=b.y,side="west"},
         {x=b.x-w+1,y=top,side="north"},{x=right,y=b.y-h+1,side="east"}}
+    local adjacent={}
+    for _,edge in ipairs(D.edges(b)) do
+        candidates[#candidates+1]={x=edge.outsideX,y=edge.outsideY,side=edge.side}
+        adjacent[edge.outsideX .. ":" .. edge.outsideY]=true
+    end
     for x=left+1,right-1 do
         candidates[#candidates+1]={x=x,y=bottom,side="south"}
         candidates[#candidates+1]={x=x,y=top,side="north"}
@@ -43,7 +48,7 @@ local function workSite(sim,b)
             local j=a.job
             if j and j.kind=="building" and j.building==b.id and j.workX==p.x and j.workY==p.y then occupied=true;break end
         end
-        if not occupied and sim:forestPath(b.x,b.y+1,p.x,p.y) then return p end
+        if not occupied and adjacent[p.x .. ":" .. p.y] and sim:forestPath(b.x,b.y+1,p.x,p.y) then return p end
     end
 end
 local function nextJob(sim)

@@ -133,6 +133,7 @@ V.atFrame(8,function()
     local resumed=Data.restore(cjson.decode(cjson.encode(saved)),"finite")
     V.assert(resumed and resumed.mealsServed==4,"Paid four-seat dining state survives a save inside the kitchen")
     local oldFootprint=cjson.decode(cjson.encode(saved))
+    oldFootprint.world.buildings[kitchen.id].footprintCells=nil
     oldFootprint.world.buildings[kitchen.id].footprintW=1
     oldFootprint.world.buildings[kitchen.id].footprintH=1
     V.assert(Data.restore(oldFootprint,"finite")~=nil,"Legacy one-tile canteens remain loadable")

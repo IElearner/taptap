@@ -13,8 +13,11 @@ V.atFrame(6, function()
     local state, _, hud = Game.Inspect()
     hud.dismissIntro()
     state.population=20
-    for _, item in ipairs({ {"farm",8}, {"kitchen",12}, {"butcher",13}, {"barracks",14} }) do
-        local b=state:addBuilding(item[1],item[2],8,true)
+    for _,p in ipairs({{13,9},{14,9},{15,9},{9,10},{9,11},{9,12},{9,13},{8,13},{15,10},{15,11},{15,12},{15,13},{14,13}}) do
+        state.roads[p[1] .. ":" .. p[2]]=true;state.roadCount=state.roadCount+1
+    end
+    for _, item in ipairs({ {"farm",8,8}, {"kitchen",14,8}, {"butcher",8,12}, {"barracks",14,12} }) do
+        local b=state:addBuilding(item[1],item[2],item[3],true)
         if item[1]~="barracks" then b.workers=1 end
     end
     for _ = 1, 300 do state:update(0.1) end

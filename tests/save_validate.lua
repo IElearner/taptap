@@ -14,8 +14,8 @@ local function memoryBackend()
 end
 V.atFrame(8, function()
     local s = Sim.new("infinite"); s.started = true
-    s:build("farm", 8, 8); s:build("woodcutter", 12, 8)
-    advance(s, 12)
+    s:build("farm", 8, 8); s:build("road",13,9);s:build("woodcutter",13,8)
+    advance(s,30)
     for _ = 1, 30 do
         s:update(0.1)
         local active = false
@@ -39,8 +39,9 @@ V.atFrame(8, function()
     end
     V.assert(not Data.restore(save, "finite"), "Modes cannot load each other's slot")
     local legacy=Sim.new("finite")
-    V.assert(legacy:build("house",8,8),"A new two-by-two home can be placed beside the warehouse")
+    V.assert(legacy:build("house",8,8),"A new rectangular home can be placed beside the warehouse")
     local legacySave=Data.capture(legacy,1000,3,true)
+    legacySave.world.buildings[2].footprintCells=nil
     legacySave.world.buildings[2].footprintW=1
     legacySave.world.buildings[2].footprintH=1
     local legacyRestored=Data.restore(legacySave,"finite")

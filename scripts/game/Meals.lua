@@ -17,29 +17,6 @@ local function occupancy(sim,id)
     return count
 end
 Meals.occupancy=occupancy
-function Meals.diningSide(sim,b)
-    -- Prefer the door side, but place the open dining bay on the clearer side
-    -- when another building crowds it. Compare projected roof centers.
-    local function center(building)
-        local x=building.x-((building.footprintW or 1)-1)*0.5
-        local y=building.y-((building.footprintH or 1)-1)*0.5
-        return x*56,y*42
-    end
-    local hx,hy=center(b)
-    local function crowd(side)
-        local score=0
-        for _,other in ipairs(sim.buildings) do
-            if other~=b and other.kind~="farm" then
-                local ox,oy=center(other)
-                local dx=math.abs(ox-(hx+side*75))
-                local dy=math.abs(oy-(hy+18))
-                score=score+math.max(0,105-dx)*math.max(0,65-dy)
-            end
-        end
-        return score
-    end
-    return crowd(1)+500<crowd(-1) and 1 or -1
-end
 function Meals.seatPosition(b,seat,side)
     local column=(seat-1)%2
     local row=math.floor((seat-1)/2)
@@ -48,13 +25,11 @@ function Meals.seatPosition(b,seat,side)
 end
 function Meals.diningPosition(b,seat,phase,timer)
     local seatX,seatY=Meals.seatPosition(b,seat)
-    local centerX=b.x-((b.footprintW or 1)-1)*0.5
-    local centerY=b.y-((b.footprintH or 1)-1)*0.5
     local progress=phase=="enter" and 1-timer/Meals.doorwaySeconds or
         phase=="exit" and timer/Meals.doorwaySeconds or 1
     progress=math.max(0,math.min(1,progress))
     local doorX,doorY=b.x,b.y+1
-    local thresholdX,thresholdY=centerX+0.45,centerY+0.55
+    local thresholdX,thresholdY=doorX,b.y+0.22
     local function between(a,z,p) return a+(z-a)*p end
     if progress<0.35 then
         local p=progress/0.35

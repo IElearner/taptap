@@ -93,15 +93,22 @@ V.atFrame(12,function()
     V.assert(not s:canBuild("house",7,8),"House preview rejects occupied quarry tile")
     V.assert(not s:build("road",7,8),"Road cannot cut through quarry footprint")
     hud.root:FindById("cancelPlacement").props.onClick()
-    local hall=live:addBuilding("kitchen",12,8,true)
-    local side=require("game.Meals").diningSide(live,hall)
-    V.assert(side==1,"Dining placement remains stable when the store crowds one side")
+    local hall=live:addBuilding("kitchen",14,8,true)
+    local Meals=require "game.Meals"
+    for seat=1,4 do
+        local x,y=Meals.seatPosition(hall,seat)
+        V.assert(x>hall.x-hall.footprintW+0.5 and x<hall.x+0.5 and
+            y>hall.y-hall.footprintH+0.5 and y<hall.y+0.5,
+            "Dining seat remains inside enlarged hall footprint")
+    end
+    local doorX,doorY=Meals.diningPosition(hall,1,"enter",Meals.doorwaySeconds)
+    V.assert(doorX==hall.x and doorY==hall.y+1,"Diner enters through reserved road entrance")
     local now=view.cameraState()
-    local centerX,centerY=hall.x-0.5,hall.y-0.5
+    local centerX,centerY=hall.x-(hall.footprintW-1)*0.5,hall.y-(hall.footprintH-1)*0.5
     local px=l.x+l.w*0.5+now.x+(centerX-10)*56*now.zoom
     local py=l.y+l.h*0.5+now.y+((centerY-9)*42+34)*now.zoom
     local wx,wy=worldPixel(view,px,py)
-    V.assert(math.abs(wx-(centerX-10)*56)<0.01 and math.abs(wy-((centerY-9)*42+34))<0.01 and live:buildingAt(12,8)==hall,
+    V.assert(math.abs(wx-(centerX-10)*56)<0.01 and math.abs(wy-((centerY-9)*42+34))<0.01 and live:buildingAt(14,8)==hall,
         "Dining annex tap maps back to the matching world position")
     view.panel.props.onPointerDown({pointerId=31,pointerType="touch",x=px,y=py})
     view.panel.props.onPointerUp({pointerId=31,pointerType="touch",x=px,y=py})

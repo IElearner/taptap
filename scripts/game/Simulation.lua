@@ -182,13 +182,11 @@ end
 function S:addBuilding(kind, x, y, complete)
     local width, height = D.footprint(kind)
     local b = { id = #self.buildings + 1, kind = kind, x = x, y = y, complete = complete or false,
-        footprintW = width, footprintH = height,
+        footprintW = width, footprintH = height, footprintCells=D.cells(kind),
         progress = 0, workers = 0, timer = 0, buffer = 0, inputs = 0, incoming = false, outgoing = false, mealStock=0,mealIncoming=false,
         farmStep=0,farmWork=0 }
     self.buildings[#self.buildings + 1] = b
-    for dx = 1-width, 0 do for dy = 1-height, 0 do
-        self.buildingIndex[key(x+dx, y+dy)] = b
-    end end
+    for _,c in ipairs(D.cells(b)) do self.buildingIndex[key(x+c.x,y+c.y)]=b end
     return b
 end
 function S:canBuild(kind, x, y)
@@ -197,15 +195,17 @@ function S:canBuild(kind, x, y)
     local def = D.buildings[kind]
     if not def then return false, "未知建筑。" end
     local width, height = D.footprint(kind)
-    for dx = 1-width, 0 do for dy = 1-height, 0 do
-        local tx, ty = x+dx, y+dy
+    local occupied={}
+    for _,c in ipairs(D.cells(kind)) do
+        local tx,ty=x+c.x,y+c.y
+        occupied[key(tx,ty)]=true
         if self:terrain(tx, ty) == "fog" then return false, "此处尚未勘探，点击「拓荒」发现新区域。" end
         if self:terrain(tx, ty) ~= "grass" then return false, "建筑占地包含树林、水域或地图边界。" end
         if self:buildingAt(tx, ty) or self.roads[key(tx, ty)] or self:roadSiteAt(tx,ty) then return false, "建筑占地与现有建筑或道路重叠。" end
-    end end
+    end
     -- Protect all existing doors; a door occupies the tile immediately south.
     for _, b in ipairs(self.buildings) do
-        if kind ~= "road" and b.x >= x-width+1 and b.x <= x and b.y+1 >= y-height+1 and b.y+1 <= y then
+        if kind ~= "road" and occupied[key(b.x,b.y+1)] then
             return false, "请为建筑门前保留一格道路。"
         end
     end
@@ -218,7 +218,6 @@ function S:canBuild(kind, x, y)
         return true, "已规划道路，空闲村民将取材到场铺设。"
     end
     if self:terrain(x, y + 1) ~= "grass" or self:buildingAt(x, y + 1) then return false, "建筑门前需要可通行的空地。" end
-    if not self:connected({ x = x, y = y }) and not self:roadSiteAt(x,y+1) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
     if kind == "courier" and self:availableWorkers() < 1 then return false, "驿站需要 1 名空闲村民。" end
     if kind == "woodcutter" and not self:nearestTree({x=x,y=y,footprintW=width},6) then
         return false, "伐木场要靠近树林，请选离树木六格以内的路旁。"
@@ -227,7 +226,8 @@ function S:canBuild(kind, x, y)
         if (self.stock.wood or 0)<(def.cost.wood or 0) then return false, "木料不足：营造伐木场、门前接路，伐木工生产后由搬运工运回义仓。" end
         return false, "物资不足，先让生产链补充库存。"
     end
-    return true, def.name .. "开始修建。"
+    if not self:connected({x=x,y=y}) then return true,def.name .. "已规划，等待门前道路接通义仓。" end
+    return true, def.name .. "已规划，工人将取材到场施工。"
 end
 function S:build(kind, x, y)
     local ok, message = self:canBuild(kind, x, y)

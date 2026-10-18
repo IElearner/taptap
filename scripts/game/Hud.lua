@@ -43,13 +43,13 @@ function Hud.create(sim, world, actions)
     local topbar = panel { position = "absolute", top = 8, left = 12, right = 12, height = 42, paddingHorizontal = 15,
         flexDirection = "row", alignItems = "center", justifyContent = "space-between", gap = 8, children = top }
     ---@type Widget[]
-    local buildItems = { label("先接通道路，再沿路营造。木料不足时，建伐木场并安排工人。", 12, Skin.muted) }
+    local buildItems = { label("可以先规划建筑；接通门前道路后，工人才会取材施工。轮廓内的格子才算占地。", 12, Skin.muted) }
     for _, kind in ipairs(D.order) do
         local k, def = kind, D.buildings[kind]
         local width,height=D.footprint(k)
         buildItems[#buildItems + 1] = row {
             button(def.name, function() actions.setMode(k); close() end, { id = "build_" .. k, width = 100 }),
-            UI.Panel { flexGrow = 1, flexBasis = 0, minWidth = 0, gap = 3, children = { label(costText(def), 12, Skin.gold), label("占地 " .. width .. "×" .. height .. " · " .. (def.output and ("生产 " .. D.names[def.output]) or (k == "road" and "运输的命脉" or "村庄设施")), 11, Skin.muted) } },
+            UI.Panel { flexGrow = 1, flexBasis = 0, minWidth = 0, gap = 3, children = { label(costText(def), 12, Skin.gold), label("占地 " .. width .. "×" .. height .. " / " .. #D.cells(k) .. "格" .. (def.shape and " · L形" or "") .. " · " .. (def.output and ("生产 " .. D.names[def.output]) or (k == "road" and "运输的命脉" or "村庄设施")), 11, Skin.muted) } },
         }
     end
     local buildDrawer = drawer("build", "营 造 工 坊", buildItems)
@@ -291,8 +291,9 @@ function Hud.create(sim, world, actions)
         local b = actions.selected
         if b then
             local def = D.buildings[b.kind]
-            selectedTitle:SetText(def.name); selectedInfo:SetText(def.description)
-            selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or ("修建中 " .. math.floor(b.progress * 100) .. "%"))
+            selectedTitle:SetText(def.name); selectedInfo:SetText(def.description .. "\n实际占地 " .. (b.footprintW or 1) .. "×" .. (b.footprintH or 1) .. "，共 " .. #D.cells(b) .. " 格。")
+            local siteStatus=not sim:connected(b) and "待修建 · 等待门前接路" or b.progress==0 and "待修建 · 等待工人取材到场" or "修建中 " .. math.floor(b.progress*100) .. "%"
+            selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or siteStatus)
             if b.kind=="farm" and b.complete then
                 local stage=Farm.stage(b,D.buildings.farm.period)
                 local stageName=({seed="播种期",sprout="幼苗期",green="拔节期",ripe="成熟期"})[stage]
@@ -327,7 +328,7 @@ function Hud.create(sim, world, actions)
         placement:SetVisible(actions.mode ~= "inspect" and not opened)
         if actions.mode ~= "inspect" then
             local width,height=D.footprint(actions.mode)
-            placementText:SetText(D.buildings[actions.mode].name .. " " .. width .. "×" .. height .. "\n拖动选址，松手建造\n绿：可建  红：不可建")
+            placementText:SetText(D.buildings[actions.mode].name .. " " .. width .. "×" .. height .. " / " .. #D.cells(actions.mode) .. "格\n拖动选址，松手规划\n绿：可建  红：不可建")
         end
         ending:SetVisible(session.accepted and (sim.victory or sim.defeat))
         if sim.victory then resultTitle:SetText("炊烟又起，乡里安宁"); resultText:SetText("粮道已通，乡勇已成，清溪里再闻饭香。")

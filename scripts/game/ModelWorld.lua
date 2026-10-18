@@ -4,6 +4,7 @@ local D=require "game.Definitions"
 local Characters=require "game.Characters"
 local Farm=require "game.FarmCycle"
 local Meals=require "game.Meals"
+local Craft=require "game.CraftMaterials"
 local World={}
 local UP=Vector3(0,1,0)
 local function position(x,y,height) return Vector3(x-10,height or 0,9-y) end
@@ -11,12 +12,13 @@ local function position(x,y,height) return Vector3(x-10,height or 0,9-y) end
 function World.new(sim)
     local developmentCache=os.getenv and os.getenv("VILLAGE_SHADER_CACHE")
     if developmentCache and developmentCache~="" then graphics.shaderCacheDir=developmentCache end
-    local self={scene=Scene(),buildings={},actors={},trees={},roads={},chunks={},materials={},models={},clock=0}
+    local self={scene=Scene(),buildings={},actors={},trees={},roads={},chunks={},materials={},surfaces={},models={},clock=0}
     -- Literal resource references let Maker include the engine meshes in Web builds.
     self.models.Box=cache:GetResource("Model","Models/Box.mdl")
     self.models.Sphere=cache:GetResource("Model","Models/Sphere.mdl")
     self.models.Cylinder=cache:GetResource("Model","Models/Cylinder.mdl")
     self.models.Cone=cache:GetResource("Model","Models/Cone.mdl")
+    self.models.Tunic=LatheGeometry({Vector2(0.085,-0.14),Vector2(0.09,-0.08),Vector2(0.115,0.075),Vector2(0.075,0.14)},12):ToModel()
     self.scene:CreateComponent("Octree")
     local zone=self.scene:CreateComponent("Zone")
     zone.boundingBox=BoundingBox(-200,200)
@@ -36,6 +38,7 @@ function World.new(sim)
     self.cameraNode=self.scene:CreateChild("VillageCamera")
     self.camera=self.cameraNode:CreateComponent("Camera")
     self.camera.orthographic=true
+    self.camera.autoAspectRatio=false
     self.camera.farClip=180
     renderer:SetViewport(0,Viewport:new(self.scene,self.camera))
 
@@ -59,7 +62,12 @@ function World.new(sim)
         local drawable=node:CreateComponent("StaticModel")
         if not self.models[shape] then self.models[shape]=cache:GetResource("Model","Models/" .. shape .. ".mdl") end
         drawable.model=self.models[shape]
-        drawable.material=mat
+        local style=Craft.style(name)
+        if style then
+            local key=tostring(mat) .. style
+            if not self.surfaces[key] then self.surfaces[key]=Craft.apply(mat,style) end
+            drawable.material=self.surfaces[key]
+        else drawable.material=mat end
         drawable.castShadows=true
         return node
     end
@@ -119,11 +127,20 @@ function World.new(sim)
                     local seed=(x*17+y*23)%9
                     local h=0.7+seed*0.035
                     self:part(root,"Trunk","Cylinder",self:material(112,83,52),0,h*0.45,0,0.095,h,0.095)
-                    for i=1,7 do
-                        local leaf=self:material(66+i%3*13+seed,102+i%3*12,43+i%3*8)
-                        local angle=i*2.4+seed
-                        local spread=i==7 and 0 or 0.24
-                        self:part(root,"Canopy","Sphere",leaf,math.sin(angle)*spread,h+0.15+i%3*0.13,math.cos(angle)*spread,0.38+i%2*0.10,0.40+i%2*0.08,0.38+i%2*0.08)
+                    if seed%3==0 then
+                        for i=1,3 do
+                            local width=0.92-i*0.17
+                            self:part(root,"Canopy","Cone",self:material(61+i*7,98+i*9,53+i*5),0,h*0.6+i*0.24,0,width,0.58,width)
+                        end
+                    else
+                        for i=1,7 do
+                            local leaf=self:material(66+i%3*13+seed,102+i%3*12,43+i%3*8)
+                            local angle=i*2.4+seed
+                            local spread=i==7 and 0 or 0.24
+                            local px,pz=math.sin(angle)*spread,math.cos(angle)*spread
+                            self:part(root,"Canopy","Sphere",leaf,px,h+0.15+i%3*0.13,pz,0.38+i%2*0.10,0.40+i%2*0.08,0.38+i%2*0.08,Quaternion(seed*7,i*23,i*13))
+                            if i<=3 then self:beam(root,"Branch",self:material(103,73,42),Vector3(0,h*0.55,0),Vector3(px,h+0.15,pz),0.045) end
+                        end
                     end
                     self.trees[key]=root
                 end
@@ -134,45 +151,98 @@ function World.new(sim)
 
     function self:road(x,y,planned,progress)
         local key=x .. ":" .. y
+        local directions={{0,-1,1},{1,0,2},{0,1,4},{-1,0,8}}
+        local mask=0
+        local connected={}
+        for i,d in ipairs(directions) do
+            local k=(x+d[1]) .. ":" .. (y+d[2])
+            connected[i]=sim.roads[k] or planned and sim:roadSiteAt(x+d[1],y+d[2])
+            if connected[i] then mask=mask+d[3] end
+        end
         local existing=self.roads[key]
-        if existing and existing.planned==planned then return end
+        if existing and existing.planned==planned and existing.mask==mask then return end
         if existing then existing.node:Remove() end
         local node=self.scene:CreateChild("Road_" .. key)
         node.position=position(x,y)
-        self.roads[key]={node=node,planned=planned}
-        local road=self:material(planned and 168 or 163,planned and 145 or 156,planned and 105 or 135)
-        self:part(node,"GravelBed","Box",road,0,-0.005,0,1.01,0.028,0.32)
-        for _,dy in ipairs({-1,1}) do
-            if sim.roads[x .. ":" .. (y+dy)] or sim:roadSiteAt(x,y+dy) then
-                self:part(node,"Turn","Box",road,0,-0.005,-dy*0.25,0.32,0.028,0.51)
-            end
-        end
+        self.roads[key]={node=node,planned=planned,mask=mask}
+        local road=self:material(planned and 161 or 135,planned and 141 or 126,planned and 106 or 104)
+        self:part(node,"RoadCenter","Box",road,0,-0.005,0,0.34,0.026,0.34)
+        for i,d in ipairs(directions) do if connected[i] then
+            self:part(node,"RoadArm","Box",road,d[1]*0.25,-0.005,-d[2]*0.25,
+                d[1]~=0 and 0.52 or 0.34,0.026,d[2]~=0 and 0.52 or 0.34)
+        end end
         if not planned then
-            for i=1,10 do
-                local px=(i-5.5)*0.095
-                local pz=((i*7+x*3+y)%5-2)*0.047
-                self:part(node,"Paver","Sphere",self:material(187+i%3*7,181+i%3*6,159+i%3*5),px,0.018,pz,0.11,0.045,0.075)
-            end
+            for row=-3,3 do for col=-3,3 do
+                local px,pz=col*0.14,row*0.14
+                local onPath=math.abs(px)<0.17 and math.abs(pz)<0.17 or
+                    connected[1] and pz>=0 and math.abs(px)<0.17 or
+                    connected[2] and px>=0 and math.abs(pz)<0.17 or
+                    connected[3] and pz<=0 and math.abs(px)<0.17 or
+                    connected[4] and px<=0 and math.abs(pz)<0.17
+                if onPath then
+                    local hash=(x*17+y*31+col*13+row*7)%13
+                    self:part(node,"Paver","Sphere",self:material(159+hash*2,154+hash*2,136+hash*2),
+                        px+(hash%3-1)*0.012,0.008,pz,0.13,0.025,0.12,Quaternion(0,hash*7,0))
+                end
+            end end
         else
-            self:part(node,"SurveyStake","Box",self:material(139,100,56),-0.32,0.10,0.18,0.035,0.23,0.035)
+            self:part(node,"SurveyStake","Box",self:material(139,100,56),-0.21,0.10,0.18,0.025,0.23,0.025)
         end
     end
 
+    function self:outline(parent,b,mat,height,stakes)
+        local w,h=b.footprintW or 1,b.footprintH or 1
+        for _,edge in ipairs(D.edges(b)) do
+            local vertical=edge.side=="west" or edge.side=="east"
+            local dx=edge.side=="east" and 0.5 or edge.side=="west" and -0.5 or 0
+            local dz=edge.side=="north" and 0.5 or edge.side=="south" and -0.5 or 0
+            local x=edge.x+(w-1)*0.5+dx
+            local z=-edge.y-(h-1)*0.5+dz
+            self:part(parent,"PlotBoundary","Box",mat,x,height,z,vertical and 0.022 or 1,0.02,vertical and 1 or 0.022)
+            if stakes then self:part(parent,"SurveyStake","Box",mat,x,height+0.10,z,0.035,0.22,0.035) end
+        end
+    end
     function self:building(b)
         local old=self.buildings[b.id]
         local signature=(b.complete and "done" or tostring(math.floor((b.progress or 0)*16))) .. ":" ..
             (b.kind=="farm" and Farm.stage(b,D.buildings.farm.period) or "") .. ":" ..
-            (b.kind=="kitchen" and tostring(Meals.occupancy(sim,b.id)>0) or "") .. ":" .. sim.roadCount
+            (b.kind=="kitchen" and tostring(Meals.occupancy(sim,b.id)>0) or "") .. ":" .. sim.roadCount .. ((b.progress or 0)>0 and ":started" or ":plan")
         if old and old.signature==signature then return end
         if old then old.node:Remove() end
         local root=self.scene:CreateChild("Building_" .. b.id .. "_" .. b.kind)
         local w,h=b.footprintW or 1,b.footprintH or 1
         root.position=position(b.x-(w-1)*0.5,b.y-(h-1)*0.5)
         self.buildings[b.id]={node=root,signature=signature}
-        local wood,lightWood,stone,wall,roof=self:material(91,57,31),self:material(156,108,57),self:material(149,146,130),self:material(213,191,143),self:material(57,74,87)
+        local wood,lightWood,stone,wall,roof=self:material(105,54,25),self:material(189,129,62),self:material(150,148,134),self:material(226,207,161),self:material(43,66,79)
+        if b.kind=="house" then roof=self:material(67,71,68) end
+        if b.kind=="mill" or b.kind=="courier" then roof=self:material(116,76,39) end
+        if b.kind=="barracks" then roof=self:material(105,54,43) end
         local bw,bh=w-0.28,h-0.28
         local progress=b.complete and 1 or b.progress or 0
-        self:part(root,"Foundation","Box",stone,0,0.045,0,bw,0.10,bh)
+        if not b.complete and progress==0 then
+            self:outline(root,b,lightWood,0.06,true)
+            self.buildings[b.id].planned=true
+            return
+        end
+        root.scale=Vector3(1,1.25,1)
+        local irregular=#D.cells(b)<w*h
+        if irregular then
+            for _,c in ipairs(D.cells(b)) do
+                self:part(root,"Foundation","Box",stone,c.x+(w-1)*0.5,0.045,-c.y-(h-1)*0.5,0.98,0.10,0.98)
+            end
+            -- The L-shaped courier has a two-cell-wide main hall and a separate
+            -- covered loading bay; its north-east cut-out remains usable land.
+            if b.kind=="courier" then
+                local annex=root:CreateChild("LoadingBay")
+                annex.position=Vector3((w-1)*0.5,0,-(h-1)*0.5)
+                if progress>0.25 then
+                    for _,x in ipairs({-0.36,0.36}) do self:part(annex,"TimberPost","Box",wood,x,0.42,-0.35,0.055,0.78,0.055) end
+                end
+                if progress>0.75 then self:part(annex,"Awning","Box",lightWood,0,0.90,0,0.90,0.065,0.92,Quaternion(-12,0,0)) end
+                local main=root:CreateChild("MainHall");main.position=Vector3(-0.5,0,0)
+                root=main;w=w-1;bw=w-0.28
+            end
+        else self:part(root,"Foundation","Box",stone,0,0.045,0,bw,0.10,bh) end
         if b.kind=="farm" then
             self:part(root,"TilledSoil","Box",self:material(156,130,93),0,0.06,0,bw,0.04,bh)
             local stage=Farm.stage(b,D.buildings.farm.period)
@@ -209,6 +279,7 @@ function World.new(sim)
             end
             return
         end
+        local doorX=math.min((w-1)*0.5,bw/2-0.25)
         -- Build individual members; no swapping complete building pictures.
         local posts=math.floor(math.min(1,progress/0.28)*4+0.01)
         local corners={{-bw/2+0.06,-bh/2+0.06},{bw/2-0.06,-bh/2+0.06},{-bw/2+0.06,bh/2-0.06},{bw/2-0.06,bh/2-0.06}}
@@ -231,17 +302,27 @@ function World.new(sim)
                 self:part(root,"WallTimber","Box",lightWood,0,0.09+i*0.16,bh/2-0.005,bw,0.018,0.018)
             end
             if not openKitchen then
-                local panelW=math.max(0.08,(bw-0.46)/2)
-                for _,sign in ipairs({-1,1}) do
-                    self:part(root,"FrontWall","Box",wall,sign*(bw+0.46)/4,0.09+wallH/2,-bh/2+0.05,panelW,wallH,0.09)
-                    if wallH>0.65 and bw>1 then
-                        self:part(root,"Window","Box",wood,sign*(bw+0.46)/4,0.58,-bh/2-0.005,0.24,0.26,0.02)
-                        for k=-1,1 do self:part(root,"WindowBar","Box",lightWood,sign*(bw+0.46)/4+k*0.065,0.58,-bh/2-0.02,0.018,0.25,0.02) end
-                        self:part(root,"WindowSill","Box",lightWood,sign*(bw+0.46)/4,0.44,-bh/2-0.03,0.30,0.035,0.07)
+                local panels={{-bw/2+0.05,doorX-0.23},{doorX+0.23,bw/2-0.05}}
+                for _,span in ipairs(panels) do
+                    local panelW=span[2]-span[1]
+                    local px=(span[1]+span[2])/2
+                    if panelW>0.02 then
+                        self:part(root,"FrontWall","Box",wall,px,0.09+wallH/2,-bh/2+0.05,panelW,wallH,0.09)
+                        if wallH>0.65 and panelW>0.42 then
+                            local windows=math.max(1,math.floor(panelW/0.85))
+                            for i=1,windows do
+                                local wx=span[1]+panelW*i/(windows+1)
+                                self:part(root,"Window","Box",wood,wx,0.58,-bh/2-0.005,0.24,0.26,0.02)
+                                for k=-1,1 do self:part(root,"WindowBar","Box",lightWood,wx+k*0.065,0.58,-bh/2-0.02,0.018,0.25,0.02) end
+                                self:part(root,"WindowSill","Box",lightWood,wx,0.44,-bh/2-0.03,0.30,0.035,0.07)
+                            end
+                            self:beam(root,"FrontTimber",wood,Vector3(span[1]+0.02,0.22,-bh/2-0.01),Vector3(span[2]-0.02,0.86,-bh/2-0.01),0.035)
+                            self:part(root,"FrontSill","Box",wood,px,0.35,-bh/2-0.01,panelW,0.035,0.035)
+                        end
                     end
                 end
-                self:part(root,"DoorLintel","Box",wood,0,0.96,-bh/2,0.47,0.08,0.12)
-                if b.complete then self:part(root,"Door","Box",self:material(94,67,43),0,0.41,-bh/2+0.035,0.36,0.72,0.05) end
+                self:part(root,"DoorLintel","Box",wood,doorX,0.96,-bh/2,0.47,0.08,0.12)
+                if b.complete then self:part(root,"Door","Box",self:material(94,67,43),doorX,0.41,-bh/2+0.035,0.36,0.72,0.05) end
             end
             if wallH>0.7 then
                 -- Timber infill and stone courses provide actual surface relief.
@@ -269,27 +350,35 @@ function World.new(sim)
                 local py=1.55-t*0.46
                 self:part(root,"RoofCourse","Box",roof,0,py,pz,bw+0.35,0.065,(bh/2+0.14)/7+0.04,
                     Quaternion(side*math.deg(math.atan(0.46/(bh/2+0.14))),0,0))
-                local columns=math.max(4,math.floor((bw+0.3)/0.19))
+                local columns=math.max(5,math.floor((bw+0.3)/0.12))
                 local along=Vector3(0,-0.46,side*(bh/2+0.14)):Normalized()
+                local tileLength=math.sqrt(0.46*0.46+(bh/2+0.14)^2)/7+0.045
                 for col=1,columns do
                     local px=-(bw+0.3)/2+(col-0.5)*(bw+0.3)/columns
-                    self:part(root,"RoofTile","Cylinder",self:material(68+col%3*5,82+col%3*5,94+col%3*5),px,py+0.045,pz,0.07,0.19,0.07,Quaternion(UP,along))
+                    self:part(root,"RoofTile","Cylinder",roof,px,py+0.045,pz,0.065,tileLength,0.065,Quaternion(UP,along))
                 end
             end end
             self:part(root,"RidgeCap","Cylinder",roof,0,1.60,0,0.105,bw+0.4,0.105,Quaternion(0,0,90))
+            for _,sign in ipairs({-1,1}) do
+                self:part(root,"RidgeFinial","Sphere",roof,sign*(bw/2+0.17),1.65,0,0.11,0.16,0.11)
+            end
         end
         if not b.complete then
             for i=1,4 do self:part(root,"DeliveredPlank","Box",lightWood,-bw/2-0.17,0.08+i*0.025,-0.2,0.14,0.026,0.65) end
         else
-            self:part(root,"Threshold","Box",stone,0,0.04,-bh/2-0.18,0.54,0.07,0.27)
-            self:part(root,"Step","Box",stone,0,0.015,-bh/2-0.33,0.62,0.035,0.16)
-            self:part(root,"DoorFrameLeft","Box",wood,-0.21,0.46,-bh/2-0.02,0.045,0.79,0.06)
-            self:part(root,"DoorFrameRight","Box",wood,0.21,0.46,-bh/2-0.02,0.045,0.79,0.06)
+            self:part(root,"Threshold","Box",stone,doorX,0.04,-bh/2-0.18,0.54,0.07,0.27)
+            self:part(root,"Step","Box",stone,doorX,0.015,-bh/2-0.33,0.62,0.035,0.16)
+            self:part(root,"DoorFrameLeft","Box",wood,doorX-0.21,0.46,-bh/2-0.02,0.045,0.79,0.06)
+            self:part(root,"DoorFrameRight","Box",wood,doorX+0.21,0.46,-bh/2-0.02,0.045,0.79,0.06)
             if not openKitchen then
-                for i=-2,2 do self:part(root,"DoorPlank","Box",lightWood,i*0.064,0.42,-bh/2-0.005,0.012,0.64,0.016) end
+                for i=-2,2 do self:part(root,"DoorPlank","Box",lightWood,doorX+i*0.064,0.42,-bh/2-0.005,0.012,0.64,0.016) end
             end
             if b.kind=="store" or b.kind=="courier" then
-                for i=1,3 do self:part(root,"Supplies","Cylinder",lightWood,-bw/2+0.18+(i-1)*0.25,0.20,-bh/2-0.12,0.19,0.32,0.19) end
+                for i=1,3 do
+                    local px=-bw/2+0.18+(i-1)*0.25
+                    self:part(root,"Supplies","Cylinder",lightWood,px,0.20,-bh/2-0.12,0.19,0.32,0.19)
+                    for _,height in ipairs({0.11,0.28}) do self:part(root,"BarrelHoop","Cylinder",self:material(75,70,57),px,height,-bh/2-0.12,0.195,0.016,0.195) end
+                end
             elseif b.kind=="woodcutter" then
                 for i=1,4 do self:part(root,"Logs","Cylinder",wood,-bw/2+0.1,0.10+i*0.08,0,0.14,0.7,0.14,Quaternion(90,0,0)) end
             elseif b.kind=="kitchen" then
@@ -299,8 +388,19 @@ function World.new(sim)
                     self:part(root,"SeatLeg","Box",wood,x,0.08,z,0.07,0.16,0.07)
                 end end
                 self:part(root,"Chimney","Box",stone,bw/2-0.22,1.24,0.25,0.20,0.70,0.22)
+                self:part(root,"CanvasAwning","Box",self:material(202,162,77),doorX,0.90,-bh/2-0.12,0.9,0.04,0.45,Quaternion(-12,0,0))
+                for _,sign in ipairs({-1,1}) do self:part(root,"PorchPost","Box",wood,doorX+sign*0.40,0.43,-bh/2-0.28,0.045,0.86,0.045) end
             elseif b.kind=="mill" then
                 self:part(root,"MillStone","Cylinder",stone,0,0.32,-bh/2-0.10,0.40,0.16,0.4)
+                local wheel=root:CreateChild("WaterWheel");wheel.position=Vector3(-bw/2-0.04,0.46,0)
+                for _,sign in ipairs({-1,1}) do
+                    self:part(wheel,"WheelRim","Cylinder",wood,sign*0.09,0,0,0.72,0.055,0.72,Quaternion(0,0,90))
+                end
+                for i=1,10 do
+                    local angle=i*math.pi/5
+                    self:part(wheel,"WheelPaddle","Box",lightWood,0,math.cos(angle)*0.34,math.sin(angle)*0.34,0.25,0.065,0.16,Quaternion(i*36,0,0))
+                end
+                self.buildings[b.id].wheel=wheel
             elseif b.kind=="quarry" then
                 for i=1,5 do self:part(root,"StoneHeap","Sphere",stone,-bw/2+(i-0.5)*bw/5,0.12,-bh/2-0.16,0.23,0.23+i%2*0.1,0.22) end
             elseif b.kind=="butcher" then
@@ -320,9 +420,9 @@ function World.new(sim)
             local coat=self:material(profile.color[1],profile.color[2],profile.color[3])
             local trouser=self:material(79,75,65)
             local boot=self:material(66,52,41)
-            local torso=self:part(root,"Torso","Sphere",coat,0,0.40,0,0.22,0.30,0.16)
+            local torso=self:part(root,"Torso","Tunic",coat,0,0.40,0,1,1,0.80)
             self:part(root,"Belt","Box",boot,0,0.30,0,0.21,0.028,0.15)
-            self:part(root,"Head","Sphere",skin,0,0.62,0,0.14,0.18,0.14)
+            self:part(root,"Head","Sphere",skin,0,0.62,0,0.125,0.15,0.13)
             self:part(root,"Nose","Sphere",skin,0,0.62,0.075,0.035,0.04,0.035)
             local hair=self:material(profile.age=="elder" and 145 or 54,profile.age=="elder" and 143 or 44,profile.age=="elder" and 131 or 33)
             self:part(root,"Hair","Sphere",hair,0,0.68,-0.018,0.145,0.10,0.13)
@@ -363,7 +463,9 @@ function World.new(sim)
         end
         person.seen=true
         person.actor,person.profile,person.action=actor,profile,action
-        local walking=actor.path and actor.path[actor.index]~=nil
+        local walking=actor.path and actor.path[actor.index]~=nil or
+            actor.meal and (actor.meal.phase=="enter" or actor.meal.phase=="exit" or actor.meal.phase=="leaveWork" or actor.meal.phase=="returnWork") or
+            (actor.farmPresence or 0)>0 and (actor.farmPresence or 0)<1
         local clock=sim.elapsed
         local cycle=clock*6+(seed or 0)*1.8
         local stride=walking and math.sin(cycle)*29 or 0
@@ -410,6 +512,9 @@ function World.new(sim)
         self.cameraNode.position=center+Vector3(0,30,-math.sqrt(700))
         self.cameraNode:LookAt(center)
         self.camera.orthoSize=layout.h/(56*zoom)
+        -- Assign the aspect after the scalar orthographic size: the latter
+        -- resets it, which otherwise stretches the view and misaligns labels.
+        self.camera.aspectRatio=layout.w/layout.h
         local halfX=layout.w/(112*zoom)+3
         local halfY=layout.h/(84*zoom)+3
         local cx,cy=10+center.x,9-center.z
@@ -425,7 +530,11 @@ function World.new(sim)
             if x and x>=minX and x<=maxX and y>=minY and y<=maxY then self:road(x,y,false,1) end
         end
         for _,p in ipairs(sim.pendingRoads) do self:road(p.x,p.y,true,p.progress) end
-        for _,b in ipairs(sim.buildings) do self:building(b) end
+        for _,b in ipairs(sim.buildings) do
+            self:building(b)
+            local wheel=self.buildings[b.id].wheel
+            if wheel and b.workers>0 and b.inputs>0 then wheel.rotation=Quaternion(sim.elapsed*20,0,0) end
+        end
         for _,p in pairs(self.actors) do p.seen=false end
         local function add(key,a,profile,action,seed)
             if Meals.hidden(sim,a) then return end
@@ -466,19 +575,13 @@ function World.new(sim)
             local valid=sim:canBuild(mode,ghost.x,ghost.y)
             local mat=valid and self:material(114,177,142) or self:material(195,112,93)
             self.ghost.position=position(ghost.x-(w-1)*0.5,ghost.y-(h-1)*0.5)
-            for _,sign in ipairs({-1,1}) do
-                self:part(self.ghost,"Outline","Box",mat,sign*w/2,0.035,0,0.035,0.02,h)
-                self:part(self.ghost,"Outline","Box",mat,0,0.035,sign*h/2,w,0.02,0.035)
-            end
+            self:outline(self.ghost,{kind=mode,footprintW=w,footprintH=h,footprintCells=D.cells(mode)},mat,0.035,false)
         end
         self.selection:RemoveAllChildren()
         if selected then
             local w,h=selected.footprintW or 1,selected.footprintH or 1
             self.selection.position=position(selected.x-(w-1)*0.5,selected.y-(h-1)*0.5)
-            for _,sign in ipairs({-1,1}) do
-                self:part(self.selection,"Outline","Box",self:material(217,176,85),sign*w/2,0.04,0,0.025,0.02,h)
-                self:part(self.selection,"Outline","Box",self:material(217,176,85),0,0.04,sign*h/2,w,0.02,0.025)
-            end
+            self:outline(self.selection,selected,self:material(217,176,85),0.04,false)
         end
     end
     function self:pick(x,y,layout)

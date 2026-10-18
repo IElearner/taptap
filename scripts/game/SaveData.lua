@@ -86,10 +86,19 @@ local function restoreUnsafe(data, mode)
         local width, height = b.footprintW or 1, b.footprintH or 1
         local maxW, maxH = D.footprint(b.kind)
         assert(number(width, 1, maxW) and width % 1 == 0 and number(height, 1, maxH) and height % 1 == 0, "building footprint")
-        for dx = 1-width, 0 do for dy = 1-height, 0 do
-            local tileX, tileY = b.x+dx, b.y+dy
+        if b.footprintCells~=nil then
+            assert(type(b.footprintCells)=="table" and #b.footprintCells>0 and #b.footprintCells<=width*height,"building mask")
+            local seen={}
+            for _,c in ipairs(b.footprintCells) do
+                assert(type(c)=="table" and number(c.x,1-width,0) and number(c.y,1-height,0) and c.x%1==0 and c.y%1==0,"mask cell")
+                local k=c.x .. ":" .. c.y;assert(not seen[k],"duplicate mask cell");seen[k]=true
+            end
+            assert(seen["0:0"],"building entrance cell")
+        end
+        for _,c in ipairs(D.cells(b)) do
+            local tileX,tileY=b.x+c.x,b.y+c.y
             assert(not s:buildingAt(tileX, tileY) and not s.roads[tileX .. ":" .. tileY], "building overlap")
-        end end
+        end
         assert(number(b.mealStock or 0,0,100) and (b.mealIncoming==nil or type(b.mealIncoming)=="boolean"),"dining inventory")
         local restored = clone(b); restored.cachedConnected, restored.networkRevision = nil, nil
         restored.mealStock,restored.mealIncoming=b.mealStock or 0,b.mealIncoming or false
@@ -99,9 +108,7 @@ local function restoreUnsafe(data, mode)
         end
         restored.footprintW, restored.footprintH = width, height
         s.buildings[i] = restored
-        for dx = 1-width, 0 do for dy = 1-height, 0 do
-            s.buildingIndex[b.x+dx .. ":" .. b.y+dy] = restored
-        end end
+        for _,c in ipairs(D.cells(restored)) do s.buildingIndex[b.x+c.x .. ":" .. b.y+c.y]=restored end
     end
     assert(s.buildings[1].kind == "store" and s.buildings[1].x == 10 and s.buildings[1].y == 8, "warehouse")
     local function restoreJob(job)
@@ -182,9 +189,12 @@ local function restoreUnsafe(data, mode)
                     if j.workX~=nil then
                         local b=s.buildings[j.building]
                         local left,right,top,bottom=b.x-(b.footprintW or 1),b.x+1,b.y-(b.footprintH or 1),b.y+1
+                        local edgeAllowed=false
+                        for _,edge in ipairs(D.edges(b)) do
+                            if edge.outsideX==j.workX and edge.outsideY==j.workY then edgeAllowed=true;break end
+                        end
                         assert(number(j.workX,left,right) and number(j.workY,top,bottom) and
-                            j.workX%1==0 and j.workY%1==0 and
-                            (j.workX==left or j.workX==right or j.workY==top or j.workY==bottom),"construction perimeter")
+                            j.workX%1==0 and j.workY%1==0 and edgeAllowed,"construction perimeter")
                         local spot=j.building .. ":" .. j.workX .. ":" .. j.workY
                         assert(not workClaims[spot],"overlapping construction positions");workClaims[spot]=true
                     end
