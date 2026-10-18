@@ -2,6 +2,10 @@ local D = require "game.Definitions"
 local Move = require "game.Movement"
 local Meals = require "game.Meals"
 local C = {}
+-- Work is measured in worker-seconds; adding builders shortens elapsed time,
+-- without changing the amount of work required by a site.
+C.maxBuilders = 4
+C.buildingWork = 18
 local directions = { {1,0}, {-1,0}, {0,1}, {0,-1} }
 function C.busy(sim)
     local count = 0
@@ -9,11 +13,12 @@ function C.busy(sim)
     return count
 end
 local function claimed(sim, kind, x, y, id)
+    local count = 0
     for _, a in ipairs(sim.builders) do
         local j = a.job
-        if j and j.kind == kind and (kind == "road" and j.x == x and j.y == y or kind == "building" and j.building == id) then return true end
+        if j and j.kind == kind and (kind == "road" and j.x == x and j.y == y or kind == "building" and j.building == id) then count=count+1 end
     end
-    return false
+    return count
 end
 local function siteFor(sim, job)
     if job.kind == "road" then return sim:roadSiteAt(job.x,job.y) end
@@ -21,7 +26,7 @@ local function siteFor(sim, job)
 end
 local function nextJob(sim)
     for _, p in ipairs(sim.pendingRoads) do
-        if not claimed(sim,"road",p.x,p.y) then
+        if claimed(sim,"road",p.x,p.y)==0 then
             for _, d in ipairs(directions) do
                 local x,y = p.x+d[1],p.y+d[2]
                 if sim:path(10,9,x,y) then return {kind="road",x=p.x,y=p.y,doorX=x,doorY=y} end
@@ -29,8 +34,17 @@ local function nextJob(sim)
         end
     end
     for _, b in ipairs(sim.buildings) do
-        if not b.complete and not claimed(sim,"building",0,0,b.id) and sim:connected(b) then
+        if not b.complete and claimed(sim,"building",0,0,b.id)<C.maxBuilders and sim:connected(b) then
             return {kind="building",building=b.id,doorX=b.x,doorY=b.y+1}
+        end
+    end
+end
+local function releaseCrew(sim,kind,id,x,y)
+    for _,a in ipairs(sim.builders) do
+        local j=a.job
+        if j and j.kind==kind and (kind=="building" and j.building==id or kind=="road" and j.x==x and j.y==y) then
+            a.job,a.phase,a.carrying=false,"return",false
+            Move.route(sim,a,10,9)
         end
     end
 end
@@ -45,8 +59,8 @@ local function finishBuilding(sim,b)
     sim:notify(def.name .. "已竣工。")
 end
 function C.update(sim,dt,offline)
-    -- Construction uses up to two genuinely idle villagers, never extra population.
-    for index = 1,2 do
+    -- Every assigned villager is drawn and charged against the population budget.
+    for index = 1,C.maxBuilders do
         local a = sim.builders[index]
         if not a then a={x=10,y=9,path={},index=1,active=false,job=false,phase="idle",timer=0,carrying=false,hunger=0,energy=100}; sim.builders[index]=a end
         local dining=false
@@ -73,16 +87,16 @@ function C.update(sim,dt,offline)
                 local p = siteFor(sim,a.job)
                 if p then
                     a.timer = a.timer+dt
-                    p.progress = math.min(1,p.progress+dt/(a.job.kind == "road" and 2.5 or 5))
+                    p.progress = math.min(1,p.progress+dt/(a.job.kind == "road" and 2.5 or C.buildingWork))
                 end
                 if not p or p.progress >= 1 then
-                    if p and a.job.kind == "road" then
+                    local job=a.job
+                    if p and job.kind == "road" then
                         sim.roads[p.x .. ":" .. p.y],sim.roadCount=true,sim.roadCount+1
                         sim.roadPlanIndex[p.x .. ":" .. p.y]=nil
                         for i,item in ipairs(sim.pendingRoads) do if item == p then table.remove(sim.pendingRoads,i);break end end
-                    elseif p then finishBuilding(sim,p) end
-                    a.job,a.phase,a.carrying = false,"return",false
-                    Move.route(sim,a,10,9)
+                    elseif p and not p.complete then finishBuilding(sim,p) end
+                    releaseCrew(sim,job.kind,job.building,job.x,job.y)
                 end
             elseif a.phase == "return" then
                 if Move.step(a,dt) then a.active,a.phase=false,"idle" end

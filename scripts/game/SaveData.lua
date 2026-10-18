@@ -153,7 +153,7 @@ local function restoreUnsafe(data, mode)
         if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then assert(m.paid,"reserved meal") end
     end
     if data.version >= 2 then
-        assert(type(w.pendingRoads)=="table" and #w.pendingRoads<=100000 and type(w.builders)=="table" and #w.builders<=2, "construction")
+        assert(type(w.pendingRoads)=="table" and #w.pendingRoads<=100000 and type(w.builders)=="table" and #w.builders<=4, "construction")
         s.pendingRoads,s.roadPlanIndex,s.builders={}, {},clone(w.builders)
         for _,p in ipairs(w.pendingRoads) do
             assert(type(p)=="table" and number(p.x,-1e9,1e9) and p.x%1==0 and number(p.y,-1e9,1e9) and p.y%1==0 and number(p.progress,0,1), "road site")
@@ -181,7 +181,8 @@ local function restoreUnsafe(data, mode)
                     assert(number(j.building,1,#s.buildings) and s.buildings[j.building] and not s.buildings[j.building].complete, "building job")
                     claim="b" .. j.building
                 end
-                assert(not claims[claim], "duplicate construction worker");claims[claim]=true
+                claims[claim]=(claims[claim] or 0)+1
+                assert(claim:sub(1,1)=="b" and claims[claim]<=4 or claims[claim]==1, "duplicate construction worker")
             else assert(a.phase=="idle" or a.phase=="return", "builder missing job") end
         end
         assert(type(w.workers)=="table" and number(w.mealsServed,0,1e12), "worker activities")

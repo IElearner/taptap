@@ -2,6 +2,7 @@ local Sim=require "game.Simulation"
 local Data=require "game.SaveData"
 local Meals=require "game.Meals"
 local Offline=require "game.Offline"
+local Construction=require "game.Construction"
 local function advance(s,t,offline) for _=1,math.ceil(t*10) do s:update(0.1,offline) end end
 local function foodTotal(s)
     local total=s.stock.food
@@ -42,6 +43,35 @@ V.atFrame(8,function()
     V.assert(s.stock.wood==wood,"Construction material escrow is not charged twice")
     V.assert(restored:count("farm")==1 and restored.roadCount==s.roadCount,"Restored construction has the same completed outcome")
     V.assert(s:availableWorkers()>=0,"Builders share the real population budget")
+
+    local crew=fresh()
+    V.assert(crew:build("house",8,8),"A house starts as a construction site")
+    local house=crew:buildingAt(8,8)
+    V.assert(house and not house.complete and house.progress==0,"Foundation starts without a finished building")
+    V.assert(untilTrue(crew,function()
+        local assigned=0
+        for _,a in ipairs(crew.builders) do if a.job and a.job.building==house.id then assigned=assigned+1 end end
+        return assigned==Construction.maxBuilders
+    end,3),"Four real villagers can share one construction site")
+    local crewSave=Data.capture(crew,1000,1,true)
+    V.assert(Data.restore(cjson.decode(cjson.encode(crewSave)),"finite")~=nil,"A multi-builder site survives save/load")
+    local carried=false
+    V.assert(untilTrue(crew,function()
+        local hammering=0
+        for _,a in ipairs(crew.builders) do
+            if a.job and a.job.building==house.id and a.carrying then carried=true end
+            if a.job and a.job.building==house.id and a.phase=="hammer" then hammering=hammering+1 end
+        end
+        return hammering==Construction.maxBuilders
+    end,14) and carried,"Builders carry planks to the site before hammering together")
+    local start=house.progress
+    advance(crew,1)
+    V.assert(math.abs(house.progress-start-Construction.maxBuilders/Construction.buildingWork)<0.025,
+        "Shared progress advances by total worker-seconds, with no duplicated work")
+    local originalPopulation=crew.population
+    V.assert(untilTrue(crew,function() return house.complete end,12),"House visibly passes through the work stages")
+    V.assert(house.progress==1 and crew.population==originalPopulation+4,
+        "The construction crew completes one house and grants its residents once")
 
     local busy=fresh();busy.population=3;busy:build("road",7,9);advance(busy,15)
     V.assert(busy.roadCount==0 and busy.pendingRoads[1].progress==0,"No free villager means no invisible builder or progress")

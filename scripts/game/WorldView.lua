@@ -145,6 +145,65 @@ local function drawFarm(vg,b,sim,ghost)
         rect(vg,sx-25,sy+17,50,4,{68,59,41});rect(vg,sx-25,sy+17,50*(b.progress or 0),4,{225,191,105})
     end
 end
+local function constructionSite(vg,x,y,size,progress,clock)
+    -- The finished building art is withheld until the roof goes on. A site
+    -- remains legible even when several builders stand around its front edge.
+    local w=math.min(70,size*0.34)
+    local back=y-math.min(48,size*0.32)
+    local front=y+7
+    polygon(vg,{x-w-5,back-6,x+w+5,back-6,x+w+5,front+5,x-w-5,front+5},{79,63,42,130})
+    polygon(vg,{x-w,back,x+w,back,x+w,front,x-w,front},{146,120,77,245})
+    for i=0,4 do
+        local ty=back+(front-back)*i/4
+        line(vg,x-w,ty,x+w,ty,{101,79,48,135},2)
+    end
+    for i=0,5 do
+        local tx=x-w+2*w*i/5
+        line(vg,tx,back,tx,front,{186,157,105,85},1)
+    end
+    -- Delivered planks gradually become a frame, walls, and roof battens.
+    local planks=math.max(1,math.min(5,math.floor(progress*12)+1))
+    for i=1,planks do
+        local px=x-w+7+(i%3)*9
+        local py=front-9-math.floor((i-1)/3)*5
+        line(vg,px-13,py,px+13,py-3,{91,60,35,240},6)
+        line(vg,px-13,py-2,px+13,py-5,{206,165,94,245},4)
+    end
+    if progress>=0.17 then
+        local rise=math.min(1,(progress-0.17)/0.25)
+        for _,px in ipairs({x-w+7,x+w-7}) do
+            line(vg,px,front,px,front-38*rise,{79,51,28,255},8)
+            line(vg,px-1,front,px-1,front-38*rise,{175,123,64,255},5)
+        end
+        if rise>=0.8 then line(vg,x-w+7,front-37,x+w-7,front-37,{165,112,56,255},5) end
+    end
+    if progress>=0.42 then
+        local wall=math.min(1,(progress-0.42)/0.26)
+        rect(vg,x-w+11,front-30*wall,2*w-22,30*wall,{172,129,74,245})
+        for i=1,3 do
+            local px=x-w+11+(2*w-22)*i/4
+            line(vg,px,front-30*wall,px,front,{107,70,37,190},3)
+        end
+        rect(vg,x-9,front-19*wall,18,19*wall,{58,46,34,220})
+    end
+    if progress>=0.67 then
+        local roof=math.min(1,(progress-0.67)/0.25)
+        local top=front-39-22*roof
+        line(vg,x-w+4,front-38,x,top,{79,52,32,250},6)
+        line(vg,x+w-4,front-38,x,top,{79,52,32,250},6)
+        for i=1,4 do
+            local t=i/5
+            line(vg,x-w+4+(w-4)*t,front-38+(top-front+38)*t,x+w-4-(w-4)*t,front-38+(top-front+38)*t,{188,140,78,245},3)
+        end
+    end
+    if progress>=0.9 then
+        -- Soft construction dust makes the transition into finished art visible.
+        for i=1,4 do
+            local px=x-w+12+i*(2*w-24)/5
+            circle(vg,px,front-16-math.abs(math.sin(clock*2+i))*8,2.5,{202,182,132,110})
+        end
+    end
+end
 local function house(vg, b, selected, clock, art, ghost, sim)
     local width, height = b.footprintW or 1, b.footprintH or 1
     local x, y = project(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
@@ -161,6 +220,16 @@ local function house(vg, b, selected, clock, art, ghost, sim)
     if b.kind=="farm" then drawFarm(vg,b,sim,ghost);return end
     -- Anchor each roof at the south edge of its rectangular site.
     local size = buildingVisualSize(b)
+    if not b.complete and not ghost then
+        constructionSite(vg,x,y,size,b.progress or 0,clock)
+        if (b.progress or 0)>=0.9 then
+            Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,
+                math.min(1,((b.progress or 0)-0.9)*10))
+        end
+        rect(vg,x-28,y+17,56,5,{58,48,31,235})
+        rect(vg,x-27,y+18,54*(b.progress or 0),3,{235,197,101,250})
+        return
+    end
     local dining=b.kind=="kitchen" and b.complete and sim and Meals.occupancy(sim,b.id)>0
     local atlasPainted=false
     if not art or art<=0 then
@@ -208,11 +277,6 @@ local function house(vg, b, selected, clock, art, ghost, sim)
         elseif b.kind == "store" then
             for i = 0, 2 do circle(vg, x - 23 + i * 7, y + 5, 5, { 204, 170, 105 }) end
         end
-    end
-    if not b.complete and not ghost then
-        for i = -1, 1 do line(vg, x + i * 19, y + 10, x + i * 19, y - 48, { 174, 141, 86 }, 2) end
-        line(vg, x - 22, y - 28, x + 22, y - 28, { 199, 169, 110 }, 2)
-        rect(vg, x - 22, y + 17, 44, 4, { 75, 72, 49 }); rect(vg, x - 22, y + 17, 44 * b.progress, 4, { 233, 199, 109 })
     end
 end
 local function diningFloor(vg,b,side)
@@ -288,7 +352,12 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
     end
     if carrying then
         local good=cargo or "wood"
-        if not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
+        if good=="plank" then
+            for i=0,2 do
+                line(vg,sx-10,sy-19+i*4,sx+12,sy-23+i*4,{89,57,32,255},5)
+                line(vg,sx-10,sy-21+i*4,sx+12,sy-25+i*4,{211,160,87,255},3)
+            end
+        elseif not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
             if good=="wood" then
                 for i=0,2 do line(vg,sx+3,sy-9-i*3,sx+13,sy-13-i*3,{137,94,49},3) end
             elseif good=="stone" then
@@ -697,6 +766,14 @@ function WorldView.create(sim, onTile)
         local function addAgent(a,role,profile,action,cargo,queueSlot,guardIndex)
             if Meals.hidden(sim,a) then return end
             local drawX,drawY=a.x,a.y
+            if a.phase=="hammer" and a.job and a.job.kind=="building" then
+                local site=sim.buildings[a.job.building]
+                if site then
+                    local offsets={-0.68,-0.24,0.24,0.68}
+                    drawX=site.x-((site.footprintW or 1)-1)*0.5+offsets[queueSlot or 1]
+                    drawY=site.y+0.52+((queueSlot or 1)%2)*0.1
+                end
+            end
             local diningHall=nil
             if a.meal and sim.buildings[a.meal.target] and sim.buildings[a.meal.target].kind=="kitchen"
                 and (a.meal.phase=="enter" or a.meal.phase=="eat" or a.meal.phase=="exit") then
@@ -788,9 +865,9 @@ function WorldView.create(sim, onTile)
         end
         for index,a in ipairs(sim.builders) do
             if a.active or a.meal then
-                local role,profile=Characters.carrier(index,false)
+                local role,profile=Characters.carrier(index,a.carrying)
                 local action=a.meal and a.meal.phase=="eat" and "eat" or (a.phase=="hammer" and "hammer" or nil)
-                addAgent(a,role,profile,action,a.carrying and "wood" or nil,index)
+                addAgent(a,role,profile,action,a.carrying and (a.job and a.job.kind=="building" and "plank" or "wood") or nil,index)
             end
         end
         for index,a in ipairs(sim.guards or {}) do
