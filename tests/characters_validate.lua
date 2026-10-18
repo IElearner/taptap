@@ -57,17 +57,18 @@ V.atFrame(6, function()
     V.assert(cookRole=="occupation-chef" and butcherRole=="occupation-butcher","Kitchen and slaughterhouse use distinct skilled professions")
 end)
 V.atFrame(30, function()
-    local s = Game.Inspect()
+    local s,view = Game.Inspect()
     local civilians, guard, cook, butcher = {}, false, false, false
-    for name in pairs(seen) do
-        if name:find("blue%-man") then civilians.blue = true end
-        if name:find("ochre%-woman") then civilians.ochre = true end
-        if name:find("grey%-elder") then civilians.grey = true end
-        guard = guard or name:find("occupation%-guard") ~= nil
-        cook = cook or name:find("occupation%-chef") ~= nil
-        butcher = butcher or name:find("occupation%-butcher") ~= nil
+    for key,person in pairs(view.modelWorld.actors) do
+        local id=person.profile.id
+        if id=="blue-man" then civilians.blue=true end
+        if id=="ochre-woman" then civilians.ochre=true end
+        if id=="grey-elder" then civilians.grey=true end
+        guard=guard or key:match("^guard") and person.profile.gender=="female"
+        cook=cook or id=="chef"
+        butcher=butcher or id=="butcher"
     end
-    V.assert(civilians.blue and civilians.ochre and civilians.grey, "Actual renderer requests distinct carrier identities")
+    V.assert(civilians.blue and civilians.ochre and civilians.grey, "Actual meshes keep distinct carrier identities")
     V.assert(not seen["person-occupation-farmer-se"] and not seen["person-occupation-logger-se"],
         "Farm and timber workers are rendered as ordinary villagers")
     V.assert(cook and butcher,"Actual renderer shows distinct chef and butcher at their workplaces")

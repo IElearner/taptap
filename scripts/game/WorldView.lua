@@ -1,307 +1,22 @@
 local UI = require "urhox-libs/UI"
 local D = require "game.Definitions"
 local Art = require "game.Art"
-local Characters = require "game.Characters"
-local Meals = require "game.Meals"
-local Farm = require "game.FarmCycle"
+local ModelWorld = require "game.ModelWorld"
 local Theme = require "urhox-libs/UI/Core/Theme"
 local WorldView = {}
-local function color(c, alpha) return nvgRGBA(c[1], c[2], c[3], alpha or c[4] or 255) end
-local function polygon(vg, points, c)
-    nvgBeginPath(vg); nvgMoveTo(vg, points[1], points[2])
-    for i = 3, #points, 2 do nvgLineTo(vg, points[i], points[i + 1]) end
-    nvgClosePath(vg); nvgFillColor(vg, color(c)); nvgFill(vg)
+local function color(c) return nvgRGBA(c[1],c[2],c[3],c[4] or 255) end
+local function rect(vg,x,y,w,h,c)
+    nvgBeginPath(vg);nvgRect(vg,x,y,w,h);nvgFillColor(vg,color(c));nvgFill(vg)
 end
-local function rect(vg, x, y, w, h, c)
-    nvgBeginPath(vg); nvgRect(vg, x, y, w, h); nvgFillColor(vg, color(c)); nvgFill(vg)
+local function circle(vg,x,y,r,c)
+    nvgBeginPath(vg);nvgCircle(vg,x,y,r);nvgFillColor(vg,color(c));nvgFill(vg)
 end
-local function circle(vg, x, y, r, c)
-    nvgBeginPath(vg); nvgCircle(vg, x, y, r); nvgFillColor(vg, color(c)); nvgFill(vg)
+local function line(vg,x1,y1,x2,y2,c,width)
+    nvgBeginPath(vg);nvgMoveTo(vg,x1,y1);nvgLineTo(vg,x2,y2)
+    nvgStrokeColor(vg,color(c));nvgStrokeWidth(vg,width or 1);nvgStroke(vg)
 end
-local function line(vg, x1, y1, x2, y2, c, width)
-    nvgBeginPath(vg); nvgMoveTo(vg, x1, y1); nvgLineTo(vg, x2, y2)
-    nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, width or 1); nvgStroke(vg)
-end
--- Bird's-eye map: world X runs across the screen and world Y runs down it.
-local TILE_W,TILE_H=56,42
-local function project(x,y) return (x-10)*TILE_W,(y-9)*TILE_H end
-local function unproject(x,y) return x/TILE_W+10,y/TILE_H+9 end
-local function buildingVisualSize(b)
-    local width,height=b.footprintW or 1,b.footprintH or 1
-    return math.min(width*TILE_W+16,height*TILE_H+68)
-end
-local function tile(vg, x, y, c, shrink)
-    local sx,sy=project(x,y)
-    local gap=shrink or 0
-    rect(vg,sx-TILE_W/2+gap,sy-TILE_H/2+gap,TILE_W-2*gap,TILE_H-2*gap,c)
-end
-local function tileOutline(vg, x, y, c)
-    local sx,sy=project(x,y)
-    nvgBeginPath(vg);nvgRect(vg,sx-TILE_W/2,sy-TILE_H/2,TILE_W,TILE_H)
-    nvgStrokeColor(vg,color(c));nvgStrokeWidth(vg,1);nvgStroke(vg)
-end
-local function roadSurface(vg,sim,x,y,planned)
-    local sx,sy=project(x,y)
-    local function connected(dx,dy)
-        local nx,ny=x+dx,y+dy
-        return sim.roads[nx .. ":" .. ny] or sim:roadSiteAt(nx,ny)
-    end
-    local base=planned and {119,104,75} or {133,121,95}
-    rect(vg,sx-15,sy-11,30,22,{74,69,52,135})
-    rect(vg,sx-13,sy-9,26,18,base)
-    if connected(-1,0) then rect(vg,sx-28,sy-9,16,18,base) end
-    if connected(1,0) then rect(vg,sx+12,sy-9,16,18,base) end
-    if connected(0,-1) then rect(vg,sx-13,sy-21,26,13,base) end
-    if connected(0,1) then rect(vg,sx-13,sy+8,26,13,base) end
-    if not planned then
-        for row=-2,2 do for col=-3,3 do
-            local px=sx+col*4+(row%2)*2
-            local py=sy+row*3.6
-            local shade=(x*13+y*7+row*11+col*17)%29
-            nvgBeginPath(vg);nvgEllipse(vg,px,py,1.7+shade%3*0.3,1.2+shade%2*0.3)
-            nvgFillColor(vg,color({162+shade,151+shade,122+shade,245}));nvgFill(vg)
-        end end
-    end
-end
-local function tree(vg, sx, sy, seed)
-    local kinds = { "tree-oak", "tree-pine", "tree-bamboo" }
-    local size = 74 + seed % 9
-    if Art.draw(vg, kinds[seed % 3 + 1], sx-size/2, sy-size*0.8, size, size) then return end
-    nvgBeginPath(vg); nvgEllipse(vg, sx + 8, sy + 3, 20, 8); nvgFillColor(vg, color({ 20, 32, 20, 65 })); nvgFill(vg)
-    local h = 32 + seed % 12
-    polygon(vg, {sx-3,sy+1,sx+4,sy-1,sx+2,sy-h,sx-1,sy-h}, {76, 65, 40})
-    line(vg, sx, sy-15, sx-9, sy-27, {91,76,43}, 2)
-    line(vg, sx+1, sy-19, sx+10, sy-30, {91,76,43}, 2)
-    for i = 0, 6 do
-        local a = i * 2.4 + seed
-        local px, py = sx + math.cos(a)*10, sy-h + math.sin(a)*8
-        circle(vg, px+2, py+3, 12, {42,63+seed%17,37})
-        circle(vg, px-1, py-2, 10, {69+seed%11,88+seed%19,43})
-        circle(vg, px-4, py-5, 6, {98+seed%18,112+seed%15,55})
-    end
-end
-local function drawFarm(vg,b,sim,ghost)
-    local width,height=b.footprintW or 1,b.footprintH or 1
-    local stage=Farm.stage(b,D.buildings.farm.period)
-    local alpha=ghost and 0.65 or (b.complete and 1 or 0.65)
-    for dx=1-width,0 do for dy=1-height,0 do
-        local tx,ty=b.x+dx,b.y+dy
-        local sx,sy=project(tx,ty)
-        rect(vg,sx-27,sy-20,54,40,{112,88,52,math.floor(alpha*245)})
-        for row=0,3 do
-            local ry=sy-15+row*10
-            line(vg,sx-25,ry+4,sx+25,ry+4,{76,58,35,115},2)
-            for col=0,6 do
-                local px=sx-22+col*7+(row%2)*2
-                local sway=math.sin((sim and sim.elapsed or 0)*1.1+col+row+tx)*1.3
-                if stage=="seed" then
-                    circle(vg,px,ry,1.5,{190,158,93,180})
-                else
-                    local ripe=stage=="ripe"
-                    local h=stage=="sprout" and 4 or ripe and 12 or 8
-                    local blade=ripe and {221,182,71,240} or {91,145,64,225}
-                    line(vg,px,ry+2,px+sway,ry+2-h,blade,ripe and 2 or 1.5)
-                    line(vg,px,ry,px-3+sway,ry-h*0.55,blade,1)
-                    line(vg,px,ry,px+3+sway,ry-h*0.60,blade,1)
-                    if ripe then circle(vg,px+sway,ry-h,2,{237,200,99,235}) end
-                end
-            end
-        end
-    end end
-    local points={west={-28,-21,-28,21},north={-28,-21,28,-21},east={28,-21,28,21},south={-28,21,28,21}}
-    for _,edge in ipairs(Farm.exposedEdges(sim,b)) do
-        local sx,sy=project(edge.x,edge.y)
-        local p=points[edge.side]
-        local x1,y1,x2,y2=sx+p[1],sy+p[2],sx+p[3],sy+p[4]
-        local gate=edge.side=="south" and edge.x==b.x and edge.y==b.y
-        if gate then
-            for _,span in ipairs({{0,0.3},{0.7,1}}) do
-                local a,z=span[1],span[2]
-                line(vg,x1+(x2-x1)*a,y1+(y2-y1)*a-8,x1+(x2-x1)*z,y1+(y2-y1)*z-8,{146,99,54,230},2.6)
-            end
-        else
-            line(vg,x1,y1-8,x2,y2-8,{146,99,54,230},2.6)
-            line(vg,x1,y1-3,x2,y2-3,{107,72,41,210},1.8)
-        end
-        line(vg,x1,y1-12,x1,y1,{111,76,44,240},2.8)
-        line(vg,x2,y2-12,x2,y2,{111,76,44,240},2.8)
-    end
-    if b.complete and Farm.needsWork(b,D.buildings.farm.period) and (b.farmWork or 0)>0 then
-        local centerX=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-        local sx,sy=project(b.x,b.y)
-        local progress=math.min(1,(b.farmWork or 0)/Farm.workSeconds)
-        rect(vg,sx-20,sy+19,40,4,{66,52,34,210})
-        rect(vg,sx-19,sy+20,38*progress,2,{224,187,97,240})
-        if Farm.step(b)==1 then
-            for i=1,5 do
-                local px=centerX-19+i*7
-                local py=sy-18+(i%2)*4
-                line(vg,px,py,px-2,py+5,{126,185,198,170},1.5)
-            end
-        elseif Farm.step(b)==3 then
-            for i=1,3 do circle(vg,centerX-10+i*9,sy-11+i%2*4,2,{235,203,111,150}) end
-        end
-    end
-    if not b.complete and not ghost then
-        local sx,sy=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-        rect(vg,sx-25,sy+17,50,4,{68,59,41});rect(vg,sx-25,sy+17,50*(b.progress or 0),4,{225,191,105})
-    end
-end
-local function constructionSite(vg,x,y,size,progress,clock)
-    -- The finished building art is withheld until the roof goes on. A site
-    -- remains legible even when several builders stand around its front edge.
-    local w=math.min(70,size*0.34)
-    local back=y-math.min(48,size*0.32)
-    local front=y+7
-    polygon(vg,{x-w-5,back-6,x+w+5,back-6,x+w+5,front+5,x-w-5,front+5},{79,63,42,130})
-    polygon(vg,{x-w,back,x+w,back,x+w,front,x-w,front},{146,120,77,245})
-    for i=0,4 do
-        local ty=back+(front-back)*i/4
-        line(vg,x-w,ty,x+w,ty,{101,79,48,135},2)
-    end
-    for i=0,5 do
-        local tx=x-w+2*w*i/5
-        line(vg,tx,back,tx,front,{186,157,105,85},1)
-    end
-    -- Delivered planks gradually become a frame, walls, and roof battens.
-    local planks=math.max(1,math.min(5,math.floor(progress*12)+1))
-    for i=1,planks do
-        local px=x-w+7+(i%3)*9
-        local py=front-9-math.floor((i-1)/3)*5
-        line(vg,px-13,py,px+13,py-3,{91,60,35,240},6)
-        line(vg,px-13,py-2,px+13,py-5,{206,165,94,245},4)
-    end
-    if progress>=0.17 then
-        local rise=math.min(1,(progress-0.17)/0.25)
-        for _,px in ipairs({x-w+7,x+w-7}) do
-            line(vg,px,front,px,front-38*rise,{79,51,28,255},8)
-            line(vg,px-1,front,px-1,front-38*rise,{175,123,64,255},5)
-        end
-        if rise>=0.8 then line(vg,x-w+7,front-37,x+w-7,front-37,{165,112,56,255},5) end
-    end
-    if progress>=0.42 then
-        local wall=math.min(1,(progress-0.42)/0.26)
-        rect(vg,x-w+11,front-30*wall,2*w-22,30*wall,{172,129,74,245})
-        for i=1,3 do
-            local px=x-w+11+(2*w-22)*i/4
-            line(vg,px,front-30*wall,px,front,{107,70,37,190},3)
-        end
-        rect(vg,x-9,front-19*wall,18,19*wall,{58,46,34,220})
-    end
-    if progress>=0.67 then
-        local roof=math.min(1,(progress-0.67)/0.25)
-        local top=front-39-22*roof
-        line(vg,x-w+4,front-38,x,top,{79,52,32,250},6)
-        line(vg,x+w-4,front-38,x,top,{79,52,32,250},6)
-        for i=1,4 do
-            local t=i/5
-            line(vg,x-w+4+(w-4)*t,front-38+(top-front+38)*t,x+w-4-(w-4)*t,front-38+(top-front+38)*t,{188,140,78,245},3)
-        end
-    end
-    if progress>=0.9 then
-        -- Soft construction dust makes the transition into finished art visible.
-        for i=1,4 do
-            local px=x-w+12+i*(2*w-24)/5
-            circle(vg,px,front-16-math.abs(math.sin(clock*2+i))*8,2.5,{202,182,132,110})
-        end
-    end
-end
-local function house(vg, b, selected, clock, art, ghost, sim)
-    local width, height = b.footprintW or 1, b.footprintH or 1
-    local x, y = project(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
-    y=y+18+(height-1)*TILE_H/2-6
-    local def = D.buildings[b.kind]
-    if b.kind~="farm" and not b.complete then
-        for dx=1-width,0 do for dy=1-height,0 do
-            tile(vg,b.x+dx,b.y+dy,{111,108,78,75},3)
-        end end
-    end
-    if selected then
-        for dx = 1-width, 0 do for dy = 1-height, 0 do tile(vg, b.x+dx, b.y+dy, { 239, 208, 115, 120 }) end end
-    end
-    if b.kind=="farm" then drawFarm(vg,b,sim,ghost);return end
-    -- Anchor each roof at the south edge of its rectangular site.
-    local size = buildingVisualSize(b)
-    if not b.complete and not ghost then
-        local progress=b.progress or 0
-        local stage=progress<0.2 and "foundation" or progress<0.45 and "frame" or progress<0.72 and "walls" or "roof"
-        if not Art.draw(vg,"construction-" .. stage,x-size/2,y-size+6,size,size) then
-            constructionSite(vg,x,y,size,progress,clock)
-        end
-        if progress>=0.9 then
-            Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,
-                math.min(1,(progress-0.9)*10))
-        end
-        rect(vg,x-28,y+17,56,5,{58,48,31,235})
-        rect(vg,x-27,y+18,54*(b.progress or 0),3,{235,197,101,250})
-        return
-    end
-    local dining=b.kind=="kitchen" and b.complete and sim and Meals.occupancy(sim,b.id)>0
-    local atlasPainted=false
-    if not art or art<=0 then
-        atlasPainted=Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,
-            ghost and 0.7 or dining and 0.22 or (b.complete and 1 or 0.65))
-    end
-    if (art and art > 0) or atlasPainted then
-        if art and art > 0 then
-        nvgBeginPath(vg); nvgRect(vg, x-size/2, y-size+6, size, size)
-        nvgFillPaint(vg, nvgImagePattern(vg, x-size/2, y-size+6, size, size, 0, art, b.complete and 1 or 0.65)); nvgFill(vg)
-        end
-        if b.kind == "kitchen" and b.complete then
-            for i = 1, 3 do circle(vg, x+10+math.sin(clock+i)*3, y-50-i*7-clock%1*5, 3+i, {235,225,195,60}) end
-        end
-    else
-        nvgBeginPath(vg); nvgEllipse(vg, x + 8, y + 4, 31, 11); nvgFillColor(vg, color({ 46, 53, 33, 60 })); nvgFill(vg)
-        local h = b.kind == "store" and 29 or 22
-        polygon(vg, { x - 22, y - h, x, y - h + 11, x, y + 10, x - 22, y - 1 }, { 200, 179, 137 })
-        polygon(vg, { x, y - h + 11, x + 23, y - h, x + 23, y - 1, x, y + 10 }, { 161, 143, 107 })
-        for i = 0, 2 do line(vg, x - 20 + i * 9, y - h + 2 + i * 4, x - 20 + i * 9, y + i * 4, { 111, 91, 65 }, 2) end
-        polygon(vg, { x - 8, y - 8, x - 1, y - 5, x - 1, y + 9, x - 8, y + 5 }, { 72, 65, 49 })
-        local c = def.color
-        polygon(vg, { x - 31, y - h - 4, x - 2, y - h - 22, x + 29, y - h - 8, x, y - h + 10 }, c)
-        polygon(vg, { x - 31, y - h - 4, x, y - h + 10, x + 29, y - h - 8, x + 29, y - h - 3, x, y - h + 15, x - 31, y - h + 1 }, { c[1] * 0.7, c[2] * 0.7, c[3] * 0.7 })
-        for i = 1, 6 do
-            local t = i / 7
-            line(vg, x - 31 + 29 * t, y - h - 4 - 18 * t, x + 31 * t, y - h + 10 - 18 * t, { 218, 217, 184, 60 }, 1)
-        end
-        line(vg, x - 2, y - h - 23, x + 29, y - h - 9, { 187, 187, 154 }, 3)
-        circle(vg, x - 31, y - h - 4, 2.5, c); circle(vg, x + 29, y - h - 8, 2.5, c)
-        if b.kind == "kitchen" then
-            rect(vg, x + 13, y - h - 28, 6, 17, { 123, 110, 94 })
-            for i = 1, 3 do circle(vg, x + 16 + math.sin(clock + i) * 3, y - h - 30 - i * 7 - clock % 1 * 5, 3 + i, { 240, 234, 211, 65 }) end
-        elseif b.kind == "mill" then
-            circle(vg, x + 21, y - 5, 11, { 91, 72, 48 })
-            for i = 0, 5 do
-                local a = i * math.pi / 3 + (b.workers > 0 and clock or 0)
-                line(vg, x + 21, y - 5, x + 21 + math.cos(a) * 10, y - 5 + math.sin(a) * 10, { 203, 178, 130 }, 2)
-            end
-        elseif b.kind == "barracks" then
-            line(vg, x + 28, y, x + 28, y - 52, { 104, 77, 50 }, 2)
-            polygon(vg, { x + 28, y - 51, x + 43, y - 46, x + 28, y - 40 }, { 171, 60, 43 })
-        elseif b.kind == "woodcutter" then
-            for i = 0, 2 do line(vg, x + 15 + i * 4, y + 5 - i * 2, x + 29 + i * 4, y - 3 - i * 2, { 138, 100, 56 }, 4) end
-        elseif b.kind == "store" then
-            for i = 0, 2 do circle(vg, x - 23 + i * 7, y + 5, 5, { 204, 170, 105 }) end
-        end
-    end
-end
-local function diningFloor(vg,b,side)
-    local width,height=b.footprintW or 1,b.footprintH or 1
-    local x,y=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-    -- Roof lifts while occupied, revealing a complete four-seat room.
-    rect(vg,x-52,y-39,104,80,{76,51,32,250})
-    rect(vg,x-48,y-35,96,72,{166,119,66,250})
-    for i=0,6 do line(vg,x-47+i*15,y-35,x-47+i*15,y+37,{211,165,95,90},1) end
-    rect(vg,x-20,y-10,40,20,{94,59,37,245})
-    rect(vg,x-18,y-8,36,16,{218,173,91,245})
-    for i=-1,1 do circle(vg,x+i*11,y,3,{226,206,153,215}) end
-    for seat=1,Meals.seats do
-        local wx,wy=Meals.seatPosition(b,seat,side)
-        local sx,sy=project(wx,wy)
-        nvgBeginPath(vg);nvgEllipse(vg,sx,sy+3,10,5);nvgFillColor(vg,color({67,45,29,235}));nvgFill(vg)
-        nvgBeginPath(vg);nvgEllipse(vg,sx,sy,8,4);nvgFillColor(vg,color({184,130,72,245}));nvgFill(vg)
-    end
-end
+local function project(x,y) return (x-10)*56,(y-9)*42 end
+local function unproject(x,y) return x/56+10,y/42+9 end
 local function smallText(vg,x,y,value,size)
     nvgFontSize(vg,size or 10);nvgFontFace(vg,Theme.FontFace())
     nvgTextAlign(vg,NVG_ALIGN_CENTER_VISUAL+NVG_ALIGN_MIDDLE)
@@ -320,164 +35,8 @@ local function thoughtBubble(vg,sx,sy,thought)
         smallText(vg,bx+2,by+2,thought=="livestock" and "畜" or thought=="meat" and "肉" or "?",11)
     end
 end
-local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
-    local sx, sy = project(x, y)
-    local step = walking and math.abs(math.sin(clock * 5 + (phase or 0))) * 1.2 or 0
-    local size = action == "hammer" and 37 or action == "eat" and 25 or 32
-    local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
-    local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
-    nvgBeginPath(vg); nvgEllipse(vg, sx+2, sy+3, 8, 3); nvgFillColor(vg, color({ 26, 32, 24, 48 })); nvgFill(vg)
-    local farmAction=action=="plow" or action=="water" or action=="tend" or action=="harvest"
-    local working=farmAction or action=="chop" or action=="cook" or action=="butcher" or action=="feed" or
-        action=="mill" or action=="quarry" or action=="pack"
-    local motion=walking and math.sin(clock*5+(phase or 0)) or working and math.sin(clock*2.4+(phase or 0)) or 0
-    local poseY=action=="eat" and math.sin(clock*2.2)*0.8 or working and motion*0.6 or 0
-    nvgSave(vg)
-    nvgTranslate(vg,sx,sy)
-    nvgRotate(vg,motion*(walking and 0.055 or working and 0.075 or 0))
-    nvgScale(vg,1+motion*0.025,1-math.abs(motion)*0.025)
-    nvgTranslate(vg,-sx,-sy)
-    local painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step+poseY, size, size)
-    if not painted and name~=base then painted=Art.draw(vg,base,sx-size/2,sy-size*0.85-step+poseY,size,size) end
-    nvgRestore(vg)
-    if not painted then
-    nvgBeginPath(vg); nvgEllipse(vg, sx, sy + 2, 5, 2); nvgFillColor(vg, color({ 30, 42, 28, 65 })); nvgFill(vg)
-    line(vg, sx - 1, sy - 2, sx - 3, sy + 3 + step, { 62, 64, 56 }, 2)
-    line(vg, sx + 1, sy - 2, sx + 3, sy + 3 - step, { 62, 64, 56 }, 2)
-    rect(vg, sx - 3, sy - 11, 6, 10, c); circle(vg, sx, sy - 14, 3, { 218, 181, 130 })
-    local hat = profile and profile.hat or "straw"
-    if hat == "straw" then polygon(vg, { sx, sy - 19, sx + 6, sy - 13, sx - 6, sy - 13 }, { 197, 167, 103 })
-    elseif hat == "cap" then rect(vg, sx-3, sy-18, 6, 4, {62,65,58})
-    else
-        circle(vg, sx,sy-16,3,{64,54,42})
-        if hat == "braid" then line(vg,sx+2,sy-15,sx+4,sy-7,{50,45,36},2)
-        else line(vg,sx-3,sy-15,sx+3,sy-15,{180,154,105},2) end
-    end
-    if profile and profile.age == "elder" then line(vg,sx-1,sy-12,sx,sy-9,{215,212,190},2) end
-    if profile and profile.gender == "female" then polygon(vg,{sx-2,sy-7,sx+2,sy-7,sx+4,sy-1,sx-4,sy-1},c) end
-    end
-    if carrying then
-        local good=cargo or "wood"
-        if good=="plank" then
-            for i=0,2 do
-                line(vg,sx-10,sy-19+i*4,sx+12,sy-23+i*4,{89,57,32,255},5)
-                line(vg,sx-10,sy-21+i*4,sx+12,sy-25+i*4,{211,160,87,255},3)
-            end
-        elseif not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
-            if good=="wood" then
-                for i=0,2 do line(vg,sx+3,sy-9-i*3,sx+13,sy-13-i*3,{137,94,49},3) end
-            elseif good=="stone" then
-                polygon(vg,{sx+3,sy-8,sx+1,sy-14,sx+7,sy-18,sx+14,sy-13,sx+12,sy-7},{146,148,137})
-            elseif good=="food" then
-                rect(vg,sx+2,sy-15,12,8,{176,139,76});line(vg,sx+2,sy-11,sx+14,sy-11,{104,82,43},1)
-            else
-                circle(vg,sx+8,sy-12,6,good=="flour" and {225,215,179} or {181,145,80})
-                line(vg,sx+5,sy-17,sx+11,sy-17,{92,75,42},2)
-            end
-        end
-    end
-    if carrying and cargo and cargoAmount and cargoAmount>0 then
-        rect(vg,sx+5,sy-29,27,15,{63,48,32,215})
-        rect(vg,sx+6,sy-28,25,13,{143,109,59,220})
-        if not Art.draw(vg,"icon-" .. cargo,sx+6,sy-28,13,13) then
-            smallText(vg,sx+12,sy-21,cargo=="livestock" and "畜" or cargo=="meat" and "肉" or "货",10)
-        end
-        smallText(vg,sx+24,sy-21,math.floor(cargoAmount),10)
-    end
-    if action=="hammer" and not painted then
-        local angle=-0.8+math.sin(clock*9)*1.05
-        local hx,hy=sx+5+math.sin(angle)*12,sy-11-math.cos(angle)*12
-        line(vg,sx+3,sy-10,hx,hy,{173,133,78},2)
-        line(vg,hx-3,hy+1,hx+3,hy-1,{167,172,163},4)
-        if math.sin(clock*9)>0.8 then
-            line(vg,sx+11,sy-2,sx+15,sy-5,{224,201,116},1)
-            line(vg,sx+12,sy-1,sx+17,sy,{224,201,116},1)
-        end
-    elseif action=="hammer" and name:sub(-11)=="hammer-down" then
-        local strikeX = (direction == "sw" or direction == "nw") and sx+10 or sx-10
-        circle(vg,strikeX,sy-1,3,{185,169,126,95})
-        line(vg,strikeX-5,sy-3,strikeX-8,sy-6,{217,194,139,150},1)
-        line(vg,strikeX+4,sy-3,strikeX+7,sy-7,{217,194,139,150},1)
-    elseif action=="chop" then
-        local swing=math.sin(clock*2.7)
-        local hx,hy=sx+7+swing*6,sy-17+swing*9
-        line(vg,sx+3,sy-10,hx,hy,{149,101,55},3)
-        line(vg,hx-5,hy-2,hx+6,hy+2,{184,190,179},5)
-        if swing>0.7 then
-            circle(vg,sx+15,sy-2,2,{214,184,115,180})
-            line(vg,sx+14,sy-4,sx+20,sy-9,{222,194,134,150},1)
-        end
-    elseif action=="eat" then
-        if name:sub(1,14)=="person-eating-" or name:sub(1,14)=="person-seated-" then
-            circle(vg,sx+4,sy-20-math.sin(clock*2)*2,1.3,{246,234,202,110})
-        else
-            circle(vg,sx+5,sy-5,4,{229,214,175})
-            circle(vg,sx+5,sy-5,2,{177,123,63})
-            line(vg,sx+8,sy-12,sx+4,sy-6-math.sin(clock*2.5)*2,{158,126,80},2)
-        end
-    elseif action=="farm" then
-        local swing=math.sin(clock*2.4)
-        line(vg,sx+3,sy-10,sx+12+swing*4,sy-20+swing*5,{139,103,59},2)
-        line(vg,sx+7+swing*4,sy-22+swing*5,sx+17+swing*4,sy-18+swing*5,{96,108,102},3)
-        if swing>0.7 then circle(vg,sx+13,sy-1,2,{189,159,91,130}) end
-    elseif action=="feed" then
-        local reach=math.sin(clock*2.3)
-        nvgBeginPath(vg);nvgEllipse(vg,sx+13,sy+1,9,4)
-        nvgFillColor(vg,color({98,67,39,220}));nvgFill(vg)
-        for i=-1,1 do line(vg,sx+13+i*4,sy+1,sx+13+i*4,sy-2,{178,169,93,215},2) end
-        line(vg,sx+3,sy-10,sx+10+reach*4,sy-3,{180,137,85},2.5)
-    elseif action=="mill" then
-        local turn=clock*2
-        circle(vg,sx+13,sy,8,{116,111,94,235})
-        circle(vg,sx+13,sy,5,{179,172,146,235})
-        line(vg,sx+13,sy,sx+13+math.cos(turn)*7,sy+math.sin(turn)*7,{91,75,49},2)
-    elseif action=="quarry" then
-        local swing=math.sin(clock*2.6)
-        polygon(vg,{sx+7,sy-2,sx+14,sy-9,sx+20,sy-4,sx+18,sy+2},{148,146,127,235})
-        line(vg,sx+2,sy-10,sx+11+swing*4,sy-20+swing*9,{135,96,55},2.5)
-        line(vg,sx+7+swing*4,sy-22+swing*9,sx+17+swing*4,sy-18+swing*9,{185,185,169},3)
-    elseif action=="pack" then
-        local reach=math.sin(clock*2)
-        rect(vg,sx+7,sy-5,16,8,{145,109,61,245})
-        line(vg,sx+8,sy-3,sx+21,sy-3,{225,190,115,210},1.5)
-        line(vg,sx+3,sy-10,sx+11+reach*3,sy-4,{175,137,83},2.5)
-    elseif action=="plow" or action=="tend" then
-        local swing=math.sin(clock*2.2)
-        local hx,hy=sx+11+swing*3,sy-20+swing*6
-        line(vg,sx+3,sy-9,hx,hy,{132,91,52},2.5)
-        line(vg,hx-2,hy,hx+7,hy+4,{130,139,126},3)
-        line(vg,hx+7,hy+4,hx+8,hy+9,{130,139,126},2)
-        if swing>0.6 then circle(vg,sx+12,sy-1,2,{142,112,67,145}) end
-    elseif action=="water" then
-        local tilt=math.sin(clock*2)*2
-        line(vg,sx+3,sy-9,sx+9,sy-12,{141,103,61},2)
-        polygon(vg,{sx+8,sy-15+tilt,sx+18,sy-14+tilt,sx+16,sy-6+tilt,sx+10,sy-6+tilt},{120,103,78,230})
-        line(vg,sx+9,sy-14+tilt,sx+12,sy-18+tilt,{171,151,108},2)
-        line(vg,sx+12,sy-18+tilt,sx+17,sy-15+tilt,{171,151,108},2)
-        for i=0,2 do
-            line(vg,sx+18+i*2,sy-8+tilt,sx+20+i*3,sy-1+math.sin(clock*2+i)*2,{116,167,181,190},1.4)
-        end
-    elseif action=="harvest" then
-        local swing=math.sin(clock*2.3)
-        line(vg,sx+3,sy-9,sx+11+swing*3,sy-15+swing*4,{144,100,53},2)
-        line(vg,sx+11+swing*3,sy-15+swing*4,sx+17+swing*3,sy-17+swing*4,{189,188,164},2.4)
-        line(vg,sx+17+swing*3,sy-17+swing*4,sx+19+swing*3,sy-13+swing*4,{189,188,164},2)
-        if swing>0.4 then circle(vg,sx+15,sy-2,2,{222,186,85,170}) end
-    elseif action=="cook" then
-        local stir=math.sin(clock*6)
-        nvgBeginPath(vg);nvgEllipse(vg,sx+10,sy-1,8,4);nvgFillColor(vg,color({82,68,51,220}));nvgFill(vg)
-        nvgBeginPath(vg);nvgEllipse(vg,sx+10,sy-3,6,2);nvgFillColor(vg,color({176,137,78,230}));nvgFill(vg)
-        line(vg,sx+8,sy-13,sx+10+stir*4,sy-5,{180,145,86},2)
-        if stir>0 then circle(vg,sx+13,sy-18-stir*2,2,{233,222,191,100}) end
-    elseif action=="butcher" then
-        local swing=math.sin(clock*7)
-        rect(vg,sx+3,sy-2,17,4,{108,75,45,225})
-        line(vg,sx+4,sy-10,sx+12+swing*3,sy-17+swing*8,{139,98,58},2)
-        line(vg,sx+10+swing*3,sy-17+swing*8,sx+17+swing*3,sy-15+swing*8,{171,172,157},3)
-    end
-    thoughtBubble(vg,sx,sy,thought)
-end
 function WorldView.create(sim, onTile)
+    local modelWorld=ModelWorld.new(sim)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
     local camera = { x = 0, y = 0, zoom = 1.55, pinchZoom = 1.55 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
@@ -583,23 +142,8 @@ function WorldView.create(sim, onTile)
         if pinched then return end
         local x,y = tileAt(event)
         if mode == "inspect" then
-            local _,ox,oy=projection()
-            local px, py = (event.x-ox)/camera.zoom, (event.y-oy)/camera.zoom
-            local hit, depth = nil, -math.huge
-            for _, building in ipairs(sim.buildings) do
-                local width,height=building.footprintW or 1,building.footprintH or 1
-                local bx, by = project(building.x-(width-1)*0.5,building.y-(height-1)*0.5)
-                local size=buildingVisualSize(building)
-                local bottom=18+(height-1)*TILE_H/2
-                local facade=building.kind~="farm" and px>=bx-size*0.48 and px<=bx+size*0.48 and
-                    py>=by+bottom-size and py<=by+bottom
-                    local porch=building.kind=="kitchen" and building.complete and
-                    px>=bx-52 and px<=bx+52 and py>=by-39 and py<=by+41
-                if (facade or porch) and building.y+building.x*0.001 > depth then
-                    hit, depth = building, building.y+building.x*0.001
-                end
-            end
-            if hit then x,y = hit.x,hit.y end
+            local hit3D=modelWorld:pick(event.x,event.y,panel:GetAbsoluteLayout())
+            if hit3D then x,y=hit3D.x,hit3D.y end
         end
         preview(event)
         onTile(x, y)
@@ -687,252 +231,47 @@ function WorldView.create(sim, onTile)
         rect(vg,l.x+6,l.y+6,l.w-12,1,{219,184,115,105})
     end
     function panel:Render(vg)
-        local l, ox, oy = projection()
-        rect(vg, l.x, l.y, l.w, l.h, { 63, 77, 48 })
-        nvgSave(vg); nvgIntersectScissor(vg, l.x, l.y, l.w, l.h)
-        nvgTranslate(vg, ox, oy); nvgScale(vg, camera.zoom, camera.zoom)
-        -- Inverse-project just the viewport. Work stays bounded as the world expands.
-        local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
-        for _, px in ipairs({ l.x - 80, l.x + l.w + 80 }) do
-            for _, py in ipairs({ l.y - 80, l.y + l.h + 80 }) do
-                local wx,wy=unproject((px-ox)/camera.zoom,(py-oy)/camera.zoom)
-                minX,maxX=math.min(minX,wx),math.max(maxX,wx)
-                minY,maxY=math.min(minY,wy),math.max(maxY,wy)
-            end
-        end
-        minX, maxX, minY, maxY = math.floor(minX), math.ceil(maxX), math.floor(minY), math.ceil(maxY)
-        if sim.mode == "finite" then minX, maxX, minY, maxY = math.max(1, minX), math.min(22, maxX), math.max(1, minY), math.min(22, maxY) end
-        local meadow=Art.texture(vg,"terrain-meadow")
-        for y=minY,maxY do
-            for x=minX,maxX do
-                do
-                    local terrain = sim:terrain(x, y)
-                    local variation = (x * 17 + y * 23) % 13
-                    -- Neighboring ground tiles share one color. Terrain detail is scattered
-                    -- separately, so ordinary play has no checkerboard tile boundaries.
-                    local c = { 118, 133, 78 }
-                    if terrain == "water" then c = { 77, 116, 116 }
-                    elseif terrain == "fog" then c = { 69, 88, 68 } end
-                    -- Slight overlap hides antialiased hairlines between equal-color diamonds.
-                    local sx, sy = project(x, y)
-                    if meadow and (terrain=="grass" or terrain=="forest") then
-                        nvgBeginPath(vg);nvgRect(vg,sx-TILE_W/2-1,sy-TILE_H/2-1,TILE_W+2,TILE_H+2)
-                        nvgFillPaint(vg,nvgImagePattern(vg,-384,-384,768,768,0,meadow,1));nvgFill(vg)
-                        if terrain=="forest" then tile(vg,x,y,{32,51,24,50},-1) end
-                    else tile(vg,x,y,c,-1) end
-                    if terrain=="grass" or terrain=="forest" then
-                        if (x*7+y*11)%3==0 then
-                            nvgBeginPath(vg);nvgEllipse(vg,sx+(x*13+y*5)%19-9,sy+(x*3+y*17)%13-6,18,8)
-                            nvgFillColor(vg,color({151,150,76,16}));nvgFill(vg)
-                        end
-                        if (x*11+y*7)%5==0 then
-                            for i=0,2 do
-                                local tx=sx-17+i*8+(x*3+y)%5
-                                local ty=sy+((x*5+y*7+i*3)%17)-9
-                                line(vg,tx,ty,tx-2,ty-4,{65,103,50,105},1.4)
-                                line(vg,tx,ty,tx+2,ty-3,{153,163,82,100},1)
-                            end
-                        end
-                        if sim:terrain(x+1,y)=="water" or sim:terrain(x-1,y)=="water" then
-                            local bankX=sim:terrain(x+1,y)=="water" and sx+TILE_W/2-4 or sx-TILE_W/2+4
-                            rect(vg,bankX-4,sy-TILE_H/2,8,TILE_H,{176,158,91,58})
-                        end
-                    end
-                    if (terrain == "grass" or terrain == "forest") and (x*13+y*19)%4 == 0 then
-                        local dx, dy = ((x*31+y*13)%27)-13, ((x*11+y*23)%9)-4
-                        line(vg, sx+dx, sy+dy, sx+dx-2, sy+dy-3, {76,101,52,85}, 1)
-                        circle(vg,sx+dx+3,sy+dy-1,1,{205,190,117,85})
-                    end
-                    if mode ~= "inspect" and terrain == "grass" then tileOutline(vg,x,y,{239,225,167,105}) end
-                    local site=sim:roadSiteAt(x,y)
-                    if site then
-                        roadSurface(vg,sim,x,y,true)
-                        for k=-1,1 do line(vg,sx-9+k*6,sy-3,sx-4+k*6,sy+1,{188,163,102},1) end
-                        rect(vg,sx-11,sy+5,22,3,{58,57,37});rect(vg,sx-11,sy+5,22*site.progress,3,{222,184,95})
-                    elseif sim.roads[x .. ":" .. y] then
-                        roadSurface(vg,sim,x,y,false)
-                        line(vg, sx-13,sy+7,sx-4,sy+7,{168,149,110},1)
-                        line(vg, sx+4,sy-6,sx+13,sy-6,{213,194,155},1)
-                    elseif terrain == "water" and (x*7+y*11)%3 == 0 then
-                        line(vg, sx - 9, sy + math.sin(sim.elapsed + x) * 2, sx + 10, sy + 1, { 187, 210, 188, 95 }, 1)
-                    elseif (x * 7 + y) % 9 == 0 then
-                        line(vg, sx, sy, sx - 2, sy - 3, { 107, 137, 78 }, 1)
-                        circle(vg, sx + 7, sy - 2, 1, { 223, 207, 141 })
-                    end
+        local l,ox,oy=projection()
+        modelWorld:update(camera,l,mode,ghost,selected)
+        -- Only interaction guides and thought bubbles use the HUD canvas.
+        if mode~="inspect" then
+            nvgSave(vg);nvgTranslate(vg,ox,oy);nvgScale(vg,camera.zoom,camera.zoom)
+            local x1,y1=unproject((l.x-ox)/camera.zoom,(l.y-oy)/camera.zoom)
+            local x2,y2=unproject((l.x+l.w-ox)/camera.zoom,(l.y+l.h-oy)/camera.zoom)
+            for y=math.floor(y1),math.ceil(y2) do for x=math.floor(x1),math.ceil(x2) do
+                if sim:terrain(x,y)=="grass" then
+                    local sx,sy=project(x,y)
+                    nvgBeginPath(vg);nvgRect(vg,sx-28,sy-21,56,42)
+                    nvgStrokeColor(vg,color({245,237,206,110}));nvgStrokeWidth(vg,0.6);nvgStroke(vg)
                 end
-            end
+            end end
+            nvgRestore(vg)
         end
-        local agentsByDepth,diningSides={},{}
-        local function diningSide(b)
-            if not diningSides[b.id] then diningSides[b.id]=Meals.diningSide(sim,b) end
-            return diningSides[b.id]
-        end
-        local function workPosition(b,a)
-            local w,h=b.footprintW or 1,b.footprintH or 1
-            local x=b.x-(w-1)*0.5+((a.slot or 1)-1)*0.2
-            local y=b.y-(h-1)*0.5+0.55
-            if b.kind=="kitchen" and Meals.occupancy(sim,b.id)>0 then x=b.x-(w-1)*0.5+1.12 end
-            return x,y
-        end
-        local function addAgent(a,role,profile,action,cargo,queueSlot,guardIndex)
-            if Meals.hidden(sim,a) then return end
-            local drawX,drawY=a.x,a.y
-            if a.phase=="hammer" and a.job and a.job.kind=="building" then
-                local site=sim.buildings[a.job.building]
-                if site then
-                    local offsets={-0.9,-0.3,0.3,0.9}
-                    drawX=site.x-((site.footprintW or 1)-1)*0.5+offsets[queueSlot or 1]
-                    drawY=site.y+0.52+((queueSlot or 1)%2)*0.1
-                end
-            end
-            local diningHall=nil
-            if a.meal and sim.buildings[a.meal.target] and sim.buildings[a.meal.target].kind=="kitchen"
-                and (a.meal.phase=="enter" or a.meal.phase=="eat" or a.meal.phase=="exit") then
-                diningHall=sim.buildings[a.meal.target]
-                drawX,drawY=Meals.diningPosition(diningHall,a.meal.seat or 1,a.meal.phase,a.meal.timer)
-            elseif a.meal and a.meal.phase=="queue" then
-                local place=(queueSlot or 1)%3
-                drawX=drawX+(place-1)*0.18
-                drawY=drawY+math.floor((queueSlot or 1)/3)*0.13
-            elseif a.meal and (a.meal.phase=="leaveWork" or a.meal.phase=="returnWork") and a.building and
-                sim.buildings[a.building] and sim.buildings[a.building].kind~="farm" then
-                local workshop=sim.buildings[a.building]
-                local workX,workY=workPosition(workshop,a)
-                local progress=a.meal.phase=="leaveWork" and a.meal.timer/Meals.workDoorSeconds or
-                    1-a.meal.timer/Meals.workDoorSeconds
-                progress=math.max(0,math.min(1,progress))
-                drawX=a.x+(workX-a.x)*progress
-                drawY=a.y+(workY-a.y)*progress
-            elseif (a.farmPresence or 0)>0 and a.building then
-                local field=sim.buildings[a.building]
-                if field and field.kind=="farm" then
-                    local clock=a.workClock or 0
-                    local presence=a.farmPresence
-                    local centerX=field.x-((field.footprintW or 1)-1)*0.5
-                    local centerY=field.y-((field.footprintH or 1)-1)*0.5
-                    drawX=a.x+(centerX+math.sin(clock*0.8+(a.slot or 0))*0.22-a.x)*presence
-                    drawY=a.y+(centerY+0.42+math.cos(clock*0.8+(a.slot or 0))*0.14-a.y)*presence
-                end
-            elseif a.building and not a.meal and not (a.path and a.path[a.index]) and not a.woodPhase then
-                local workshop=sim.buildings[a.building]
-                if workshop and workshop.kind~="farm" then
-                    drawX,drawY=workPosition(workshop,a)
-                end
-            elseif guardIndex and not a.meal and not (a.path and a.path[a.index]) then
-                drawX=9.3+((guardIndex-1)%3)*0.28
-                drawY=9.25+math.floor((guardIndex-1)/3)*0.2
-            end
-            local depth=math.floor(drawY+0.5)
-            if diningHall then depth=diningHall.y end
-            if (a.farmPresence or 0)>0 and a.building then
-                local field=sim.buildings[a.building]
-                if field and field.kind=="farm" then depth=math.max(depth,field.y) end
-            end
-            local sx,sy=project(drawX,drawY)
-            if depth < minY or depth > maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
-                or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
-            agentsByDepth[depth]=agentsByDepth[depth] or {}
-            local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1) or
-                (a.meal and (a.meal.phase=="enter" or a.meal.phase=="exit" or
-                    a.meal.phase=="leaveWork" or a.meal.phase=="returnWork"))
-            local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="plow" or
-                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher" or action=="chop" or action=="feed" or
-                action=="mill" or action=="quarry" or action=="pack") and sim.elapsed or 0
+        for _,person in pairs(modelWorld.actors) do
+            local actor=person.actor
             local thought
-            if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
-                if (a.hunger or 0)>=65 then thought="food"
-                elseif (a.energy or 100)<=30 then thought="rest"
-                elseif a.building then
-                    local b=sim.buildings[a.building]
+            if not actor.meal or actor.meal.phase=="walk" or actor.meal.phase=="queue" then
+                if (actor.hunger or 0)>=65 then thought="food"
+                elseif (actor.energy or 100)<=30 then thought="rest"
+                elseif actor.building then
+                    local b=sim.buildings[actor.building]
                     local def=b and D.buildings[b.kind]
-                    if def and def.input and b.inputs==0 and not b.incoming and (sim.stock[def.input] or 0)==0
-                        and (not def.alternateInput or (sim.stock[def.alternateInput] or 0)==0) then thought=def.input
-                    elseif b and b.kind=="woodcutter" and (sim.timber==0 or not sim:nearestTree(b,6)) and not a.woodPhase then thought="wood"
-                    elseif b and b.kind=="quarry" and sim.rock==0 then thought="stone" end
+                    if def and def.input and b.inputs==0 and not b.incoming and (sim.stock[def.input] or 0)==0 and
+                        (not def.alternateInput or (sim.stock[def.alternateInput] or 0)==0) then thought=def.input end
                 end
             end
-            local entry={actor=a,x=drawX,y=drawY,role=role,profile=profile,action=action,cargo=cargo,
-                amount=a.job and a.job.amount or nil,thought=thought,clock=clock,walking=walking,phase=queueSlot or 0}
-            table.insert(agentsByDepth[depth],entry)
-        end
-        for index,a in ipairs(sim.carriers) do
-            local role,profile=Characters.carrier(index,a.carrying)
-            local action=a.meal and a.meal.phase=="eat" and "eat" or nil
-            addAgent(a,role,profile,action,a.job and a.job.resource or nil,index)
-        end
-        for _,a in pairs(sim.workers) do
-            local b=sim.buildings[a.building]
-            local role,profile=Characters.worker(b,a.slot)
-            local action=a.meal and a.meal.phase=="eat" and "eat" or
-                (not a.meal and (b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.95 and Farm.action(b) or
-                    b.kind=="ranch" and "feed" or
-                    b.kind=="woodcutter" and a.woodPhase=="chop" and "chop" or
-                    b.kind=="kitchen" and b.inputs>0 and "cook" or
-                    b.kind=="butcher" and b.inputs>0 and "butcher" or nil))
-            if not action and not a.meal and b.kind=="mill" and b.inputs>0 then action="mill" end
-            if not action and not a.meal and b.kind=="quarry" and sim.rock>0 then action="quarry" end
-            if not action and not a.meal and b.kind=="courier" then action="pack" end
-            if role then addAgent(a,role,profile,action,a.carrying and "wood" or nil,a.building*2+a.slot) end
-        end
-        for index,a in ipairs(sim.builders) do
-            if a.active or a.meal then
-                local role,profile=Characters.carrier(index,a.carrying)
-                local action=a.meal and a.meal.phase=="eat" and "eat" or (a.phase=="hammer" and "hammer" or nil)
-                addAgent(a,role,profile,action,a.carrying and (a.job and a.job.kind=="building" and "plank" or "wood") or nil,index)
+            if thought then
+                local at=modelWorld.camera:WorldToScreenPoint(person.node.worldPosition+Vector3(0,0.8,0))
+                thoughtBubble(vg,l.x+at.x*l.w,l.y+at.y*l.h+35,thought)
             end
         end
-        for index,a in ipairs(sim.guards or {}) do
-            local role,profile=Characters.militia(index)
-            local action=a.meal and a.meal.phase=="eat" and "eat" or nil
-            addAgent(a,role,profile,action,nil,index,index)
-        end
-        for y=minY,maxY do
-            for x=minX,maxX do
-                do
-                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then
-                        local sx,sy=project(x,y)
-                        tree(vg,sx+(x*19+y*13)%17-8,sy+(x*7+y*23)%11-5,x*3+y)
-                    end
-                    local b = sim:buildingAt(x, y)
-                    if not b and not sim.roads[x .. ":" .. y] then
-                        local terrain = sim:terrain(x,y)
-                        local sx,sy = project(x,y)
-                        if terrain == "forest" and (x*7+y*3)%13 == 0 then Art.draw(vg, "rock-moss", sx-27,sy-32,54,40)
-                        elseif terrain == "grass" and (x*11+y*7)%13 == 0 then Art.draw(vg, "bush-flowers",sx-18,sy-22,36,30)
-                        elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
-                    end
-                    if b and b.x==x and b.y==y then
-                        house(vg,b,selected==b,sim.elapsed,nil,false,sim)
-                        if b.kind=="kitchen" and b.complete and Meals.occupancy(sim,b.id)>0 then diningFloor(vg,b,diningSide(b)) end
-                    end
-                    if ghost and mode ~= "inspect" and ghost.x==x and ghost.y==y then
-                        local width,height=D.footprint(mode)
-                        local valid=sim:canBuild(mode,x,y)
-                        for dx=1-width,0 do for dy=1-height,0 do
-                            tile(vg,x+dx,y+dy,valid and {106,207,150,180} or {220,95,78,185},2)
-                        end end
-                        if mode ~= "road" then
-                            house(vg,{kind=mode,x=x,y=y,footprintW=width,footprintH=height,complete=false,progress=0},false,sim.elapsed,nil,true,sim)
-                        end
-                    end
-                end
-            end
-            local bucket=agentsByDepth[y]
-            if bucket then
-                for _,entry in ipairs(bucket) do
-                    local a=entry.actor
-                    person(vg,entry.x,entry.y,entry.profile.color,a.carrying,entry.clock,entry.role,a.facing or "se",entry.profile,entry.action,entry.cargo,entry.walking,entry.phase,entry.thought,entry.amount)
-                end
-            end
-        end
-        for _, e in ipairs(sim.enemies) do if e.hp > 0 then person(vg, e.x, e.y, { 74, 64, 73 }, false, sim.elapsed, "bandit", "sw") end end
-        nvgRestore(vg)
     end
     ---@class VillageWorldView
     local result = {
         panel = panel,
         minimap = minimap,
-        dispose = function() end,
+        dispose = function() modelWorld:dispose() end,
+        modelWorld = modelWorld,
 
         setMode = function(value) mode = value; ghost = nil end,
         previewState = function() return ghost end,

@@ -1,13 +1,13 @@
--- Render real work cycles and verify that the same villager animates throughout.
+-- Field work moves real articulated geometry without changing worker identity.
 local Game=require "network.Standalone"
-local Art=require "game.Art"
-local sim,original,frames
+local sim,view,identity,poses
+poses={}
 V.atFrame(6,function()
     Game.UseStore(require("game.SaveStore").new({now=function() return 1000 end,
         read=function() return nil end,write=function() return true end}),true)
 end)
 V.atFrame(9,function()
-    local view,hud
+    local hud
     sim,view,hud=Game.Inspect();hud.dismissIntro()
     sim,view,hud=Game.Inspect();hud.dismissIntro()
     sim.started,sim.skipped,sim.menuOpen=true,true,false
@@ -16,27 +16,21 @@ V.atFrame(9,function()
     local farm=sim:addBuilding("farm",8,8,true)
     V.assert(sim:staff(farm,1),"A real worker visits the field")
     view.home();view.zoom(0.8);hud.update()
-    original,frames=Art.draw,{}
-    Art.draw=function(vg,name,...)
-        local painted=original(vg,name,...)
-        if name:find("^person%-civilian%-") and painted then frames[name]=true end
-        return painted
-    end
+    local _,profile=require("game.Characters").worker(farm,1)
+    identity=profile.id
 end)
 for frame=10,64 do
-    V.atFrame(frame,function() sim:update(0.1) end)
+    V.atFrame(frame,function()
+        local person=view.modelWorld.actors["worker2:1"]
+        if person then
+            V.assert(person.profile.id==identity,"Field work keeps the same worker model")
+            poses[tostring(person.torso.rotation.x)]=true
+        end
+        sim:update(0.1)
+    end)
 end
 V.atFrame(65,function()
-    Art.draw=original
-    local identity=sim.buildings[2]
-    local role=require("game.Characters").worker(identity,1)
-    V.assert(frames["person-" .. role .. "-se"] or frames["person-" .. role .. "-sw"] or
-        frames["person-" .. role .. "-ne"] or frames["person-" .. role .. "-nw"],
-        "Field work renders the assigned villager instead of a generic farmer")
-    V.assert(not frames["person-farm-plow-1"] and not frames["person-farm-plow-2"],
-        "Farm actions do not replace the villager's identity")
-    V.assert(Art.exists("person-eating-blue-man-1") and Art.exists("person-eating-blue-man-2") and
-        Art.exists("person-eating-chef-1") and Art.exists("person-eating-chef-2"),
-        "Villagers and specialists have distinct eating keyframes")
+    local count=0;for _ in pairs(poses) do count=count+1 end
+    V.assert(count>1,"The field worker bends and moves through actual joint poses")
     V.finish()
 end)

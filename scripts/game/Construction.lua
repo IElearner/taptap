@@ -5,7 +5,7 @@ local C = {}
 -- Work is measured in worker-seconds; adding builders shortens elapsed time,
 -- without changing the amount of work required by a site.
 C.maxBuilders = 4
-C.buildingWork = 18
+C.buildingWork = 36
 local directions = { {1,0}, {-1,0}, {0,1}, {0,-1} }
 function C.busy(sim)
     local count = 0
@@ -24,6 +24,28 @@ local function siteFor(sim, job)
     if job.kind == "road" then return sim:roadSiteAt(job.x,job.y) end
     return sim.buildings[job.building]
 end
+local function workSite(sim,b)
+    local w,h=b.footprintW or 1,b.footprintH or 1
+    local left,right,top,bottom=b.x-w,b.x+1,b.y-h,b.y+1
+    local candidates={{x=b.x,y=bottom,side="south"},{x=left,y=b.y,side="west"},
+        {x=b.x-w+1,y=top,side="north"},{x=right,y=b.y-h+1,side="east"}}
+    for x=left+1,right-1 do
+        candidates[#candidates+1]={x=x,y=bottom,side="south"}
+        candidates[#candidates+1]={x=x,y=top,side="north"}
+    end
+    for y=top+1,bottom-1 do
+        candidates[#candidates+1]={x=left,y=y,side="west"}
+        candidates[#candidates+1]={x=right,y=y,side="east"}
+    end
+    for _,p in ipairs(candidates) do
+        local occupied=false
+        for _,a in ipairs(sim.builders) do
+            local j=a.job
+            if j and j.kind=="building" and j.building==b.id and j.workX==p.x and j.workY==p.y then occupied=true;break end
+        end
+        if not occupied and sim:forestPath(b.x,b.y+1,p.x,p.y) then return p end
+    end
+end
 local function nextJob(sim)
     for _, p in ipairs(sim.pendingRoads) do
         if claimed(sim,"road",p.x,p.y)==0 then
@@ -35,7 +57,8 @@ local function nextJob(sim)
     end
     for _, b in ipairs(sim.buildings) do
         if not b.complete and claimed(sim,"building",0,0,b.id)<C.maxBuilders and sim:connected(b) then
-            return {kind="building",building=b.id,doorX=b.x,doorY=b.y+1}
+            local p=workSite(sim,b)
+            if p then return {kind="building",building=b.id,doorX=b.x,doorY=b.y+1,workX=p.x,workY=p.y,side=p.side} end
         end
     end
 end
@@ -43,8 +66,13 @@ local function releaseCrew(sim,kind,id,x,y)
     for _,a in ipairs(sim.builders) do
         local j=a.job
         if j and j.kind==kind and (kind=="building" and j.building==id or kind=="road" and j.x==x and j.y==y) then
+            local onSite=a.phase=="approach" or a.phase=="hammer"
             a.job,a.phase,a.carrying=false,"return",false
-            Move.route(sim,a,10,9)
+            if kind=="building" and onSite then
+                local path=sim:forestPath(math.floor(a.x+0.5),math.floor(a.y+0.5),j.doorX,j.doorY)
+                if path then a.path,a.index,a.phase=path,1,"leaveSite"
+                else Move.route(sim,a,10,9) end
+            else Move.route(sim,a,10,9) end
         end
     end
 end
@@ -72,6 +100,19 @@ function C.update(sim,dt,offline)
             end
         end
         if a.active then
+            -- Old saves put every builder at the front door; reserve real perimeter
+            -- positions before resuming those jobs.
+            if a.job and a.job.kind=="building" and not a.job.workX then
+                local b=sim.buildings[a.job.building]
+                local p=b and workSite(sim,b)
+                if p then
+                    a.job.workX,a.job.workY,a.job.side=p.x,p.y,p.side
+                    if a.phase=="hammer" then
+                        local path=sim:forestPath(math.floor(a.x+0.5),math.floor(a.y+0.5),p.x,p.y)
+                        if path then a.path,a.index,a.phase=path,1,"approach" end
+                    end
+                end
+            end
             if not offline then
                 a.hunger=math.min(600,(a.hunger or 0)+dt)
                 a.energy=math.max(0,(a.energy or 100)-dt*0.8)
@@ -82,7 +123,15 @@ function C.update(sim,dt,offline)
                 a.timer = math.max(0,a.timer-dt)
                 if a.timer == 0 and Move.route(sim,a,a.job.doorX,a.job.doorY) then a.phase,a.carrying="toSite",true end
             elseif a.phase == "toSite" then
-                if Move.step(a,dt) then a.phase,a.timer,a.carrying="hammer",0,false end
+                if Move.step(a,dt) then
+                    local j=a.job
+                    if j.kind=="building" and j.workX then
+                        local path=sim:forestPath(j.doorX,j.doorY,j.workX,j.workY)
+                        if path then a.path,a.index,a.phase=path,1,"approach" end
+                    else a.phase,a.timer,a.carrying="hammer",0,false end
+                end
+            elseif a.phase=="approach" then
+                if Move.step(a,dt,1.35) then a.phase,a.timer,a.carrying="hammer",0,false end
             elseif a.phase == "hammer" then
                 local p = siteFor(sim,a.job)
                 if p then
@@ -98,6 +147,8 @@ function C.update(sim,dt,offline)
                     elseif p and not p.complete then finishBuilding(sim,p) end
                     releaseCrew(sim,job.kind,job.building,job.x,job.y)
                 end
+            elseif a.phase=="leaveSite" then
+                if Move.step(a,dt,1.35) then a.phase="return";Move.route(sim,a,10,9) end
             elseif a.phase == "return" then
                 if Move.step(a,dt) then a.active,a.phase=false,"idle" end
             end

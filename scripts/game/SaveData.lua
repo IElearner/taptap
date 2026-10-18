@@ -161,13 +161,13 @@ local function restoreUnsafe(data, mode)
             assert(not s.roads[k] and not s:buildingAt(p.x,p.y) and not s.roadPlanIndex[k], "road overlap")
             local entry=clone(p);s.pendingRoads[#s.pendingRoads+1]=entry;s.roadPlanIndex[k]=entry
         end
-        local claims={}
+        local claims,workClaims={},{}
         for _,a in ipairs(s.builders) do
             validatePath(a)
             validateMeal(a)
             a.energy=a.energy or 100
             assert(type(a.active)=="boolean" and type(a.carrying)=="boolean" and number(a.timer,0,1e12), "builder state")
-            assert(a.phase=="idle" or a.phase=="collect" or a.phase=="packing" or a.phase=="toSite" or a.phase=="hammer" or a.phase=="return", "builder phase")
+            assert(a.phase=="idle" or a.phase=="collect" or a.phase=="packing" or a.phase=="toSite" or a.phase=="approach" or a.phase=="hammer" or a.phase=="leaveSite" or a.phase=="return", "builder phase")
             assert(a.active == (a.phase~="idle"), "builder occupancy")
             if a.job then
                 local j=a.job
@@ -179,11 +179,20 @@ local function restoreUnsafe(data, mode)
                     claim="r" .. j.x .. ":" .. j.y
                 else
                     assert(number(j.building,1,#s.buildings) and s.buildings[j.building] and not s.buildings[j.building].complete, "building job")
+                    if j.workX~=nil then
+                        local b=s.buildings[j.building]
+                        local left,right,top,bottom=b.x-(b.footprintW or 1),b.x+1,b.y-(b.footprintH or 1),b.y+1
+                        assert(number(j.workX,left,right) and number(j.workY,top,bottom) and
+                            j.workX%1==0 and j.workY%1==0 and
+                            (j.workX==left or j.workX==right or j.workY==top or j.workY==bottom),"construction perimeter")
+                        local spot=j.building .. ":" .. j.workX .. ":" .. j.workY
+                        assert(not workClaims[spot],"overlapping construction positions");workClaims[spot]=true
+                    end
                     claim="b" .. j.building
                 end
                 claims[claim]=(claims[claim] or 0)+1
                 assert(claim:sub(1,1)=="b" and claims[claim]<=4 or claims[claim]==1, "duplicate construction worker")
-            else assert(a.phase=="idle" or a.phase=="return", "builder missing job") end
+            else assert(a.phase=="idle" or a.phase=="return" or a.phase=="leaveSite", "builder missing job") end
         end
         assert(type(w.workers)=="table" and number(w.mealsServed,0,1e12), "worker activities")
         s.workers,s.mealsServed={},w.mealsServed

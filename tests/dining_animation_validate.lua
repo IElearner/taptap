@@ -1,13 +1,13 @@
--- Real diners should alternate two painted eating poses in the visible bay.
+-- Diners sit inside the open model and animate their shoulder joints.
 local Game=require "network.Standalone"
-local Art=require "game.Art"
-local sim,original,seen
+local sim,view,seen
+seen={}
 V.atFrame(6,function()
     Game.UseStore(require("game.SaveStore").new({now=function() return 1000 end,
         read=function() return nil end,write=function() return true end}),true)
 end)
 V.atFrame(9,function()
-    local view,hud
+    local hud
     sim,view,hud=Game.Inspect();hud.dismissIntro()
     sim,view,hud=Game.Inspect();hud.dismissIntro()
     sim.started,sim.skipped,sim.menuOpen=true,true,false
@@ -23,23 +23,25 @@ V.atFrame(9,function()
         if require("game.Meals").occupancy(sim,kitchen.id)==4 then break end
     end
     V.assert(require("game.Meals").occupancy(sim,kitchen.id)==4,
-        "Four real villagers occupy the painted dining bay")
+        "Four real villagers occupy the dining room")
     view.home();view.zoom(0.65);hud.update()
-    original,seen=Art.draw,{}
-    Art.draw=function(vg,name,...)
-        local painted=original(vg,name,...)
-        if painted and name:find("^person%-eating%-%a") then seen[name]=true end
-        return painted
-    end
+
 end)
-for frame=10,46 do V.atFrame(frame,function() sim:update(0.08) end) end
-V.atFrame(47,function()
-    Art.draw=original
-    local animated=false
-    for name in pairs(seen) do
-        local base=name:match("^(person%-eating%-.+)%-1$")
-        if base and seen[base .. "-2"] then animated=true end
+for frame=10,46 do V.atFrame(frame,function()
+    for key,person in pairs(view.modelWorld.actors) do
+        if person.action=="eat" then
+            seen[key]=seen[key] or {}
+            seen[key][tostring(person.shoulders[2].rotation.x)]=true
+        end
     end
-    V.assert(animated,"A seated villager visibly alternates eating keyframes while dining")
+    sim:update(0.08)
+end) end
+V.atFrame(47,function()
+    local animated=false
+    for _,poses in pairs(seen) do
+        local count=0;for _ in pairs(poses) do count=count+1 end
+        if count>1 then animated=true end
+    end
+    V.assert(animated,"A seated villager moves its real arm joint while eating")
     V.finish()
 end)
