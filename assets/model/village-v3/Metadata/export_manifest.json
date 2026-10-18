@@ -1,0 +1,2405 @@
+{
+  "schema": "urhox.blender_export.v1",
+  "scene_id": "VillageV3",
+  "source_blend": "/workspace/taptap/art-source/v3/village-models.blend",
+  "resource_prefix": "model/village-v3",
+  "axis_conversion": "Blender XYZ/Z-up -> UrhoX YZX/Y-up",
+  "objects_exported": 122,
+  "resources": [
+    {
+      "type": "material",
+      "source": "Stone",
+      "path": "Materials/Stone.xml",
+      "resource": "model/village-v3/Materials/Stone.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "store_0",
+      "path": "Meshes/store_0.mdl",
+      "resource": "model/village-v3/Meshes/store_0.mdl",
+      "vertices": 264,
+      "indices": 396,
+      "geometries": 1
+    },
+    {
+      "type": "material",
+      "source": "Wood",
+      "path": "Materials/Wood.xml",
+      "resource": "model/village-v3/Materials/Wood.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "DarkWood",
+      "path": "Materials/DarkWood.xml",
+      "resource": "model/village-v3/Materials/DarkWood.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "PaleWood",
+      "path": "Materials/PaleWood.xml",
+      "resource": "model/village-v3/Materials/PaleWood.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "store_1",
+      "path": "Meshes/store_1.mdl",
+      "resource": "model/village-v3/Meshes/store_1.mdl",
+      "vertices": 2936,
+      "indices": 3876,
+      "geometries": 4
+    },
+    {
+      "type": "material",
+      "source": "Plaster",
+      "path": "Materials/Plaster.xml",
+      "resource": "model/village-v3/Materials/Plaster.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "Hair",
+      "path": "Materials/Hair.xml",
+      "resource": "model/village-v3/Materials/Hair.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "store_2",
+      "path": "Meshes/store_2.mdl",
+      "resource": "model/village-v3/Meshes/store_2.mdl",
+      "vertices": 3506,
+      "indices": 4734,
+      "geometries": 6
+    },
+    {
+      "type": "material",
+      "source": "Roof",
+      "path": "Materials/Roof.xml",
+      "resource": "model/village-v3/Materials/Roof.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "store_3",
+      "path": "Meshes/store_3.mdl",
+      "resource": "model/village-v3/Meshes/store_3.mdl",
+      "vertices": 10769,
+      "indices": 14010,
+      "geometries": 7
+    },
+    {
+      "type": "material",
+      "source": "Grain",
+      "path": "Materials/Grain.xml",
+      "resource": "model/village-v3/Materials/Grain.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "Ochre",
+      "path": "Materials/Ochre.xml",
+      "resource": "model/village-v3/Materials/Ochre.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "Iron",
+      "path": "Materials/Iron.xml",
+      "resource": "model/village-v3/Materials/Iron.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "store_4",
+      "path": "Meshes/store_4.mdl",
+      "resource": "model/village-v3/Meshes/store_4.mdl",
+      "vertices": 18954,
+      "indices": 24876,
+      "geometries": 10
+    },
+    {
+      "type": "model",
+      "object": "house_0",
+      "path": "Meshes/house_0.mdl",
+      "resource": "model/village-v3/Meshes/house_0.mdl",
+      "vertices": 456,
+      "indices": 684,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "house_1",
+      "path": "Meshes/house_1.mdl",
+      "resource": "model/village-v3/Meshes/house_1.mdl",
+      "vertices": 3432,
+      "indices": 4596,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "house_2",
+      "path": "Meshes/house_2.mdl",
+      "resource": "model/village-v3/Meshes/house_2.mdl",
+      "vertices": 4568,
+      "indices": 6306,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "house_3",
+      "path": "Meshes/house_3.mdl",
+      "resource": "model/village-v3/Meshes/house_3.mdl",
+      "vertices": 14498,
+      "indices": 19038,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "house_4",
+      "path": "Meshes/house_4.mdl",
+      "resource": "model/village-v3/Meshes/house_4.mdl",
+      "vertices": 24618,
+      "indices": 32208,
+      "geometries": 10
+    },
+    {
+      "type": "model",
+      "object": "mill_0",
+      "path": "Meshes/mill_0.mdl",
+      "resource": "model/village-v3/Meshes/mill_0.mdl",
+      "vertices": 216,
+      "indices": 324,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "mill_1",
+      "path": "Meshes/mill_1.mdl",
+      "resource": "model/village-v3/Meshes/mill_1.mdl",
+      "vertices": 2888,
+      "indices": 3804,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "mill_2",
+      "path": "Meshes/mill_2.mdl",
+      "resource": "model/village-v3/Meshes/mill_2.mdl",
+      "vertices": 3623,
+      "indices": 4866,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "mill_3",
+      "path": "Meshes/mill_3.mdl",
+      "resource": "model/village-v3/Meshes/mill_3.mdl",
+      "vertices": 9529,
+      "indices": 12414,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "mill_4",
+      "path": "Meshes/mill_4.mdl",
+      "resource": "model/village-v3/Meshes/mill_4.mdl",
+      "vertices": 14866,
+      "indices": 19200,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "kitchen_0",
+      "path": "Meshes/kitchen_0.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_0.mdl",
+      "vertices": 456,
+      "indices": 684,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "kitchen_1",
+      "path": "Meshes/kitchen_1.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_1.mdl",
+      "vertices": 3432,
+      "indices": 4596,
+      "geometries": 4
+    },
+    {
+      "type": "material",
+      "source": "Bowl",
+      "path": "Materials/Bowl.xml",
+      "resource": "model/village-v3/Materials/Bowl.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "kitchen_2",
+      "path": "Meshes/kitchen_2.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_2.mdl",
+      "vertices": 4525,
+      "indices": 6108,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "kitchen_3",
+      "path": "Meshes/kitchen_3.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_3.mdl",
+      "vertices": 14471,
+      "indices": 18840,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "kitchen_4",
+      "path": "Meshes/kitchen_4.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_4.mdl",
+      "vertices": 36851,
+      "indices": 47430,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "woodcutter_0",
+      "path": "Meshes/woodcutter_0.mdl",
+      "resource": "model/village-v3/Meshes/woodcutter_0.mdl",
+      "vertices": 912,
+      "indices": 1368,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "woodcutter_1",
+      "path": "Meshes/woodcutter_1.mdl",
+      "resource": "model/village-v3/Meshes/woodcutter_1.mdl",
+      "vertices": 3888,
+      "indices": 5280,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "woodcutter_2",
+      "path": "Meshes/woodcutter_2.mdl",
+      "resource": "model/village-v3/Meshes/woodcutter_2.mdl",
+      "vertices": 4648,
+      "indices": 6252,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "woodcutter_3",
+      "path": "Meshes/woodcutter_3.mdl",
+      "resource": "model/village-v3/Meshes/woodcutter_3.mdl",
+      "vertices": 14586,
+      "indices": 18984,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "woodcutter_4",
+      "path": "Meshes/woodcutter_4.mdl",
+      "resource": "model/village-v3/Meshes/woodcutter_4.mdl",
+      "vertices": 23950,
+      "indices": 30954,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "quarry_0",
+      "path": "Meshes/quarry_0.mdl",
+      "resource": "model/village-v3/Meshes/quarry_0.mdl",
+      "vertices": 624,
+      "indices": 936,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "quarry_1",
+      "path": "Meshes/quarry_1.mdl",
+      "resource": "model/village-v3/Meshes/quarry_1.mdl",
+      "vertices": 3296,
+      "indices": 4416,
+      "geometries": 4
+    },
+    {
+      "type": "material",
+      "source": "Leather",
+      "path": "Materials/Leather.xml",
+      "resource": "model/village-v3/Materials/Leather.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "quarry_2",
+      "path": "Meshes/quarry_2.mdl",
+      "resource": "model/village-v3/Meshes/quarry_2.mdl",
+      "vertices": 3728,
+      "indices": 5016,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "quarry_3",
+      "path": "Meshes/quarry_3.mdl",
+      "resource": "model/village-v3/Meshes/quarry_3.mdl",
+      "vertices": 8985,
+      "indices": 11700,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "quarry_4",
+      "path": "Meshes/quarry_4.mdl",
+      "resource": "model/village-v3/Meshes/quarry_4.mdl",
+      "vertices": 13645,
+      "indices": 17622,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "courier_main_0",
+      "path": "Meshes/courier_main_0.mdl",
+      "resource": "model/village-v3/Meshes/courier_main_0.mdl",
+      "vertices": 264,
+      "indices": 396,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "courier_0",
+      "path": "Meshes/courier_0.mdl",
+      "resource": "model/village-v3/Meshes/courier_0.mdl",
+      "vertices": 120,
+      "indices": 180,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "courier_main_1",
+      "path": "Meshes/courier_main_1.mdl",
+      "resource": "model/village-v3/Meshes/courier_main_1.mdl",
+      "vertices": 2408,
+      "indices": 3168,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "courier_1",
+      "path": "Meshes/courier_1.mdl",
+      "resource": "model/village-v3/Meshes/courier_1.mdl",
+      "vertices": 168,
+      "indices": 252,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "courier_main_2",
+      "path": "Meshes/courier_main_2.mdl",
+      "resource": "model/village-v3/Meshes/courier_main_2.mdl",
+      "vertices": 3052,
+      "indices": 4134,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "courier_2",
+      "path": "Meshes/courier_2.mdl",
+      "resource": "model/village-v3/Meshes/courier_2.mdl",
+      "vertices": 168,
+      "indices": 252,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "courier_main_3",
+      "path": "Meshes/courier_main_3.mdl",
+      "resource": "model/village-v3/Meshes/courier_main_3.mdl",
+      "vertices": 10311,
+      "indices": 13410,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "courier_3",
+      "path": "Meshes/courier_3.mdl",
+      "resource": "model/village-v3/Meshes/courier_3.mdl",
+      "vertices": 4747,
+      "indices": 6072,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "courier_main_4",
+      "path": "Meshes/courier_main_4.mdl",
+      "resource": "model/village-v3/Meshes/courier_main_4.mdl",
+      "vertices": 17529,
+      "indices": 22632,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "courier_4",
+      "path": "Meshes/courier_4.mdl",
+      "resource": "model/village-v3/Meshes/courier_4.mdl",
+      "vertices": 9116,
+      "indices": 11616,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "barracks_0",
+      "path": "Meshes/barracks_0.mdl",
+      "resource": "model/village-v3/Meshes/barracks_0.mdl",
+      "vertices": 1152,
+      "indices": 1728,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "barracks_1",
+      "path": "Meshes/barracks_1.mdl",
+      "resource": "model/village-v3/Meshes/barracks_1.mdl",
+      "vertices": 8416,
+      "indices": 11184,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "barracks_2",
+      "path": "Meshes/barracks_2.mdl",
+      "resource": "model/village-v3/Meshes/barracks_2.mdl",
+      "vertices": 11126,
+      "indices": 15222,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "barracks_3",
+      "path": "Meshes/barracks_3.mdl",
+      "resource": "model/village-v3/Meshes/barracks_3.mdl",
+      "vertices": 29531,
+      "indices": 38730,
+      "geometries": 6
+    },
+    {
+      "type": "material",
+      "source": "Red",
+      "path": "Materials/Red.xml",
+      "resource": "model/village-v3/Materials/Red.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "barracks_4",
+      "path": "Meshes/barracks_4.mdl",
+      "resource": "model/village-v3/Meshes/barracks_4.mdl",
+      "vertices": 47324,
+      "indices": 61464,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "butcher_0",
+      "path": "Meshes/butcher_0.mdl",
+      "resource": "model/village-v3/Meshes/butcher_0.mdl",
+      "vertices": 456,
+      "indices": 684,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "butcher_1",
+      "path": "Meshes/butcher_1.mdl",
+      "resource": "model/village-v3/Meshes/butcher_1.mdl",
+      "vertices": 3432,
+      "indices": 4596,
+      "geometries": 4
+    },
+    {
+      "type": "material",
+      "source": "Russet",
+      "path": "Materials/Russet.xml",
+      "resource": "model/village-v3/Materials/Russet.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "butcher_2",
+      "path": "Meshes/butcher_2.mdl",
+      "resource": "model/village-v3/Meshes/butcher_2.mdl",
+      "vertices": 5129,
+      "indices": 7236,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "butcher_3",
+      "path": "Meshes/butcher_3.mdl",
+      "resource": "model/village-v3/Meshes/butcher_3.mdl",
+      "vertices": 15030,
+      "indices": 19968,
+      "geometries": 7
+    },
+    {
+      "type": "model",
+      "object": "butcher_4",
+      "path": "Meshes/butcher_4.mdl",
+      "resource": "model/village-v3/Meshes/butcher_4.mdl",
+      "vertices": 37460,
+      "indices": 48558,
+      "geometries": 6
+    },
+    {
+      "type": "material",
+      "source": "Earth",
+      "path": "Materials/Earth.xml",
+      "resource": "model/village-v3/Materials/Earth.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "ranch_0",
+      "path": "Meshes/ranch_0.mdl",
+      "resource": "model/village-v3/Meshes/ranch_0.mdl",
+      "vertices": 24,
+      "indices": 36,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "ranch_1",
+      "path": "Meshes/ranch_1.mdl",
+      "resource": "model/village-v3/Meshes/ranch_1.mdl",
+      "vertices": 1808,
+      "indices": 2376,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "ranch_2",
+      "path": "Meshes/ranch_2.mdl",
+      "resource": "model/village-v3/Meshes/ranch_2.mdl",
+      "vertices": 4192,
+      "indices": 5508,
+      "geometries": 6
+    },
+    {
+      "type": "model",
+      "object": "ranch_3",
+      "path": "Meshes/ranch_3.mdl",
+      "resource": "model/village-v3/Meshes/ranch_3.mdl",
+      "vertices": 9114,
+      "indices": 11760,
+      "geometries": 7
+    },
+    {
+      "type": "material",
+      "source": "Skin",
+      "path": "Materials/Skin.xml",
+      "resource": "model/village-v3/Materials/Skin.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "Pig",
+      "path": "Materials/Pig.xml",
+      "resource": "model/village-v3/Materials/Pig.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "ranch_4",
+      "path": "Meshes/ranch_4.mdl",
+      "resource": "model/village-v3/Meshes/ranch_4.mdl",
+      "vertices": 17543,
+      "indices": 23586,
+      "geometries": 9
+    },
+    {
+      "type": "model",
+      "object": "kitchen_open",
+      "path": "Meshes/kitchen_open.mdl",
+      "resource": "model/village-v3/Meshes/kitchen_open.mdl",
+      "vertices": 1890,
+      "indices": 2700,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "field_seed",
+      "path": "Meshes/field_seed.mdl",
+      "resource": "model/village-v3/Meshes/field_seed.mdl",
+      "vertices": 240,
+      "indices": 360,
+      "geometries": 1
+    },
+    {
+      "type": "material",
+      "source": "Leaf",
+      "path": "Materials/Leaf.xml",
+      "resource": "model/village-v3/Materials/Leaf.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "field_sprout",
+      "path": "Meshes/field_sprout.mdl",
+      "resource": "model/village-v3/Meshes/field_sprout.mdl",
+      "vertices": 4218,
+      "indices": 5274,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "field_green",
+      "path": "Meshes/field_green.mdl",
+      "resource": "model/village-v3/Meshes/field_green.mdl",
+      "vertices": 4218,
+      "indices": 5274,
+      "geometries": 2
+    },
+    {
+      "type": "material",
+      "source": "Wheat",
+      "path": "Materials/Wheat.xml",
+      "resource": "model/village-v3/Materials/Wheat.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "field_ripe",
+      "path": "Meshes/field_ripe.mdl",
+      "resource": "model/village-v3/Meshes/field_ripe.mdl",
+      "vertices": 69681,
+      "indices": 106362,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "waterwheel",
+      "path": "Meshes/waterwheel.mdl",
+      "resource": "model/village-v3/Meshes/waterwheel.mdl",
+      "vertices": 3592,
+      "indices": 4548,
+      "geometries": 3
+    },
+    {
+      "type": "material",
+      "source": "Ivory",
+      "path": "Materials/Ivory.xml",
+      "resource": "model/village-v3/Materials/Ivory.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "material",
+      "source": "Indigo",
+      "path": "Materials/Indigo.xml",
+      "resource": "model/village-v3/Materials/Indigo.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "blue-man_torso",
+      "path": "Meshes/blue-man_torso.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_torso.mdl",
+      "vertices": 630,
+      "indices": 960,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "blue-man_head",
+      "path": "Meshes/blue-man_head.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_head.mdl",
+      "vertices": 3092,
+      "indices": 4764,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "blue-man_upperarm",
+      "path": "Meshes/blue-man_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "blue-man_forearm",
+      "path": "Meshes/blue-man_forearm.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "material",
+      "source": "Pants",
+      "path": "Materials/Pants.xml",
+      "resource": "model/village-v3/Materials/Pants.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "blue-man_thigh",
+      "path": "Meshes/blue-man_thigh.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "material",
+      "source": "Grey",
+      "path": "Materials/Grey.xml",
+      "resource": "model/village-v3/Materials/Grey.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "blue-man_shin",
+      "path": "Meshes/blue-man_shin.mdl",
+      "resource": "model/village-v3/Meshes/blue-man_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_torso",
+      "path": "Meshes/ochre-woman_torso.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_torso.mdl",
+      "vertices": 820,
+      "indices": 1248,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_head",
+      "path": "Meshes/ochre-woman_head.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_head.mdl",
+      "vertices": 4336,
+      "indices": 6780,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_upperarm",
+      "path": "Meshes/ochre-woman_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_forearm",
+      "path": "Meshes/ochre-woman_forearm.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_thigh",
+      "path": "Meshes/ochre-woman_thigh.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "ochre-woman_shin",
+      "path": "Meshes/ochre-woman_shin.mdl",
+      "resource": "model/village-v3/Meshes/ochre-woman_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_torso",
+      "path": "Meshes/grey-elder_torso.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_torso.mdl",
+      "vertices": 630,
+      "indices": 960,
+      "geometries": 3
+    },
+    {
+      "type": "material",
+      "source": "GreyHair",
+      "path": "Materials/GreyHair.xml",
+      "resource": "model/village-v3/Materials/GreyHair.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_head",
+      "path": "Meshes/grey-elder_head.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_head.mdl",
+      "vertices": 3013,
+      "indices": 4644,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_upperarm",
+      "path": "Meshes/grey-elder_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_forearm",
+      "path": "Meshes/grey-elder_forearm.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_thigh",
+      "path": "Meshes/grey-elder_thigh.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "grey-elder_shin",
+      "path": "Meshes/grey-elder_shin.mdl",
+      "resource": "model/village-v3/Meshes/grey-elder_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "material",
+      "source": "Green",
+      "path": "Materials/Green.xml",
+      "resource": "model/village-v3/Materials/Green.xml",
+      "technique": "Techniques/PBR/PBRDiff.xml"
+    },
+    {
+      "type": "model",
+      "object": "green-woman_torso",
+      "path": "Meshes/green-woman_torso.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_torso.mdl",
+      "vertices": 820,
+      "indices": 1248,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "green-woman_head",
+      "path": "Meshes/green-woman_head.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_head.mdl",
+      "vertices": 4336,
+      "indices": 6780,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "green-woman_upperarm",
+      "path": "Meshes/green-woman_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "green-woman_forearm",
+      "path": "Meshes/green-woman_forearm.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "green-woman_thigh",
+      "path": "Meshes/green-woman_thigh.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "green-woman_shin",
+      "path": "Meshes/green-woman_shin.mdl",
+      "resource": "model/village-v3/Meshes/green-woman_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "chef_torso",
+      "path": "Meshes/chef_torso.mdl",
+      "resource": "model/village-v3/Meshes/chef_torso.mdl",
+      "vertices": 882,
+      "indices": 1332,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "chef_head",
+      "path": "Meshes/chef_head.mdl",
+      "resource": "model/village-v3/Meshes/chef_head.mdl",
+      "vertices": 4336,
+      "indices": 6780,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "chef_upperarm",
+      "path": "Meshes/chef_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/chef_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "chef_forearm",
+      "path": "Meshes/chef_forearm.mdl",
+      "resource": "model/village-v3/Meshes/chef_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "chef_thigh",
+      "path": "Meshes/chef_thigh.mdl",
+      "resource": "model/village-v3/Meshes/chef_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "chef_shin",
+      "path": "Meshes/chef_shin.mdl",
+      "resource": "model/village-v3/Meshes/chef_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "butcher_torso",
+      "path": "Meshes/butcher_torso.mdl",
+      "resource": "model/village-v3/Meshes/butcher_torso.mdl",
+      "vertices": 692,
+      "indices": 1044,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "butcher_head",
+      "path": "Meshes/butcher_head.mdl",
+      "resource": "model/village-v3/Meshes/butcher_head.mdl",
+      "vertices": 3036,
+      "indices": 4692,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "butcher_upperarm",
+      "path": "Meshes/butcher_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/butcher_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "butcher_forearm",
+      "path": "Meshes/butcher_forearm.mdl",
+      "resource": "model/village-v3/Meshes/butcher_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "butcher_thigh",
+      "path": "Meshes/butcher_thigh.mdl",
+      "resource": "model/village-v3/Meshes/butcher_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "butcher_shin",
+      "path": "Meshes/butcher_shin.mdl",
+      "resource": "model/village-v3/Meshes/butcher_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "guard-man_torso",
+      "path": "Meshes/guard-man_torso.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_torso.mdl",
+      "vertices": 1230,
+      "indices": 1860,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "guard-man_head",
+      "path": "Meshes/guard-man_head.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_head.mdl",
+      "vertices": 3386,
+      "indices": 5208,
+      "geometries": 5
+    },
+    {
+      "type": "model",
+      "object": "guard-man_upperarm",
+      "path": "Meshes/guard-man_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-man_forearm",
+      "path": "Meshes/guard-man_forearm.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-man_thigh",
+      "path": "Meshes/guard-man_thigh.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-man_shin",
+      "path": "Meshes/guard-man_shin.mdl",
+      "resource": "model/village-v3/Meshes/guard-man_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_torso",
+      "path": "Meshes/guard-woman_torso.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_torso.mdl",
+      "vertices": 1420,
+      "indices": 2148,
+      "geometries": 4
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_head",
+      "path": "Meshes/guard-woman_head.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_head.mdl",
+      "vertices": 4336,
+      "indices": 6780,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_upperarm",
+      "path": "Meshes/guard-woman_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_forearm",
+      "path": "Meshes/guard-woman_forearm.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_thigh",
+      "path": "Meshes/guard-woman_thigh.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "guard-woman_shin",
+      "path": "Meshes/guard-woman_shin.mdl",
+      "resource": "model/village-v3/Meshes/guard-woman_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "bandit_torso",
+      "path": "Meshes/bandit_torso.mdl",
+      "resource": "model/village-v3/Meshes/bandit_torso.mdl",
+      "vertices": 630,
+      "indices": 960,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "bandit_head",
+      "path": "Meshes/bandit_head.mdl",
+      "resource": "model/village-v3/Meshes/bandit_head.mdl",
+      "vertices": 3036,
+      "indices": 4692,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "bandit_upperarm",
+      "path": "Meshes/bandit_upperarm.mdl",
+      "resource": "model/village-v3/Meshes/bandit_upperarm.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "bandit_forearm",
+      "path": "Meshes/bandit_forearm.mdl",
+      "resource": "model/village-v3/Meshes/bandit_forearm.mdl",
+      "vertices": 761,
+      "indices": 1140,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "bandit_thigh",
+      "path": "Meshes/bandit_thigh.mdl",
+      "resource": "model/village-v3/Meshes/bandit_thigh.mdl",
+      "vertices": 188,
+      "indices": 288,
+      "geometries": 1
+    },
+    {
+      "type": "model",
+      "object": "bandit_shin",
+      "path": "Meshes/bandit_shin.mdl",
+      "resource": "model/village-v3/Meshes/bandit_shin.mdl",
+      "vertices": 673,
+      "indices": 1152,
+      "geometries": 3
+    },
+    {
+      "type": "model",
+      "object": "tool_hammer",
+      "path": "Meshes/tool_hammer.mdl",
+      "resource": "model/village-v3/Meshes/tool_hammer.mdl",
+      "vertices": 92,
+      "indices": 120,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_axe",
+      "path": "Meshes/tool_axe.mdl",
+      "resource": "model/village-v3/Meshes/tool_axe.mdl",
+      "vertices": 76,
+      "indices": 96,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_hoe",
+      "path": "Meshes/tool_hoe.mdl",
+      "resource": "model/village-v3/Meshes/tool_hoe.mdl",
+      "vertices": 92,
+      "indices": 120,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_sickle",
+      "path": "Meshes/tool_sickle.mdl",
+      "resource": "model/village-v3/Meshes/tool_sickle.mdl",
+      "vertices": 410,
+      "indices": 516,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_watering",
+      "path": "Meshes/tool_watering.mdl",
+      "resource": "model/village-v3/Meshes/tool_watering.mdl",
+      "vertices": 1057,
+      "indices": 1488,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_bowl",
+      "path": "Meshes/tool_bowl.mdl",
+      "resource": "model/village-v3/Meshes/tool_bowl.mdl",
+      "vertices": 370,
+      "indices": 624,
+      "geometries": 2
+    },
+    {
+      "type": "model",
+      "object": "tool_chopsticks",
+      "path": "Meshes/tool_chopsticks.mdl",
+      "resource": "model/village-v3/Meshes/tool_chopsticks.mdl",
+      "vertices": 96,
+      "indices": 120,
+      "geometries": 1
+    },
+    {
+      "type": "scene",
+      "path": "Scene.xml",
+      "resource": "model/village-v3/Scene.xml"
+    }
+  ],
+  "objects": [
+    {
+      "name": "Zone",
+      "type": "ZONE",
+      "node_id": 2,
+      "parent": null,
+      "collections": []
+    },
+    {
+      "name": "store_0",
+      "type": "MESH",
+      "node_id": 3,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "store_1",
+      "type": "MESH",
+      "node_id": 4,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "store_2",
+      "type": "MESH",
+      "node_id": 5,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "store_3",
+      "type": "MESH",
+      "node_id": 6,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "store_4",
+      "type": "MESH",
+      "node_id": 7,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "house_0",
+      "type": "MESH",
+      "node_id": 8,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "house_1",
+      "type": "MESH",
+      "node_id": 9,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "house_2",
+      "type": "MESH",
+      "node_id": 10,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "house_3",
+      "type": "MESH",
+      "node_id": 11,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "house_4",
+      "type": "MESH",
+      "node_id": 12,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "mill_0",
+      "type": "MESH",
+      "node_id": 13,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "mill_1",
+      "type": "MESH",
+      "node_id": 14,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "mill_2",
+      "type": "MESH",
+      "node_id": 15,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "mill_3",
+      "type": "MESH",
+      "node_id": 16,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "mill_4",
+      "type": "MESH",
+      "node_id": 17,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_0",
+      "type": "MESH",
+      "node_id": 18,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_1",
+      "type": "MESH",
+      "node_id": 19,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_2",
+      "type": "MESH",
+      "node_id": 20,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_3",
+      "type": "MESH",
+      "node_id": 21,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_4",
+      "type": "MESH",
+      "node_id": 22,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "woodcutter_0",
+      "type": "MESH",
+      "node_id": 23,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "woodcutter_1",
+      "type": "MESH",
+      "node_id": 24,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "woodcutter_2",
+      "type": "MESH",
+      "node_id": 25,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "woodcutter_3",
+      "type": "MESH",
+      "node_id": 26,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "woodcutter_4",
+      "type": "MESH",
+      "node_id": 27,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "quarry_0",
+      "type": "MESH",
+      "node_id": 28,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "quarry_1",
+      "type": "MESH",
+      "node_id": 29,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "quarry_2",
+      "type": "MESH",
+      "node_id": 30,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "quarry_3",
+      "type": "MESH",
+      "node_id": 31,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "quarry_4",
+      "type": "MESH",
+      "node_id": 32,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_main_0",
+      "type": "MESH",
+      "node_id": 33,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_0",
+      "type": "MESH",
+      "node_id": 34,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_main_1",
+      "type": "MESH",
+      "node_id": 35,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_1",
+      "type": "MESH",
+      "node_id": 36,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_main_2",
+      "type": "MESH",
+      "node_id": 37,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_2",
+      "type": "MESH",
+      "node_id": 38,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_main_3",
+      "type": "MESH",
+      "node_id": 39,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_3",
+      "type": "MESH",
+      "node_id": 40,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_main_4",
+      "type": "MESH",
+      "node_id": 41,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "courier_4",
+      "type": "MESH",
+      "node_id": 42,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "barracks_0",
+      "type": "MESH",
+      "node_id": 43,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "barracks_1",
+      "type": "MESH",
+      "node_id": 44,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "barracks_2",
+      "type": "MESH",
+      "node_id": 45,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "barracks_3",
+      "type": "MESH",
+      "node_id": 46,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "barracks_4",
+      "type": "MESH",
+      "node_id": 47,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_0",
+      "type": "MESH",
+      "node_id": 48,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_1",
+      "type": "MESH",
+      "node_id": 49,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_2",
+      "type": "MESH",
+      "node_id": 50,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_3",
+      "type": "MESH",
+      "node_id": 51,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_4",
+      "type": "MESH",
+      "node_id": 52,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ranch_0",
+      "type": "MESH",
+      "node_id": 53,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ranch_1",
+      "type": "MESH",
+      "node_id": 54,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ranch_2",
+      "type": "MESH",
+      "node_id": 55,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ranch_3",
+      "type": "MESH",
+      "node_id": 56,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ranch_4",
+      "type": "MESH",
+      "node_id": 57,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "kitchen_open",
+      "type": "MESH",
+      "node_id": 58,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "field_seed",
+      "type": "MESH",
+      "node_id": 59,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "field_sprout",
+      "type": "MESH",
+      "node_id": 60,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "field_green",
+      "type": "MESH",
+      "node_id": 61,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "field_ripe",
+      "type": "MESH",
+      "node_id": 62,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "waterwheel",
+      "type": "MESH",
+      "node_id": 63,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_torso",
+      "type": "MESH",
+      "node_id": 64,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_head",
+      "type": "MESH",
+      "node_id": 65,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_upperarm",
+      "type": "MESH",
+      "node_id": 66,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_forearm",
+      "type": "MESH",
+      "node_id": 67,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_thigh",
+      "type": "MESH",
+      "node_id": 68,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "blue-man_shin",
+      "type": "MESH",
+      "node_id": 69,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_torso",
+      "type": "MESH",
+      "node_id": 70,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_head",
+      "type": "MESH",
+      "node_id": 71,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_upperarm",
+      "type": "MESH",
+      "node_id": 72,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_forearm",
+      "type": "MESH",
+      "node_id": 73,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_thigh",
+      "type": "MESH",
+      "node_id": 74,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "ochre-woman_shin",
+      "type": "MESH",
+      "node_id": 75,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_torso",
+      "type": "MESH",
+      "node_id": 76,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_head",
+      "type": "MESH",
+      "node_id": 77,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_upperarm",
+      "type": "MESH",
+      "node_id": 78,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_forearm",
+      "type": "MESH",
+      "node_id": 79,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_thigh",
+      "type": "MESH",
+      "node_id": 80,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "grey-elder_shin",
+      "type": "MESH",
+      "node_id": 81,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_torso",
+      "type": "MESH",
+      "node_id": 82,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_head",
+      "type": "MESH",
+      "node_id": 83,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_upperarm",
+      "type": "MESH",
+      "node_id": 84,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_forearm",
+      "type": "MESH",
+      "node_id": 85,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_thigh",
+      "type": "MESH",
+      "node_id": 86,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "green-woman_shin",
+      "type": "MESH",
+      "node_id": 87,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_torso",
+      "type": "MESH",
+      "node_id": 88,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_head",
+      "type": "MESH",
+      "node_id": 89,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_upperarm",
+      "type": "MESH",
+      "node_id": 90,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_forearm",
+      "type": "MESH",
+      "node_id": 91,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_thigh",
+      "type": "MESH",
+      "node_id": 92,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "chef_shin",
+      "type": "MESH",
+      "node_id": 93,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_torso",
+      "type": "MESH",
+      "node_id": 94,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_head",
+      "type": "MESH",
+      "node_id": 95,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_upperarm",
+      "type": "MESH",
+      "node_id": 96,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_forearm",
+      "type": "MESH",
+      "node_id": 97,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_thigh",
+      "type": "MESH",
+      "node_id": 98,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "butcher_shin",
+      "type": "MESH",
+      "node_id": 99,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_torso",
+      "type": "MESH",
+      "node_id": 100,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_head",
+      "type": "MESH",
+      "node_id": 101,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_upperarm",
+      "type": "MESH",
+      "node_id": 102,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_forearm",
+      "type": "MESH",
+      "node_id": 103,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_thigh",
+      "type": "MESH",
+      "node_id": 104,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-man_shin",
+      "type": "MESH",
+      "node_id": 105,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_torso",
+      "type": "MESH",
+      "node_id": 106,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_head",
+      "type": "MESH",
+      "node_id": 107,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_upperarm",
+      "type": "MESH",
+      "node_id": 108,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_forearm",
+      "type": "MESH",
+      "node_id": 109,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_thigh",
+      "type": "MESH",
+      "node_id": 110,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "guard-woman_shin",
+      "type": "MESH",
+      "node_id": 111,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_torso",
+      "type": "MESH",
+      "node_id": 112,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_head",
+      "type": "MESH",
+      "node_id": 113,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_upperarm",
+      "type": "MESH",
+      "node_id": 114,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_forearm",
+      "type": "MESH",
+      "node_id": 115,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_thigh",
+      "type": "MESH",
+      "node_id": 116,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "bandit_shin",
+      "type": "MESH",
+      "node_id": 117,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_hammer",
+      "type": "MESH",
+      "node_id": 118,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_axe",
+      "type": "MESH",
+      "node_id": 119,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_hoe",
+      "type": "MESH",
+      "node_id": 120,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_sickle",
+      "type": "MESH",
+      "node_id": 121,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_watering",
+      "type": "MESH",
+      "node_id": 122,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_bowl",
+      "type": "MESH",
+      "node_id": 123,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    },
+    {
+      "name": "tool_chopsticks",
+      "type": "MESH",
+      "node_id": 124,
+      "parent": null,
+      "collections": [
+        "Collection"
+      ]
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "options": {
+    "skip_disabled": true,
+    "only_selected": false,
+    "flip_v": false,
+    "strict_shader": false,
+    "no_cameras": true,
+    "no_lights": true
+  }
+}

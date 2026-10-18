@@ -64,7 +64,8 @@ V.atFrame(12,function()
     local plan=model.buildings[#live.buildings]
     V.assert(plan.planned and plan.node:GetChild("SurveyStake") and not plan.node:GetChild("Foundation"),"Waiting construction renders only survey stakes and its real boundary")
     local l=model.buildings[3].node
-    V.assert(l:GetChild("LoadingBay") and l:GetChild("MainHall"),"The L-shaped model has separate wings rather than filling its recess")
+    local shape=l:GetChild("AuthoredBuilding")
+    V.assert(shape and shape:GetChild("LoadingBay"):GetComponent("StaticModel") and shape:GetChild("MainHall"):GetComponent("StaticModel"),"The L-shaped model has separate mesh wings rather than filling its recess")
     local coordinates={{0,-1,1},{1,0,2},{0,1,4},{-1,0,8}}
     for mask=0,15 do
         live.roads["15:11"]=true

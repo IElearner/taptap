@@ -52,7 +52,8 @@ V.atFrame(12,function()
     local model=view.modelWorld
     V.assert(model and model.scene and model.camera.orthographic,"The game renders a real scene through an orthographic camera")
     local site=model.buildings[building.id]
-    V.assert(site and site.node:GetChild("Foundation") and site.node:GetChild("TimberPost"),"Construction contains separate mesh foundations and timber members")
+    local shape=site and site.node:GetChild("AuthoredBuilding")
+    V.assert(site and site.authored and shape and shape:GetChild("ArchitectureMesh"):GetComponent("StaticModel"),"Construction uses the exported mesh stage reached by actual worker progress")
     for i=1,4 do
         local worker=model.actors["builder" .. i]
         V.assert(worker and worker.node:GetChild("Head") and worker.shoulders[2] and worker.tool.enabled,"Each construction worker is an articulated mesh with a physical hammer")

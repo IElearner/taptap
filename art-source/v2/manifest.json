@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "date": "2026-10-18",
+  "source": "client-image-generation",
+  "images": [
+    {
+      "file": "actions.png",
+      "sha256": "59d58f2c7e20c8d1fcbcc377cac8bf9e09d35317ff7a83d95420f82d00cb2b63",
+      "bytes": 2071100
+    },
+    {
+      "file": "buildings.png",
+      "sha256": "0b6af77994d8ee6e710fa91830fdad44e5c83a8f8f26add9e89cf1ca5c1566db",
+      "bytes": 3169345
+    },
+    {
+      "file": "characters.png",
+      "sha256": "52292658d03aafb19ee33fdd969f778d30aa812b44893786ad5b3af6836a7c6b",
+      "bytes": 2032509
+    },
+    {
+      "file": "construction.png",
+      "sha256": "c98cb3f6f5b8c8390f521bdf8943513c034cd8767b2bff45181a91247439bc7e",
+      "bytes": 2847351
+    },
+    {
+      "file": "environment.png",
+      "sha256": "8e1de69d6c7928bdb0a702708ef01b1aaddb544b6143d92a8c41b86e1fdc061d",
+      "bytes": 3138659
+    },
+    {
+      "file": "login.png",
+      "sha256": "ac3a3fec76bd1522237e0ceb6e9f1d07e2845481b3b1d5bef79dc47f932dc89a",
+      "bytes": 3800610
+    },
+    {
+      "file": "materials.png",
+      "sha256": "ec6e33484102f0b9d86b380ba9fce82a9d7305eda17caf1c8e8ed5f0a8961585",
+      "bytes": 3871107
+    },
+    {
+      "file": "meadow.png",
+      "sha256": "bcacf694ced9dd26cd4dd9961627d4ee19dfe1f01194cc71fa2a1e9f5271ecb7",
+      "bytes": 2886333
+    },
+    {
+      "file": "portraits.png",
+      "sha256": "7ca3e822b7a89c3c0c6027971a7322826cb9ca643790e8a72223573437562cf3",
+      "bytes": 2884791
+    },
+    {
+      "file": "supplies.png",
+      "sha256": "33ae8780d594b31be971a62aed09deb74258966869ec4c6dfb6dcedbc1089482",
+      "bytes": 2893046
+    },
+    {
+      "file": "ui.png",
+      "sha256": "b86f5e3b2a164cf517783d82f7075ed8d90a0cc1459b98831f94a54e6e5b4dc6",
+      "bytes": 2355718
+    }
+  ]
+}

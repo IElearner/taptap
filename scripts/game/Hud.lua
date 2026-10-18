@@ -84,7 +84,7 @@ function Hud.create(sim, world, actions)
     local idle = button("", function() actions.toggleIdle() end, { id = "toggleIdle" })
     local pause = button("", function() sim.paused = not sim.paused end, { id = "pause", flexGrow = 1 })
     local speed = button("", function() sim.speed = sim.speed == 1 and 2 or 1 end, { flexGrow = 1 })
-    local systemDrawer = drawer("system", "系 统 与 存 档", { status, summary,
+    local systemDrawer = drawer("system", "系 统 与 存 档", { label("造型版本：3D-03",12,Skin.muted), status, summary,
         row { pause, speed }, button("保存进度", function() actions.save() end, { id = "saveGame", artIcon = "save" }), idle,
         button("返回模式选择", function() sim.menuOpen = true; intro:Show(); close() end, { id = "showModes" }),
         button("重新开始本模式", function() confirmNew:Show() end, { id = "newGame" }),

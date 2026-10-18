@@ -2,6 +2,25 @@
 -- scene sprites: grain and relief stay attached to the rotating mesh and light.
 local Craft={}
 local maps={}
+local atlasImage
+local generatedCells={wood={0,0},plaster={1,0},roof={2,0},stone={3,0},grass={0,1},earth={1,1},leaf={3,1}}
+local function paintedTexture(style)
+    if style=="grass" and cache:Exists("image/meadow-v2.png") then
+        local texture=Texture2D:new()
+        texture:SetData(cache:GetResource("Image","image/meadow-v2.png"))
+        return texture
+    end
+    local cell=generatedCells[style]
+    if not cell or not cache:Exists("image/materials-v2.png") then return nil end
+    atlasImage=atlasImage or cache:GetResource("Image","image/materials-v2.png")
+    if not atlasImage then return nil end
+    local w,h=atlasImage:GetWidth()/4,atlasImage:GetHeight()/2
+    local image=atlasImage:GetSubimage(IntRect(math.floor(cell[1]*w)+2,math.floor(cell[2]*h)+2,
+        math.floor((cell[1]+1)*w)-2,math.floor((cell[2]+1)*h)-2))
+    local texture=Texture2D:new()
+    texture:SetData(image)
+    return texture
+end
 local function noise(x,y)
     local v=math.sin(x*127.1+y*311.7)*43758.5453
     return v-math.floor(v)
@@ -42,7 +61,8 @@ local function textures(style)
     end end
     local albedo,bump=Texture2D:new(),Texture2D:new()
     albedo:SetData(diffuse);bump:SetData(normal)
-    maps[style]={albedo=albedo,normal=bump}
+    local painted=paintedTexture(style)
+    maps[style]={albedo=painted or albedo,normal=bump,painted=painted~=nil}
     return maps[style]
 end
 function Craft.style(name)
@@ -52,6 +72,7 @@ function Craft.style(name)
     if name:find("Foundation") or name:find("Stone") or name:find("Masonry") or name=="Step" or name=="Threshold" or name=="Paver" then return "stone" end
     if name:find("Wall") then return "plaster" end
     if name=="Canopy" then return "leaf" end
+    if name=="Meadow" then return "grass" end
     if name=="Torso" or name=="UpperArm" or name=="Thigh" or name=="Shin" then return "cloth" end
 end
 function Craft.apply(base,style)
@@ -60,6 +81,10 @@ function Craft.apply(base,style)
     mat:SetTechnique(0,cache:GetResource("Technique","Techniques/PBR/PBRDiffNormal.xml"))
     mat:SetTexture(TU_DIFFUSE,map.albedo)
     mat:SetTexture(TU_NORMAL,map.normal)
+    -- The new albedo already contains the authored material color. Multiplying
+    -- it by the old prototype tint would make it muddy and too dark.
+    if map.painted then mat:SetShaderParameter("MatDiffColor",Variant(Color(1,1,1))) end
+    if style=="grass" then mat:SetUVTiling(Vector2(36,36)) end
     return mat
 end
 return Craft

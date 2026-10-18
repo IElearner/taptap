@@ -9,6 +9,10 @@ for _,name in ipairs({"login-painting","portrait-elder","dining-pavilion","terra
     "atlas-builders-hammer-up","atlas-builders-hammer-down",
     "panel-wood","button-painting"}) do direct[name]=true end
 local atlas = {}
+-- Portraits are UI illustrations, not replacements for animated world actors.
+direct["atlas-portraits-v2"]=true
+direct["portrait-elder"]=nil
+atlas["portrait-elder"]={source="atlas-portraits-v2",col=0,row=0,cols=4,rows=2}
 local function register(prefix,atlasName,names,cols,rows,options)
     for i,name in ipairs(names) do
         atlas[prefix .. name]={source=atlasName,col=(i-1)%cols,row=math.floor((i-1)/cols),cols=cols,rows=rows,
