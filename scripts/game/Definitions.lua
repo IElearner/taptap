@@ -44,7 +44,7 @@ function D.footprint(kind)
 end
 ---@type {title:string, lines:string[], complete:string, kind:string, target:number}[]
 D.lessons = {
-    { title = "一 · 道通百业", lines = { "孩子，义仓虽在，路不通，百事都慢。", "点右下「营造」选「道路」，沿旧路规划四格。", "工人会取材、举锤；铺好才算通路。" }, complete="好，脚下有路，乡亲们就能送货了。", kind = "road", target = 4 },
+    { title = "一 · 道通百业", lines = { "孩子，义仓虽在，路不通，百事都慢。", "点左侧「营造」选「道路」，沿旧路规划四格。", "工人会取材、举锤；铺好才算通路。" }, complete="好，脚下有路，乡亲们就能送货了。", kind = "road", target = 4 },
     { title = "二 · 安居于此", lines = { "有路了，先为新来的乡亲盖间屋吧。", "民居要占两格见方，门前留一格路。", "等工人建好，就能多住四个人。" }, complete="屋里有了灯火，咱们的人手也宽裕了。", kind = "house", target = 1 },
     { title = "三 · 耕者有粮", lines = { "人要吃饭，田里的麦子得先种起来。", "沿路建一块围栏麦田，安排工人播种。", "麦子会自己生长，工人中途照料，成熟后再收割。" }, complete="麦穗起来了，接着得把麦粒磨细。", kind = "farm", target = 1 },
     { title = "四 · 麦成细粉", lines = { "光有麦粒还不够，得有磨坊。", "在路边建一座磨坊，门前接上道路。", "工人会送麦粒进去，磨好后再运出来。" }, complete="磨坊转起来，村里离热饭又近一步。", kind = "mill", target = 1 },

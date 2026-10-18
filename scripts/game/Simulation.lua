@@ -91,7 +91,8 @@ function S:terrain(x, y)
     return self.map:terrain(x, y)
 end
 function S:standingTree(x,y)
-    return self:terrain(x,y)=="forest" and (x+y)%2==0 and not self.felledTrees[key(x,y)]
+    -- Irregular stands read as a woodland, while each tile remains stable for saves.
+    return self:terrain(x,y)=="forest" and (x*17+y*31+x*y*7)%11<7 and not self.felledTrees[key(x,y)]
 end
 function S:nearestTree(b, maximum)
     local best, distance

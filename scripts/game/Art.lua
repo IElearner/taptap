@@ -3,7 +3,7 @@
 local Art = {}
 local textures, context = {}, nil
 local direct = {}
-for _,name in ipairs({"login-painting","portrait-elder","dining-pavilion","atlas-buildings","atlas-livestock-buildings","atlas-environment",
+for _,name in ipairs({"login-painting","portrait-elder","dining-pavilion","terrain-meadow","atlas-construction","atlas-buildings","atlas-livestock-buildings","atlas-environment",
     "atlas-villagers","atlas-workers","atlas-specialists","atlas-seated-villagers","atlas-seated-specialists","atlas-seated-eating","atlas-specialists-eating","atlas-farm-actions","atlas-wheatfield","atlas-wheat-interior","atlas-loaded","atlas-combatants","atlas-icons",
     "atlas-villagers-stride","atlas-loaded-stride","atlas-workers-stride",
     "atlas-builders-hammer-up","atlas-builders-hammer-down",
@@ -16,6 +16,7 @@ local function register(prefix,atlasName,names,cols,rows,options)
     end
 end
 register("building-","atlas-buildings",{"store","house","farm","mill","kitchen","woodcutter","quarry","courier","barracks"},3,3)
+register("construction-","atlas-construction",{"foundation","frame","walls","roof"},2,2)
 register("building-","atlas-livestock-buildings",{"ranch","butcher"},2,2)
 register("field-","atlas-wheatfield",{"seed","sprout","green","ripe"},2,2)
 register("crop-","atlas-wheat-interior",{"seed","sprout","green","ripe"},2,2)
@@ -84,7 +85,7 @@ function Art.texture(vg, name)
     context = vg
     if not direct[name] then return nil end
     if textures[name] and textures[name] > 0 then return textures[name] end
-    local flags = name == "panel-wood" and (NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) or 0
+    local flags = (name == "panel-wood" or name == "terrain-meadow") and (NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY) or 0
     local handle = nvgCreateImage(vg, Art.path(name), flags)
     if handle and handle > 0 then textures[name] = handle end
     return textures[name]

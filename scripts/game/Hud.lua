@@ -27,7 +27,7 @@ function Hud.create(sim, world, actions)
         return row { label(name, 20, Skin.gold), UI.Panel { flexGrow = 1 }, button("×", close, { width = 44, id = "closeDrawer" .. name }) }
     end
     local function drawer(name, title, items)
-        local p = panel { id = "drawer_" .. name, position = "absolute", right = 12, top = 58, bottom = 78, width = 310, padding = 14, gap = 8,
+        local p = panel { id = "drawer_" .. name, position = "absolute", left = 106, top = 58, bottom = 24, width = 310, padding = 14, gap = 8,
             visible = false, children = { header(title), UI.ScrollView { flexGrow = 1, flexBasis = 0, scrollY = true,
                 children = { UI.Panel { gap = 9, paddingRight = 5, children = items } } } } }
         drawers[name] = p
@@ -102,10 +102,10 @@ function Hud.create(sim, world, actions)
     local dockItems = {}
     for _, item in ipairs({ {"build","营造"}, {"village","村务"}, {"army","军务"}, {"system","系统"} }) do
         local name = item[1]
-        local b = button(item[2], function() open(name) end, { id = "open_" .. name, artIcon = name, width = 94, height = 50, fontSize = 17 })
+        local b = button(item[2], function() open(name) end, { id = "open_" .. name, artIcon = name, width = 84, height = 46, fontSize = 14 })
         mainButtons[name] = b; dockItems[#dockItems + 1] = b
     end
-    local dock = panel { position = "absolute", right = 12, bottom = 12, padding = 7, flexDirection = "row", gap = 5, children = dockItems }
+    local dock = panel { position = "absolute", left = 12, top = 112, padding = 7, flexDirection = "column", gap = 5, children = dockItems }
     local controls = panel { id = "mapControls", position = "absolute", left = 12, bottom = 12, padding = 6,
         flexDirection = "row", alignItems = "center", gap = 8, children = {
         button("归村", function() world.home() end, { artIcon = "home" }), label("双指缩放", 12, Skin.muted),

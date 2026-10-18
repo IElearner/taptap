@@ -46,18 +46,20 @@ local function roadSurface(vg,sim,x,y,planned)
         local nx,ny=x+dx,y+dy
         return sim.roads[nx .. ":" .. ny] or sim:roadSiteAt(nx,ny)
     end
-    local base=planned and {126,107,71} or {149,136,103}
-    rect(vg,sx-13,sy-10,26,20,base)
-    if connected(-1,0) then rect(vg,sx-28,sy-10,16,20,base) end
-    if connected(1,0) then rect(vg,sx+12,sy-10,16,20,base) end
-    if connected(0,-1) then rect(vg,sx-13,sy-21,26,12,base) end
-    if connected(0,1) then rect(vg,sx-13,sy+9,26,12,base) end
+    local base=planned and {119,104,75} or {133,121,95}
+    rect(vg,sx-15,sy-11,30,22,{74,69,52,135})
+    rect(vg,sx-13,sy-9,26,18,base)
+    if connected(-1,0) then rect(vg,sx-28,sy-9,16,18,base) end
+    if connected(1,0) then rect(vg,sx+12,sy-9,16,18,base) end
+    if connected(0,-1) then rect(vg,sx-13,sy-21,26,13,base) end
+    if connected(0,1) then rect(vg,sx-13,sy+8,26,13,base) end
     if not planned then
-        for j=-1,1 do for k=-1,1 do
-            local px=sx+j*8+(k%2)*2
-            local py=sy+k*6+(j%2)
-            nvgBeginPath(vg);nvgEllipse(vg,px,py,2+(j+k)%2,1.5)
-            nvgFillColor(vg,color({183+(x+y)%9,170+(x*3+y)%8,137+(x+y*2)%8,220}));nvgFill(vg)
+        for row=-2,2 do for col=-3,3 do
+            local px=sx+col*4+(row%2)*2
+            local py=sy+row*3.6
+            local shade=(x*13+y*7+row*11+col*17)%29
+            nvgBeginPath(vg);nvgEllipse(vg,px,py,1.7+shade%3*0.3,1.2+shade%2*0.3)
+            nvgFillColor(vg,color({162+shade,151+shade,122+shade,245}));nvgFill(vg)
         end end
     end
 end
@@ -221,10 +223,14 @@ local function house(vg, b, selected, clock, art, ghost, sim)
     -- Anchor each roof at the south edge of its rectangular site.
     local size = buildingVisualSize(b)
     if not b.complete and not ghost then
-        constructionSite(vg,x,y,size,b.progress or 0,clock)
-        if (b.progress or 0)>=0.9 then
+        local progress=b.progress or 0
+        local stage=progress<0.2 and "foundation" or progress<0.45 and "frame" or progress<0.72 and "walls" or "roof"
+        if not Art.draw(vg,"construction-" .. stage,x-size/2,y-size+6,size,size) then
+            constructionSite(vg,x,y,size,progress,clock)
+        end
+        if progress>=0.9 then
             Art.draw(vg,"building-" .. b.kind,x-size/2,y-size+6,size,size,
-                math.min(1,((b.progress or 0)-0.9)*10))
+                math.min(1,(progress-0.9)*10))
         end
         rect(vg,x-28,y+17,56,5,{58,48,31,235})
         rect(vg,x-27,y+18,54*(b.progress or 0),3,{235,197,101,250})
@@ -473,7 +479,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
 end
 function WorldView.create(sim, onTile)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
-    local camera = { x = 0, y = 0, zoom = 1.15, pinchZoom = 1.15 }
+    local camera = { x = 0, y = 0, zoom = 1.55, pinchZoom = 1.55 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
     local mode = "inspect"
     local selected = false
@@ -696,6 +702,7 @@ function WorldView.create(sim, onTile)
         end
         minX, maxX, minY, maxY = math.floor(minX), math.ceil(maxX), math.floor(minY), math.ceil(maxY)
         if sim.mode == "finite" then minX, maxX, minY, maxY = math.max(1, minX), math.min(22, maxX), math.max(1, minY), math.min(22, maxY) end
+        local meadow=Art.texture(vg,"terrain-meadow")
         for y=minY,maxY do
             for x=minX,maxX do
                 do
@@ -707,8 +714,12 @@ function WorldView.create(sim, onTile)
                     if terrain == "water" then c = { 77, 116, 116 }
                     elseif terrain == "fog" then c = { 69, 88, 68 } end
                     -- Slight overlap hides antialiased hairlines between equal-color diamonds.
-                    tile(vg, x, y, c, -1)
                     local sx, sy = project(x, y)
+                    if meadow and (terrain=="grass" or terrain=="forest") then
+                        nvgBeginPath(vg);nvgRect(vg,sx-TILE_W/2-1,sy-TILE_H/2-1,TILE_W+2,TILE_H+2)
+                        nvgFillPaint(vg,nvgImagePattern(vg,-384,-384,768,768,0,meadow,1));nvgFill(vg)
+                        if terrain=="forest" then tile(vg,x,y,{32,51,24,50},-1) end
+                    else tile(vg,x,y,c,-1) end
                     if terrain=="grass" or terrain=="forest" then
                         if (x*7+y*11)%3==0 then
                             nvgBeginPath(vg);nvgEllipse(vg,sx+(x*13+y*5)%19-9,sy+(x*3+y*17)%13-6,18,8)
@@ -769,7 +780,7 @@ function WorldView.create(sim, onTile)
             if a.phase=="hammer" and a.job and a.job.kind=="building" then
                 local site=sim.buildings[a.job.building]
                 if site then
-                    local offsets={-0.68,-0.24,0.24,0.68}
+                    local offsets={-0.9,-0.3,0.3,0.9}
                     drawX=site.x-((site.footprintW or 1)-1)*0.5+offsets[queueSlot or 1]
                     drawY=site.y+0.52+((queueSlot or 1)%2)*0.1
                 end
@@ -878,7 +889,10 @@ function WorldView.create(sim, onTile)
         for y=minY,maxY do
             for x=minX,maxX do
                 do
-                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then local sx, sy = project(x, y); tree(vg, sx, sy, x * 3 + y) end
+                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then
+                        local sx,sy=project(x,y)
+                        tree(vg,sx+(x*19+y*13)%17-8,sy+(x*7+y*23)%11-5,x*3+y)
+                    end
                     local b = sim:buildingAt(x, y)
                     if not b and not sim.roads[x .. ":" .. y] then
                         local terrain = sim:terrain(x,y)
@@ -925,7 +939,7 @@ function WorldView.create(sim, onTile)
         select = function(value) selected = value end,
         selectedBuilding = function() return selected end,
         zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,
-        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1.15 end,
+        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1.55 end,
         cameraState = function() return {x=camera.x,y=camera.y,zoom=camera.zoom} end,
         frontier = function()
             local _, high = sim.map:bounds()
