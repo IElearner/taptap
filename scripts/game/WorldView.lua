@@ -28,7 +28,7 @@ local function project(x,y) return (x-10)*TILE_W,(y-9)*TILE_H end
 local function unproject(x,y) return x/TILE_W+10,y/TILE_H+9 end
 local function buildingVisualSize(b)
     local width,height=b.footprintW or 1,b.footprintH or 1
-    return math.min(width*TILE_W+4,height*TILE_H+54)
+    return math.min(width*TILE_W+16,height*TILE_H+68)
 end
 local function tile(vg, x, y, c, shrink)
     local sx,sy=project(x,y)
@@ -47,16 +47,16 @@ local function roadSurface(vg,sim,x,y,planned)
         return sim.roads[nx .. ":" .. ny] or sim:roadSiteAt(nx,ny)
     end
     local base=planned and {126,107,71} or {149,136,103}
-    rect(vg,sx-17,sy-14,34,28,base)
-    if connected(-1,0) then rect(vg,sx-28,sy-14,12,28,base) end
-    if connected(1,0) then rect(vg,sx+16,sy-14,12,28,base) end
-    if connected(0,-1) then rect(vg,sx-17,sy-21,34,8,base) end
-    if connected(0,1) then rect(vg,sx-17,sy+13,34,8,base) end
+    rect(vg,sx-13,sy-10,26,20,base)
+    if connected(-1,0) then rect(vg,sx-28,sy-10,16,20,base) end
+    if connected(1,0) then rect(vg,sx+12,sy-10,16,20,base) end
+    if connected(0,-1) then rect(vg,sx-13,sy-21,26,12,base) end
+    if connected(0,1) then rect(vg,sx-13,sy+9,26,12,base) end
     if not planned then
-        for j=-2,2 do for k=-1,1 do
-            local px=sx+j*6+(k%2)*3
-            local py=sy+k*8+(j%2)*2
-            nvgBeginPath(vg);nvgEllipse(vg,px,py,3+(j+k)%2,2)
+        for j=-1,1 do for k=-1,1 do
+            local px=sx+j*8+(k%2)*2
+            local py=sy+k*6+(j%2)
+            nvgBeginPath(vg);nvgEllipse(vg,px,py,2+(j+k)%2,1.5)
             nvgFillColor(vg,color({183+(x+y)%9,170+(x*3+y)%8,137+(x+y*2)%8,220}));nvgFill(vg)
         end end
     end
@@ -239,21 +239,21 @@ local function smallText(vg,x,y,value,size)
 end
 local function thoughtBubble(vg,sx,sy,thought)
     if not thought then return end
-    local bx,by=sx+15,sy-56
-    circle(vg,bx-8,by+20,2,{245,235,203,165})
-    circle(vg,bx-4,by+14,3,{245,235,203,195})
-    circle(vg,bx+3,by+2,15,{252,243,216,238})
-    nvgBeginPath(vg);nvgCircle(vg,bx+3,by+2,15)
+    local bx,by=sx+12,sy-45
+    circle(vg,bx-7,by+16,1.5,{245,235,203,165})
+    circle(vg,bx-3,by+11,2.5,{245,235,203,195})
+    circle(vg,bx+2,by+1,12,{252,243,216,238})
+    nvgBeginPath(vg);nvgCircle(vg,bx+2,by+1,12)
     nvgStrokeColor(vg,color({123,98,63,220}));nvgStrokeWidth(vg,1);nvgStroke(vg)
-    if thought=="rest" then smallText(vg,bx+3,by+3,"累",15)
-    elseif not Art.draw(vg,"icon-" .. thought,bx-7,by-8,20,20) then
-        smallText(vg,bx+3,by+3,thought=="livestock" and "畜" or thought=="meat" and "肉" or "?",14)
+    if thought=="rest" then smallText(vg,bx+2,by+2,"累",12)
+    elseif not Art.draw(vg,"icon-" .. thought,bx-6,by-7,16,16) then
+        smallText(vg,bx+2,by+2,thought=="livestock" and "畜" or thought=="meat" and "肉" or "?",11)
     end
 end
 local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
     local sx, sy = project(x, y)
     local step = walking and math.abs(math.sin(clock * 7 + (phase or 0))) * 1.4 or 0
-    local size = action == "hammer" and 47 or action == "eat" and 30 or 42
+    local size = action == "hammer" and 37 or action == "eat" and 25 or 32
     local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
     local name = Characters.sprite(role or (carrying and "loaded" or "carrier"),direction,walking,action,clock,phase)
     nvgBeginPath(vg); nvgEllipse(vg, sx+2, sy+3, 8, 3); nvgFillColor(vg, color({ 26, 32, 24, 48 })); nvgFill(vg)
@@ -262,7 +262,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
     if name:sub(1,12)=="person-farm-" then
         -- Action cells are twice as wide as high; fit by height rather than
         -- squeezing the whole frame into the usual square portrait box.
-        painted=Art.draw(vg,name,sx-42,sy-43,84,43)
+        painted=Art.draw(vg,name,sx-33,sy-34,66,34)
     else
         painted=Art.draw(vg, name, sx-size/2, sy-size*0.85-step+poseY, size, size)
     end
@@ -664,12 +664,12 @@ function WorldView.create(sim, onTile)
                     local site=sim:roadSiteAt(x,y)
                     if site then
                         roadSurface(vg,sim,x,y,true)
-                        for k=-1,1 do line(vg,sx-12+k*7,sy-3,sx-5+k*7,sy+2,{188,163,102},1) end
-                        rect(vg,sx-14,sy+5,28,3,{58,57,37});rect(vg,sx-14,sy+5,28*site.progress,3,{222,184,95})
+                        for k=-1,1 do line(vg,sx-9+k*6,sy-3,sx-4+k*6,sy+1,{188,163,102},1) end
+                        rect(vg,sx-11,sy+5,22,3,{58,57,37});rect(vg,sx-11,sy+5,22*site.progress,3,{222,184,95})
                     elseif sim.roads[x .. ":" .. y] then
                         roadSurface(vg,sim,x,y,false)
-                        line(vg, sx-20,sy+9,sx-6,sy+9,{168,149,110},1)
-                        line(vg, sx+7,sy-7,sx+21,sy-7,{213,194,155},1)
+                        line(vg, sx-13,sy+7,sx-4,sy+7,{168,149,110},1)
+                        line(vg, sx+4,sy-6,sx+13,sy-6,{213,194,155},1)
                     elseif terrain == "water" and (x*7+y*11)%3 == 0 then
                         line(vg, sx - 9, sy + math.sin(sim.elapsed + x) * 2, sx + 10, sy + 1, { 187, 210, 188, 95 }, 1)
                     elseif (x * 7 + y) % 9 == 0 then
