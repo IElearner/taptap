@@ -13,13 +13,13 @@ local function number(value, low, high)
 end
 local function jobData(job)
     if not job then return false end
-    return { building = job.b.id, inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
+    return { building = job.b.id, destination=job.destination and job.destination.id or nil, inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
 end
 function Data.capture(s, savedAt, revision, idleEnabled)
     local world = { stock = clone(s.stock), produced = clone(s.produced), roads = clone(s.roads),
         buildings = {}, jobs = {}, carriers = {}, enemies = clone(s.enemies),
         pendingRoads=clone(s.pendingRoads), builders=clone(s.builders), workers=clone(s.workers),
-        guards=clone(s.guards), mealsServed=s.mealsServed }
+        guards=clone(s.guards), mealsServed=s.mealsServed, felledTrees=clone(s.felledTrees) }
     for _, name in ipairs(fields) do world[name] = s[name] end
     for _, b in ipairs(s.buildings) do
         local entry = clone(b); entry.cachedConnected, entry.networkRevision, entry.activeWorkers = nil, nil, nil
@@ -66,6 +66,11 @@ local function restoreUnsafe(data, mode)
     s.map.expansion = data.expansion
     for _, name in ipairs(fields) do s[name] = w[name] end
     s.stock, s.produced, s.roads = clone(w.stock), clone(w.produced), clone(w.roads)
+    s.felledTrees={}
+    for k,value in pairs(w.felledTrees or {}) do
+        assert(type(k)=="string" and k:match("^%-?%d+:%-?%d+$") and value==true,"felled tree")
+        s.felledTrees[k]=true
+    end
     s.stock.livestock,s.stock.meat=s.stock.livestock or 0,s.stock.meat or 0
     s.buildings, s.buildingIndex, s.jobs, s.carriers = {}, {}, {}, {}
     for i, b in ipairs(w.buildings) do
@@ -105,7 +110,13 @@ local function restoreUnsafe(data, mode)
         assert(type(job.inbound) == "boolean" and D.names[job.resource] and number(job.amount, 1, 1e12), "job")
         assert(job.service==nil or type(job.service)=="boolean","service job")
         if job.service then assert(job.inbound and job.resource=="food" and job.amount<=2 and s.buildings[job.building].kind=="kitchen","meal delivery") end
-        return { b = s.buildings[job.building], inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
+        local destination=job.destination and s.buildings[job.destination] or nil
+        if job.destination then
+            assert(destination and not job.inbound and destination.complete and job.amount<=4,"delivery destination")
+            local def=D.buildings[destination.kind]
+            assert(def.input==job.resource or def.alternateInput==job.resource,"delivery resource")
+        end
+        return { b = s.buildings[job.building], destination=destination, inbound = job.inbound, resource = job.resource, amount = job.amount,service=job.service or false }
     end
     for _, job in ipairs(w.jobs) do s.jobs[#s.jobs + 1] = restoreJob(job) end
     for _, c in ipairs(w.carriers) do
@@ -179,7 +190,12 @@ local function restoreUnsafe(data, mode)
             count=count+1;assert(count<=20000 and type(k)=="string" and type(a)=="table", "worker limit")
             local b=s.buildings[a.building]
             assert(b and b.complete and number(a.slot,1,b.workers) and a.slot%1==0 and k==a.building .. ":" .. a.slot, "worker slot")
-            validatePath(a);validateMeal(a);s.workers[k]=clone(a);s.workers[k].energy=a.energy or 100
+            validatePath(a);validateMeal(a)
+            if a.woodPhase then
+                assert(b.kind=="woodcutter" and (a.woodPhase=="toTree" or a.woodPhase=="chop" or a.woodPhase=="toCamp"),"woodcutting phase")
+                assert(number(a.treeX,-1e9,1e9) and number(a.treeY,-1e9,1e9) and number(a.woodClock or 0,0,1e12),"woodcutting target")
+            end
+            s.workers[k]=clone(a);s.workers[k].energy=a.energy or 100
         end
         for _,a in ipairs(s.carriers) do validatePath(a);validateMeal(a) end
     else

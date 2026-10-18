@@ -33,7 +33,7 @@ D.buildings = {
     mill = { name = "磨坊", cost = { wood = 10, stone = 4 }, workers = 1, input = "grain", output = "flour", amount = 2, period = 6, color = { 118, 100, 79 }, description = "搬入 1 袋麦粒，加工为 2 袋面粉。" },
     butcher = { name = "屠宰场", cost = { wood = 8, stone = 3 }, workers = 1, input = "livestock", output = "meat", amount = 3, period = 8, color = { 145, 79, 62 }, description = "屠夫加工工人送来的牲畜，每 8 秒产出 3 份鲜肉；工人再送往食堂。" },
     kitchen = { name = "食堂", cost = { wood = 10, stone = 2 }, workers = 1, footprint = { 2, 2 }, input = "flour", alternateInput = "meat", output = "food", amount = 4, period = 6, color = { 146, 78, 61 }, description = "宽敞食堂有 4 个可见座位、8 份店内储粮；厨师烹饪，工人补粮，村民入座吃饭后离席。" },
-    woodcutter = { name = "伐木场", cost = { wood = 6 }, workers = 1, footprint = { 2, 1 }, output = "wood", amount = 3, period = 8, color = { 100, 116, 74 }, description = "获取木材：营造伐木场，门前先铺通义仓的道路。竣工后安排伐木工，每 8 秒产出 3 木料，再由搬运工送回义仓。" },
+    woodcutter = { name = "伐木场", cost = { wood = 6 }, workers = 1, footprint = { 2, 1 }, output = "wood", amount = 1, period = 8, color = { 100, 116, 74 }, description = "建在树林六格内并接通道路；伐木工走到树前挥斧砍伐，背木回场，搬运工再送往义仓。附近树木砍尽后需另建伐木场。" },
     quarry = { name = "采石场", cost = { wood = 8 }, workers = 1, footprint = { 2, 1 }, output = "stone", amount = 3, period = 11, color = { 123, 129, 125 }, description = "开采本区域石料，每 11 秒产出 3 份；拓荒发现新储量。" },
     courier = { name = "驿站", cost = { wood = 10, stone = 2 }, workers = 0, color = { 152, 117, 74 }, description = "调配 1 名工人负责搬运，占用 1 名村民。适合扩张后的长途运输。" },
     barracks = { name = "乡勇营", cost = { wood = 12, stone = 6 }, workers = 0, footprint = { 1, 2 }, color = { 144, 65, 53 }, description = "选中后训练乡勇：每人消耗 2 木料、2 口粮和 1 村民。" },
@@ -49,7 +49,7 @@ D.lessons = {
     { title = "三 · 耕者有粮", lines = { "人要吃饭，田里的麦子得先种起来。", "沿路建一块围栏麦田，安排工人播种。", "麦子会自己生长，工人中途照料，成熟后再收割。" }, complete="麦穗起来了，接着得把麦粒磨细。", kind = "farm", target = 1 },
     { title = "四 · 麦成细粉", lines = { "光有麦粒还不够，得有磨坊。", "在路边建一座磨坊，门前接上道路。", "工人会送麦粒进去，磨好后再运出来。" }, complete="磨坊转起来，村里离热饭又近一步。", kind = "mill", target = 1 },
     { title = "五 · 炊烟起处", lines = { "食堂里有火，乡亲们才吃得上热饭。", "建食堂，安排厨师把面粉和鲜肉烹成口粮。", "食堂有四席，工人会把口粮送来补满储粮。" }, complete="炊烟又起，先让大家吃饱。", kind = "food", target = 4 },
-    { title = "六 · 取材有度", lines = { "营造离不开木料，先在「营造」里选伐木场。", "门前铺路接通义仓，建成后安排工人。", "工人伐木，再把木料送回仓库，库存才会增加。" }, complete="木料有了来路，后面的工程有底气了。", kind = "woodcutter", target = 1 },
+    { title = "六 · 取材有度", lines = { "营造离不开木料，先在「营造」里选伐木场。", "靠近树林六格内建造，门前道路接通义仓。", "工人走到树前挥斧、背木回场；搬运工再送入义仓。" }, complete="木料有了来路，后面的工程有底气了。", kind = "woodcutter", target = 1 },
     { title = "七 · 乡勇集结", lines = { "山外不总太平，得让村里有人守望。", "建乡勇营，选中后训练三名乡勇。", "每人要两木、两粮，还要一名空闲村民。" }, complete="三名乡勇已齐，村口总算有了守护。", kind = "militia", target = 3 },
     { title = "八 · 守住炊烟", lines = { "最后一关，咱们一起守住这片炊烟。", "备齐乡勇，在军务里点「开始守村」。", "守住后，这方水土就交给你经营了。" }, complete="这回守住了。山河里，往后托付给你。", kind = "victory", target = 1 },
 }

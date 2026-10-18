@@ -37,3 +37,31 @@ V.atFrame(8,function()
     V.assert(visitor.energy>90 and visitor.hunger<30 and tired.mealsServed>0,"Low stamina sends a villager to eat and recover at the canteen")
 end)
 V.atFrame(25,function() V.finish() end)
+V.atFrame(9,function()
+    local wood=Sim.new();wood.started,wood.skipped=true,true;wood.stock.food=200
+    local camp=wood:addBuilding("woodcutter",8,8,true);camp.workers=1
+    local first=wood:nearestTree(camp,6)
+    V.assert(first~=nil and wood:standingTree(first.x,first.y),"Woodcutters require a standing nearby tree")
+    advance(wood,4)
+    local inProgress=Data.restore(cjson.decode(cjson.encode(Data.capture(wood,1000,1,true))),"finite")
+    V.assert(inProgress and inProgress.workers[camp.id .. ":1"].woodPhase,"Woodcutting trip survives save/load")
+    advance(wood,38)
+    local felled=0;for _ in pairs(wood.felledTrees) do felled=felled+1 end
+    V.assert(felled>0 and wood.timber<320 and wood.stock.wood>72,"A visible tree is felled before its log reaches the store")
+    local restored=Data.restore(cjson.decode(cjson.encode(Data.capture(wood,1001,2,true))),"finite")
+    V.assert(restored and not restored:standingTree(first.x,first.y),"Felled trees remain gone after loading")
+
+    local supply=Sim.new();supply.started,supply.skipped=true,true;supply.stock.food=200
+    local field=supply:addBuilding("farm",8,8,true)
+    local mill=supply:addBuilding("mill",12,8,true)
+    field.buffer=3
+    supply:update(0.1)
+    V.assert(supply.carriers[1].job and supply.carriers[1].job.destination==mill,"Grain is assigned directly to the mill")
+    local carrying=Data.restore(cjson.decode(cjson.encode(Data.capture(supply,1000,1,true))),"finite")
+    V.assert(carrying and carrying.carriers[1].job.destination==carrying.buildings[mill.id],"A direct delivery keeps its destination in the save")
+    advance(supply,15)
+    V.assert(mill.inputs==3 and supply.stock.grain==0,"Carrier delivers grain to the mill before the store")
+    mill.inputs=4;field.buffer=3;supply:update(0.1)
+    advance(supply,15)
+    V.assert(supply.stock.grain==3,"Full mill sends surplus harvest to the store")
+end)

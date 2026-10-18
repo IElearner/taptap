@@ -27,7 +27,7 @@ function Map:terrain(x, y)
     -- Shared beginner valley: ensures the original tutorial is always solvable.
     if x >= 1 and y >= 1 and x <= 22 and y <= 22 then
         if x >= 18 and y >= 4 and y <= 17 then return "water" end
-        if (x <= 3 and y <= 9) or (y >= 18 and x <= 13) then return "forest" end
+        if (x <= 3 and y <= 9) or (y >= 18 and x <= 13) or (y <= 4 and x >= 11 and x <= 16) then return "forest" end
         return "grass"
     end
     -- The road corridors guarantee traversable entrances into every frontier region.

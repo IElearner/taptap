@@ -64,6 +64,7 @@ function S:init(mode, seed)
     self.wave, self.wavesDefeated, self.nextRaid = 0, 0, 240
     self.defended, self.timber, self.rock, self.score = false, 320, 180, 0
     self.roads, self.buildings, self.jobs, self.carriers = {}, {}, {}, {}
+    self.felledTrees = {}
     self.buildingIndex = {}
     self.pendingRoads,self.roadPlanIndex,self.builders,self.workers,self.guards,self.mealsServed={},{},{},{},{},0
     ---@type table<string, number>
@@ -88,6 +89,46 @@ function S:notify(message)
 end
 function S:terrain(x, y)
     return self.map:terrain(x, y)
+end
+function S:standingTree(x,y)
+    return self:terrain(x,y)=="forest" and (x+y)%2==0 and not self.felledTrees[key(x,y)]
+end
+function S:nearestTree(b, maximum)
+    local best, distance
+    local cx=b.x-((b.footprintW or 1)-1)*0.5
+    for x=math.floor(cx-maximum),math.ceil(cx+maximum) do
+        for y=b.y-maximum,b.y+maximum do
+            local d=math.abs(x-cx)+math.abs(y-b.y)
+            if d<=maximum and (not distance or d<distance) and self:standingTree(x,y) then
+                local claimed=false
+                for _,a in pairs(self.workers) do
+                    if a.treeX==x and a.treeY==y and a.woodPhase then claimed=true;break end
+                end
+                if not claimed then best,distance={x=x,y=y},d end
+            end
+        end
+    end
+    return best
+end
+function S:forestPath(sx,sy,tx,ty)
+    local queue,seen,head={{x=sx,y=sy}},{[key(sx,sy)]=false},1
+    while head<=#queue do
+        local p=queue[head];head=head+1
+        if p.x==tx and p.y==ty then
+            local route={}
+            while p do table.insert(route,1,p);p=seen[key(p.x,p.y)] end
+            return route
+        end
+        for _,d in ipairs(directions) do
+            local x,y=p.x+d[1],p.y+d[2]
+            local k=key(x,y)
+            local terrain=self:terrain(x,y)
+            if seen[k]==nil and math.abs(x-sx)<=8 and math.abs(y-sy)<=8
+                and (terrain=="grass" or terrain=="forest") and not self:buildingAt(x,y) then
+                seen[k]=p;queue[#queue+1]={x=x,y=y}
+            end
+        end
+    end
 end
 function S:roadSiteAt(x,y) return self.roadPlanIndex[key(x,y)] end
 function S:buildingAt(x, y)
@@ -178,6 +219,9 @@ function S:canBuild(kind, x, y)
     if self:terrain(x, y + 1) ~= "grass" or self:buildingAt(x, y + 1) then return false, "建筑门前需要可通行的空地。" end
     if not self:connected({ x = x, y = y }) and not self:roadSiteAt(x,y+1) then return false, "门前未通路：请先在下方一格铺路连接义仓。" end
     if kind == "courier" and self:availableWorkers() < 1 then return false, "驿站需要 1 名空闲村民。" end
+    if kind == "woodcutter" and not self:nearestTree({x=x,y=y,footprintW=width},6) then
+        return false, "伐木场要靠近树林，请选离树木六格以内的路旁。"
+    end
     if not self:canAfford(def.cost) then
         if (self.stock.wood or 0)<(def.cost.wood or 0) then return false, "木料不足：营造伐木场、门前接路，伐木工生产后由搬运工运回义仓。" end
         return false, "物资不足，先让生产链补充库存。"
@@ -264,12 +308,29 @@ end
 function S:enqueue(b, inbound, selectedResource)
     local resource = selectedResource or (inbound and D.buildings[b.kind].input or D.buildings[b.kind].output)
     if not resource then return end
+    local destination
+    if not inbound then
+        local bestDistance
+        for _,other in ipairs(self.buildings) do
+            local def=D.buildings[other.kind]
+            if other~=b and other.complete and self:connected(other) and not other.incoming
+                and other.inputs<4 and (def.input==resource or def.alternateInput==resource) then
+                local path=self:path(b.x,b.y+1,other.x,other.y+1)
+                if path and (not bestDistance or #path<bestDistance) then destination,bestDistance=other,#path end
+            end
+        end
+    end
     if inbound then
         if self.stock[resource] <= 0 then return end
         self.stock[resource], b.incoming = self.stock[resource] - 1, true
-    else b.outgoing = true end
-    self.jobs[#self.jobs + 1] = { b = b, inbound = inbound, resource = resource, amount = inbound and 1 or b.buffer }
-    if not inbound then b.buffer = 0 end
+    else
+        b.outgoing = true
+        if destination then destination.incoming=true end
+    end
+    local amount=inbound and 1 or b.buffer
+    if destination then amount=math.min(amount,4-destination.inputs) end
+    self.jobs[#self.jobs + 1] = { b = b, destination=destination, inbound = inbound, resource = resource, amount = amount }
+    if not inbound then b.buffer = b.buffer-amount end
 end
 function S:updateCarrier(c, dt, offline)
     if Meals.tick(self,c,dt,offline,c.job ~= false and c.job ~= nil) then return end
@@ -290,17 +351,61 @@ function S:updateCarrier(c, dt, offline)
     if not c.carrying then
         c.carrying = true
         local tx, ty = 10, 9
-        if job.inbound then tx, ty = job.b.x, job.b.y + 1 end
+        if job.inbound then tx, ty = job.b.x, job.b.y + 1
+        elseif job.destination then tx,ty=job.destination.x,job.destination.y+1 end
         c.path, c.index = self:path(math.floor(c.x + 0.5), math.floor(c.y + 0.5), tx, ty) or {}, 1
     else
         if job.service then job.b.mealStock,job.b.mealIncoming=(job.b.mealStock or 0)+job.amount,false
         elseif job.inbound then job.b.inputs, job.b.incoming = job.b.inputs + 1, false
         else
-            self.stock[job.resource] = self.stock[job.resource] + job.amount
+            if job.destination then
+                job.destination.inputs=job.destination.inputs+job.amount
+                job.destination.incoming=false
+            else self.stock[job.resource] = self.stock[job.resource] + job.amount end
             self.produced[job.resource] = (self.produced[job.resource] or 0) + job.amount
             job.b.outgoing = false
         end
         c.job, c.carrying = false, false
+    end
+end
+function S:updateWoodcutter(b,dt)
+    if b.buffer>0 or b.outgoing then return end
+    for slot=1,b.workers do
+        local a=self.workers[b.id .. ":" .. slot]
+        if a and not a.meal then
+            if not a.woodPhase then
+                local tree=self:nearestTree(b,6)
+                if tree and self.timber>0 then
+                    local route=self:forestPath(b.x,b.y+1,tree.x,tree.y)
+                    if route then
+                        a.treeX,a.treeY=tree.x,tree.y
+                        a.woodPhase,a.woodClock="toTree",0
+                        a.path,a.index=route,1
+                    end
+                end
+            elseif a.woodPhase=="toTree" then
+                if Move.step(a,dt,1.05) then a.woodPhase,a.woodClock="chop",0 end
+            elseif a.woodPhase=="chop" then
+                a.woodClock=(a.woodClock or 0)+dt
+                if a.woodClock>=5 then
+                    local x,y=a.treeX,a.treeY
+                    if self:standingTree(x,y) and self.timber>0 then
+                        self.felledTrees[key(x,y)]=true
+                        self.timber=self.timber-1
+                        a.carrying=true
+                    end
+                    a.woodPhase="toCamp"
+                    a.path=self:forestPath(x,y,b.x,b.y+1) or {{x=b.x,y=b.y+1}}
+                    a.index=1
+                end
+            elseif a.woodPhase=="toCamp" then
+                if Move.step(a,dt,1.05) then
+                    if a.carrying then b.buffer=b.buffer+1 end
+                    a.carrying=false
+                    a.woodPhase,a.treeX,a.treeY,a.path,a.index=nil,nil,nil,{},1
+                end
+            end
+        end
     end
 end
 function S:update(dt, offline)
@@ -330,9 +435,15 @@ function S:update(dt, offline)
             if def.input and b.inputs == 0 and not b.incoming and b.activeWorkers > 0 then
                 local resource=def.input
                 if def.alternateInput and (self.stock[def.alternateInput] or 0)>(self.stock[def.input] or 0) then resource=def.alternateInput end
-                self:enqueue(b,true,resource)
+                local supply=false
+                for _,source in ipairs(self.buildings) do
+                    if source~=b and source.complete and not source.outgoing and source.buffer>0
+                        and D.buildings[source.kind].output==resource and self:connected(source) then supply=true;break end
+                end
+                if not supply then self:enqueue(b,true,resource) end
             end
-            if b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
+            if b.kind=="woodcutter" then self:updateWoodcutter(b,dt)
+            elseif b.buffer == 0 and not b.outgoing and (not def.input or b.inputs > 0) then
                 local finished=false
                 if b.kind=="farm" then
                     finished=Farm.update(b,dt,def.period,b.workRate or 0)
@@ -343,9 +454,7 @@ function S:update(dt, offline)
                 if finished then
                     if b.kind~="farm" then b.timer=0 end
                     b.buffer=def.amount
-                    if b.kind == "woodcutter" then
-                        b.buffer = math.min(def.amount, self.timber); self.timber = self.timber - b.buffer
-                    elseif b.kind == "quarry" then
+                    if b.kind == "quarry" then
                         b.buffer = math.min(def.amount, self.rock); self.rock = self.rock - b.buffer
                     end
                     if def.input then b.inputs = b.inputs - 1 end

@@ -249,7 +249,7 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
     if profile and profile.age == "elder" then line(vg,sx-1,sy-12,sx,sy-9,{215,212,190},2) end
     if profile and profile.gender == "female" then polygon(vg,{sx-2,sy-7,sx+2,sy-7,sx+4,sy-1,sx-4,sy-1},c) end
     end
-    if carrying and not painted then
+    if carrying then
         local good=cargo or "wood"
         if not Art.draw(vg,"icon-" .. good,sx+2,sy-19,13,13) then
             if good=="wood" then
@@ -286,6 +286,15 @@ local function person(vg, x, y, c, carrying, clock, role, direction, profile, ac
         circle(vg,strikeX,sy-1,3,{185,169,126,95})
         line(vg,strikeX-5,sy-3,strikeX-8,sy-6,{217,194,139,150},1)
         line(vg,strikeX+4,sy-3,strikeX+7,sy-7,{217,194,139,150},1)
+    elseif action=="chop" then
+        local swing=math.sin(clock*2.7)
+        local hx,hy=sx+7+swing*6,sy-17+swing*9
+        line(vg,sx+3,sy-10,hx,hy,{149,101,55},3)
+        line(vg,hx-5,hy-2,hx+6,hy+2,{184,190,179},5)
+        if swing>0.7 then
+            circle(vg,sx+15,sy-2,2,{214,184,115,180})
+            line(vg,sx+14,sy-4,sx+20,sy-9,{222,194,134,150},1)
+        end
     elseif action=="eat" then
         if name:sub(1,14)=="person-eating-" or name:sub(1,14)=="person-seated-" then
             circle(vg,sx+4,sy-20-math.sin(clock*2)*2,1.3,{246,234,202,110})
@@ -657,7 +666,7 @@ function WorldView.create(sim, onTile)
             local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1) or
                 (a.meal and (a.meal.phase=="enter" or a.meal.phase=="exit"))
             local clock=(walking or action=="hammer" or action=="eat" or action=="farm" or action=="plow" or
-                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher") and sim.elapsed or 0
+                action=="water" or action=="tend" or action=="harvest" or action=="cook" or action=="butcher" or action=="chop") and sim.elapsed or 0
             local thought
             if not a.meal or a.meal.phase=="walk" or a.meal.phase=="queue" then
                 if (a.hunger or 0)>=65 then thought="food"
@@ -667,7 +676,7 @@ function WorldView.create(sim, onTile)
                     local def=b and D.buildings[b.kind]
                     if def and def.input and b.inputs==0 and not b.incoming and (sim.stock[def.input] or 0)==0
                         and (not def.alternateInput or (sim.stock[def.alternateInput] or 0)==0) then thought=def.input
-                    elseif b and b.kind=="woodcutter" and sim.timber==0 then thought="wood"
+                    elseif b and b.kind=="woodcutter" and (sim.timber==0 or not sim:nearestTree(b,6)) and not a.woodPhase then thought="wood"
                     elseif b and b.kind=="quarry" and sim.rock==0 then thought="stone" end
                 end
             end
@@ -686,8 +695,9 @@ function WorldView.create(sim, onTile)
             local action=a.meal and a.meal.phase=="eat" and "eat" or
                 (not a.meal and (b.kind=="farm" and Farm.needsWork(b,D.buildings.farm.period) and (a.farmPresence or 0)>=0.95 and Farm.action(b) or
                     b.kind=="ranch" and "farm" or
+                    b.kind=="woodcutter" and a.woodPhase=="chop" and "chop" or
                     b.kind=="kitchen" and "cook" or b.kind=="butcher" and "butcher" or nil))
-            if role then addAgent(a,role,profile,action,nil,a.building*2+a.slot) end
+            if role then addAgent(a,role,profile,action,a.carrying and "wood" or nil,a.building*2+a.slot) end
         end
         for index,a in ipairs(sim.builders) do
             if a.active or a.meal then
@@ -705,7 +715,7 @@ function WorldView.create(sim, onTile)
             for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
                 local y = sum - x
                 do
-                    if sim:terrain(x, y) == "forest" and (x + y) % 2 == 0 and not sim:buildingAt(x,y) then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
+                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
                     local b = sim:buildingAt(x, y)
                     if not b and not sim.roads[x .. ":" .. y] then
                         local terrain = sim:terrain(x,y)
