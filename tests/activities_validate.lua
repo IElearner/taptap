@@ -18,6 +18,13 @@ local function untilTrue(s,predicate,seconds)
     return predicate()
 end
 V.atFrame(8,function()
+    local noHall=fresh()
+    local initialFood=noHall.stock.food
+    advance(noHall,110)
+    V.assert(noHall.mealsServed==0 and noHall.stock.food==initialFood,
+        "Villagers cannot sit or consume meals before a kitchen exists")
+    for _,a in ipairs(noHall.carriers) do V.assert(not a.meal,"No phantom dining trip to the warehouse") end
+
     local s=fresh()
     V.assert(s:build("road",7,9) and s:build("road",6,9),"Connected road plans can be queued")
     V.assert(s:build("farm",6,8),"Foundation can wait beside a planned access road")

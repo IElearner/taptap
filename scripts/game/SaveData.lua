@@ -146,7 +146,8 @@ local function restoreUnsafe(data, mode)
         assert(type(m)=="table" and number(m.target,1,#s.buildings) and s.buildings[m.target], "dining target")
         local target=s.buildings[m.target]
         assert(target.complete and (target.kind=="kitchen" or target.kind=="store"), "dining building")
-        assert(m.phase=="walk" or m.phase=="queue" or m.phase=="enter" or m.phase=="eat" or m.phase=="exit" or m.phase=="return", "meal phase")
+        assert(m.phase=="leaveWork" or m.phase=="walk" or m.phase=="queue" or m.phase=="enter" or
+            m.phase=="eat" or m.phase=="exit" or m.phase=="return" or m.phase=="returnWork", "meal phase")
         assert(number(m.timer,0,6) and number(m.resumeX,-1e9,1e9) and number(m.resumeY,-1e9,1e9) and type(m.paid)=="boolean", "meal state")
         assert(m.seat==nil or (number(m.seat,1,4) and m.seat%1==0),"dining seat")
         if m.phase=="enter" or m.phase=="eat" or m.phase=="exit" then assert(m.paid,"reserved meal") end
@@ -213,6 +214,18 @@ local function restoreUnsafe(data, mode)
     else
         for _=1,s.militia do s.guards[#s.guards+1]={x=10,y=9,path={},index=1,meal=false,hunger=0,energy=100} end
     end
+    -- Earlier versions let villagers eat at the warehouse. Keep the save, but
+    -- clear that obsolete visit before the first frame can render a fake diner.
+    local function clearWarehouseMeal(actor)
+        local meal=actor.meal
+        if meal and s.buildings[meal.target].kind=="store" then
+            actor.meal=false;actor.path={};actor.index=1
+        end
+    end
+    for _,actor in ipairs(s.carriers) do clearWarehouseMeal(actor) end
+    for _,actor in pairs(s.workers) do clearWarehouseMeal(actor) end
+    for _,actor in ipairs(s.builders) do clearWarehouseMeal(actor) end
+    for _,actor in ipairs(s.guards) do clearWarehouseMeal(actor) end
     assert(s:availableWorkers() >= 0, "workforce")
     return s
 end

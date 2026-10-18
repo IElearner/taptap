@@ -1,4 +1,4 @@
--- Render real work cycles and verify that both painted keyframes load.
+-- Render real work cycles and verify that the same villager animates throughout.
 local Game=require "network.Standalone"
 local Art=require "game.Art"
 local sim,original,frames
@@ -19,7 +19,7 @@ V.atFrame(9,function()
     original,frames=Art.draw,{}
     Art.draw=function(vg,name,...)
         local painted=original(vg,name,...)
-        if name:find("^person%-farm%-plow%-%d$") and painted then frames[name]=true end
+        if name:find("^person%-civilian%-") and painted then frames[name]=true end
         return painted
     end
 end)
@@ -28,8 +28,13 @@ for frame=10,64 do
 end
 V.atFrame(65,function()
     Art.draw=original
-    V.assert(frames["person-farm-plow-1"] and frames["person-farm-plow-2"],
-        "Plowing renders two different hand-painted animation frames")
+    local identity=sim.buildings[2]
+    local role=require("game.Characters").worker(identity,1)
+    V.assert(frames["person-" .. role .. "-se"] or frames["person-" .. role .. "-sw"] or
+        frames["person-" .. role .. "-ne"] or frames["person-" .. role .. "-nw"],
+        "Field work renders the assigned villager instead of a generic farmer")
+    V.assert(not frames["person-farm-plow-1"] and not frames["person-farm-plow-2"],
+        "Farm actions do not replace the villager's identity")
     V.assert(Art.exists("person-eating-blue-man-1") and Art.exists("person-eating-blue-man-2") and
         Art.exists("person-eating-chef-1") and Art.exists("person-eating-chef-2"),
         "Villagers and specialists have distinct eating keyframes")

@@ -25,6 +25,11 @@ V.atFrame(8, function()
     local save = Data.capture(s, 1000, 3, true)
     local restored = Data.restore(cjson.decode(cjson.encode(save)), "infinite")
     V.assert(restored ~= nil and restored:count("farm") == 1, "JSON round-trip restores buildings")
+    local obsoleteMeal=cjson.decode(cjson.encode(save))
+    obsoleteMeal.world.carriers[1].meal={target=1,phase="eat",timer=2,resumeX=10,resumeY=9,paid=true,seat=1}
+    local migratedMeal=Data.restore(obsoleteMeal,"infinite")
+    V.assert(migratedMeal and not migratedMeal.carriers[1].meal,
+        "Old warehouse dining is removed when its save loads")
     V.assert(restored:buildingAt(8, 8) == restored.buildings[2], "Building coordinate index is reconstructed")
     for _, c in ipairs(restored.carriers) do if c.job then V.assert(c.job.b == restored.buildings[c.job.b.id], "Active delivery relinks the live building") end end
     for _, j in ipairs(restored.jobs) do V.assert(j.b == restored.buildings[j.b.id], "Queued delivery relinks the live building") end

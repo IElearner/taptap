@@ -39,9 +39,6 @@ end
 -- A pose is selected from simulation time, so pausing and restoring a save do
 -- not require storing any visual animation state in the world data.
 function C.sprite(role, direction, walking, action, clock, phase)
-    if action=="plow" or action=="water" or action=="tend" or action=="harvest" then
-        return "person-farm-" .. action .. "-" .. (math.floor((clock or 0)*2.4+(phase or 0)*0.3)%2+1)
-    end
     if action=="eat" then
         local civilian=role:match("^civilian%-(.+)$") or role:match("^loaded%-(.+)$")
         if civilian then return "person-eating-" .. civilian .. "-" .. (math.floor((clock or 0)*1.5+(phase or 0)*0.3)%2+1) end
@@ -56,6 +53,8 @@ function C.sprite(role, direction, walking, action, clock, phase)
     if action == "hammer" then
         return base .. (math.floor((clock or 0) * 4 + offset) % 2 == 0 and "-hammer-up" or "-hammer-down")
     end
+    if (action=="plow" or action=="water" or action=="tend" or action=="harvest") and
+        math.floor((clock or 0)*2.4+offset)%2==1 then return base .. "-stride" end
     if action == "farm" and math.floor((clock or 0)*3+offset)%2==1 then return base .. "-stride" end
     if walking and math.floor((clock or 0) * 6 + offset) % 2 == 1 then return base .. "-stride" end
     return base

@@ -1,6 +1,6 @@
 local Move = require "game.Movement"
 local Farm = require "game.FarmCycle"
-local Meals = { seats = 4, pantryCapacity = 8 }
+local Meals = { seats = 4, pantryCapacity = 8, doorwaySeconds = 1.6, workDoorSeconds = 1.2 }
 local function floorFood(sim) return sim.mode == "finite" and not sim.skipped and 8 or 0 end
 local function visitors(sim,visit)
     for _,a in ipairs(sim.carriers) do visit(a) end
@@ -46,6 +46,26 @@ function Meals.seatPosition(b,seat,side)
     return b.x-((b.footprintW or 1)-1)*0.5+(column-0.5)*0.94,
         b.y-((b.footprintH or 1)-1)*0.5+(row-0.5)*0.72
 end
+function Meals.diningPosition(b,seat,phase,timer)
+    local seatX,seatY=Meals.seatPosition(b,seat)
+    local centerX=b.x-((b.footprintW or 1)-1)*0.5
+    local centerY=b.y-((b.footprintH or 1)-1)*0.5
+    local progress=phase=="enter" and 1-timer/Meals.doorwaySeconds or
+        phase=="exit" and timer/Meals.doorwaySeconds or 1
+    progress=math.max(0,math.min(1,progress))
+    local doorX,doorY=b.x,b.y+1
+    local thresholdX,thresholdY=centerX+0.45,centerY+0.55
+    local function between(a,z,p) return a+(z-a)*p end
+    if progress<0.35 then
+        local p=progress/0.35
+        return between(doorX,thresholdX,p),between(doorY,thresholdY,p)
+    elseif progress<0.7 then
+        local p=(progress-0.35)/0.35
+        return between(thresholdX,seatX,p),thresholdY
+    end
+    local p=(progress-0.7)/0.3
+    return seatX,between(thresholdY,seatY,p)
+end
 local function freeSeat(sim,id,actor)
     local taken={}
     visitors(sim,function(a)
@@ -62,7 +82,7 @@ local function destination(sim,a)
             if path and #path < distance then best,distance=b,#path end
         end
     end
-    return best or sim.buildings[1]
+    return best
 end
 function Meals.tick(sim,a,dt,offline,busy,working)
     a.hunger=a.hunger or 0
@@ -78,33 +98,44 @@ function Meals.tick(sim,a,dt,offline,busy,working)
         for _,c in ipairs(sim.carriers) do if not c.meal then freeCarriers=freeCarriers+1 end end
         local carrier=false
         for _,c in ipairs(sim.carriers) do if c==a then carrier=true;break end end
-        local stocked=target.kind=="kitchen" and (target.mealStock or 0)>0
+        local stocked=target and (target.mealStock or 0)>0
         local supply=stocked or sim.stock.food>floorFood(sim)
         -- The final available carrier keeps transporting until the dining room has food.
-        if supply and (not carrier or freeCarriers>1 or stocked or target.kind=="store") then
+        if target and supply and (not carrier or freeCarriers>1 or stocked) then
             local resumeX,resumeY=math.floor(a.x+0.5),math.floor(a.y+0.5)
             if Move.route(sim,a,target.x,target.y+1) then
-                m={target=target.id,phase="walk",timer=0,resumeX=resumeX,resumeY=resumeY,paid=false}
+                m={target=target.id,phase=a.building and "leaveWork" or "walk",
+                    timer=a.building and Meals.workDoorSeconds or 0,
+                    resumeX=resumeX,resumeY=resumeY,paid=false}
                 a.meal=m
             end
         end
     end
     if not m then return false end
-    if m.phase == "walk" then
+    local target=sim.buildings[m.target]
+    if not target or target.kind~="kitchen" or not target.complete then
+        a.meal=false;a.path={};a.index=1
+        return false
+    end
+    if m.phase == "leaveWork" then
+        m.timer=math.max(0,m.timer-dt)
+        if m.timer==0 then
+            if Move.route(sim,a,target.x,target.y+1) then m.phase="walk"
+            else a.meal=false;a.path={};a.index=1;return false end
+        end
+    elseif m.phase == "walk" then
         if Move.step(a,dt) then m.phase="queue" end
     elseif m.phase == "queue" then
-        local target=sim.buildings[m.target]
-        local available=target.kind=="kitchen" and (target.mealStock or 0) or math.max(0,sim.stock.food-floorFood(sim))
+        local available=target.mealStock or 0
         if offline then
             m.phase="return";Move.route(sim,a,m.resumeX,m.resumeY)
         elseif available>0 and occupancy(sim,m.target)<Meals.seats then
             local seat=freeSeat(sim,m.target,a)
             if not seat then return true end
-            if target.kind=="kitchen" then target.mealStock=target.mealStock-1
-            else sim.stock.food=sim.stock.food-1 end
+            target.mealStock=target.mealStock-1
             sim.mealsServed=sim.mealsServed+1
-            m.phase,m.timer,m.paid,m.seat="enter",0.7,true,seat
-        elseif target.kind=="kitchen" and available==0 and not target.mealIncoming and sim.stock.food>floorFood(sim) then
+            m.phase,m.timer,m.paid,m.seat="enter",Meals.doorwaySeconds,true,seat
+        elseif available==0 and not target.mealIncoming and sim.stock.food>floorFood(sim) then
             local amount=math.min(2,Meals.pantryCapacity-(target.mealStock or 0),sim.stock.food-floorFood(sim))
             if amount<=0 then return true end
             sim.stock.food,target.mealIncoming=sim.stock.food-amount,true
@@ -118,11 +149,18 @@ function Meals.tick(sim,a,dt,offline,busy,working)
         m.timer=math.max(0,m.timer-dt)
         if m.timer == 0 then
             if m.phase == "enter" then m.phase,m.timer="eat",5
-            elseif m.phase == "eat" then m.phase,m.timer,a.hunger,a.energy="exit",0.7,0,100
+            elseif m.phase == "eat" then m.phase,m.timer,a.hunger,a.energy="exit",Meals.doorwaySeconds,0,100
             else m.phase,m.seat="return",nil; Move.route(sim,a,m.resumeX,m.resumeY) end
         end
     elseif m.phase == "return" then
-        if Move.step(a,dt) then a.meal=false;a.path={};a.index=1 end
+        if Move.step(a,dt) then
+            a.path={};a.index=1
+            if a.building then m.phase,m.timer="returnWork",Meals.workDoorSeconds
+            else a.meal=false end
+        end
+    elseif m.phase == "returnWork" then
+        m.timer=math.max(0,m.timer-dt)
+        if m.timer==0 then a.meal=false end
     end
     return true
 end
@@ -142,7 +180,7 @@ function Meals.prepareWorkers(sim,dt,offline)
                 local working=b.kind~="farm" or Farm.needsWork(b,require("game.Definitions").buildings.farm.period)
                 local eating=Meals.tick(sim,a,dt,offline,b.kind=="woodcutter" and a.woodPhase~=nil,working)
                 if b.kind=="farm" and not offline then
-                    local target=working and not eating and 1 or 0
+                    local target=working and (not eating or a.meal and a.meal.phase=="returnWork") and 1 or 0
                     local presence=a.farmPresence or 0
                     a.farmPresence=math.max(0,math.min(1,presence+(target==1 and 1 or -1)*dt*0.85))
                 end

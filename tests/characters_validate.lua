@@ -35,9 +35,10 @@ V.atFrame(6, function()
     V.assert(Characters.sprite("occupation-chef","sw",false,"eat",0,0)=="person-eating-chef-1" and
         Characters.sprite("occupation-guard","se",false,"eat",0.8,0)=="person-eating-guard-2",
         "Specialists and guards keep their identity through eating frames")
-    V.assert(Characters.sprite("civilian-blue-man","se",false,"plow",0,0)=="person-farm-plow-1" and
-        Characters.sprite("civilian-blue-man","se",false,"plow",0.5,0)=="person-farm-plow-2",
-        "Plowing switches actual illustrated action frames")
+    V.assert(Characters.sprite("civilian-blue-man","se",false,"plow",0,0)==idle and
+        Characters.sprite("civilian-blue-man","se",false,"plow",0.5,0)==idle .. "-stride" and
+        Characters.sprite("civilian-ochre-woman","se",false,"plow",0,0)=="person-civilian-ochre-woman-se",
+        "Farm work animates each villager's own face and clothing")
     V.assert(Characters.sprite("civilian-blue-man","se",true,nil,0,0)==idle and
         Characters.sprite("civilian-blue-man","se",true,nil,0.2,0)==idle .. "-stride",
         "Walking villagers alternate two drawn stride frames")
