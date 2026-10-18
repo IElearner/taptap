@@ -27,7 +27,7 @@ function D.job(kind) return D.jobs[kind] or "工人" end
 D.buildings = {
     store = { name = "义仓", cost = {}, workers = 0, footprint = { 2, 2 }, color = { 85, 103, 101 }, description = "村庄的中心。工人沿道路运送物资。" },
     road = { name = "道路", cost = {}, workers = 0, color = { 190, 166, 116 }, description = "免费规划道路；空闲村民将到场铺设，完工后才能运输。拖动可移动地图。" },
-    house = { name = "民居", cost = { wood = 8, stone = 2 }, workers = 0, color = { 97, 111, 114 }, description = "竣工后增加 4 名村民，无需另行招募。" },
+    house = { name = "民居", cost = { wood = 8, stone = 2 }, workers = 0, footprint = { 2, 2 }, color = { 97, 111, 114 }, description = "两格见方的院落；竣工后增加 4 名村民，无需另行招募。" },
     farm = { name = "麦田", cost = { wood = 8 }, workers = 1, footprint = { 2, 2 }, output = "grain", amount = 3, period = 90, color = { 187, 157, 69 }, description = "两格见方的围栏麦田；相邻麦田会连片，只保留外侧栅栏。工人犁地、浇水、照料，约 90 秒成熟后收割，每轮收获 3 袋麦粒。" },
     ranch = { name = "牧场", cost = { wood = 10 }, workers = 1, footprint = { 2, 1 }, output = "livestock", amount = 2, period = 12, color = { 129, 113, 68 }, description = "工人照料牲畜，每 12 秒出栏 2 头；工人送往屠宰场。" },
     mill = { name = "磨坊", cost = { wood = 10, stone = 4 }, workers = 1, input = "grain", output = "flour", amount = 2, period = 6, color = { 118, 100, 79 }, description = "搬入 1 袋麦粒，加工为 2 袋面粉。" },
@@ -45,7 +45,7 @@ end
 ---@type {title:string, lines:string[], complete:string, kind:string, target:number}[]
 D.lessons = {
     { title = "一 · 道通百业", lines = { "孩子，义仓虽在，路不通，百事都慢。", "点右下「营造」选「道路」，沿旧路规划四格。", "工人会取材、举锤；铺好才算通路。" }, complete="好，脚下有路，乡亲们就能送货了。", kind = "road", target = 4 },
-    { title = "二 · 安居于此", lines = { "有路了，先为新来的乡亲盖间屋吧。", "在道路上方放一栋民居，门前留一格路。", "等工人建好，就能多住四个人。" }, complete="屋里有了灯火，咱们的人手也宽裕了。", kind = "house", target = 1 },
+    { title = "二 · 安居于此", lines = { "有路了，先为新来的乡亲盖间屋吧。", "民居要占两格见方，门前留一格路。", "等工人建好，就能多住四个人。" }, complete="屋里有了灯火，咱们的人手也宽裕了。", kind = "house", target = 1 },
     { title = "三 · 耕者有粮", lines = { "人要吃饭，田里的麦子得先种起来。", "沿路建一块围栏麦田，安排工人播种。", "麦子会自己生长，工人中途照料，成熟后再收割。" }, complete="麦穗起来了，接着得把麦粒磨细。", kind = "farm", target = 1 },
     { title = "四 · 麦成细粉", lines = { "光有麦粒还不够，得有磨坊。", "在路边建一座磨坊，门前接上道路。", "工人会送麦粒进去，磨好后再运出来。" }, complete="磨坊转起来，村里离热饭又近一步。", kind = "mill", target = 1 },
     { title = "五 · 炊烟起处", lines = { "食堂里有火，乡亲们才吃得上热饭。", "建食堂，安排厨师把面粉和鲜肉烹成口粮。", "食堂有四席，工人会把口粮送来补满储粮。" }, complete="炊烟又起，先让大家吃饱。", kind = "food", target = 4 },

@@ -33,6 +33,14 @@ V.atFrame(8, function()
         V.assert(s.stock[resource] == restored.stock[resource], "Transport preserves " .. resource .. ": " .. s.stock[resource] .. "/" .. restored.stock[resource])
     end
     V.assert(not Data.restore(save, "finite"), "Modes cannot load each other's slot")
+    local legacy=Sim.new("finite")
+    V.assert(legacy:build("house",8,8),"A new two-by-two home can be placed beside the warehouse")
+    local legacySave=Data.capture(legacy,1000,3,true)
+    legacySave.world.buildings[2].footprintW=1
+    legacySave.world.buildings[2].footprintH=1
+    local legacyRestored=Data.restore(legacySave,"finite")
+    V.assert(legacyRestored and legacyRestored:buildingAt(8,8).footprintW==1 and not legacyRestored:buildingAt(7,8),
+        "Older one-tile homes retain their original footprint when a save loads")
     local bad = cjson.decode(cjson.encode(save)); bad.world.stock.food = -1
     V.assert(not Data.restore(bad, "infinite"), "Corrupt inventory is rejected")
     bad = cjson.decode(cjson.encode(save)); bad.version = 999
