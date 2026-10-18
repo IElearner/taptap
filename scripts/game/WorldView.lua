@@ -22,21 +22,45 @@ local function line(vg, x1, y1, x2, y2, c, width)
     nvgBeginPath(vg); nvgMoveTo(vg, x1, y1); nvgLineTo(vg, x2, y2)
     nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, width or 1); nvgStroke(vg)
 end
-local function iso(x, y) return (x - y) * 30, (x + y) * 15 end
+-- Knights & Merchants-like map: world X runs across the screen and world Y
+-- runs down it. Buildings retain a painted facade, but roads are orthogonal.
+local TILE_W,TILE_H=56,42
+local function project(x,y) return (x-10)*TILE_W,(y-9)*TILE_H end
+local function unproject(x,y) return x/TILE_W+10,y/TILE_H+9 end
 local function buildingVisualSize(b)
     local width,height=b.footprintW or 1,b.footprintH or 1
-    return 104+18*math.max(width-1,height-1)+(b.kind=="store" and 6 or 0)+(b.kind=="kitchen" and 6 or 0)
+    return math.min(width*TILE_W-4,height*TILE_H+48)
 end
 local function tile(vg, x, y, c, shrink)
-    local sx, sy = iso(x, y); local a = 30 - (shrink or 0); local b = a / 2
-    polygon(vg, { sx, sy - b, sx + a, sy, sx, sy + b, sx - a, sy }, c)
+    local sx,sy=project(x,y)
+    local gap=shrink or 0
+    rect(vg,sx-TILE_W/2+gap,sy-TILE_H/2+gap,TILE_W-2*gap,TILE_H-2*gap,c)
 end
 local function tileOutline(vg, x, y, c)
-    local sx, sy = iso(x, y)
-    nvgBeginPath(vg)
-    nvgMoveTo(vg, sx, sy-15); nvgLineTo(vg, sx+30, sy)
-    nvgLineTo(vg, sx, sy+15); nvgLineTo(vg, sx-30, sy)
-    nvgClosePath(vg); nvgStrokeColor(vg, color(c)); nvgStrokeWidth(vg, 1); nvgStroke(vg)
+    local sx,sy=project(x,y)
+    nvgBeginPath(vg);nvgRect(vg,sx-TILE_W/2,sy-TILE_H/2,TILE_W,TILE_H)
+    nvgStrokeColor(vg,color(c));nvgStrokeWidth(vg,1);nvgStroke(vg)
+end
+local function roadSurface(vg,sim,x,y,planned)
+    local sx,sy=project(x,y)
+    local function connected(dx,dy)
+        local nx,ny=x+dx,y+dy
+        return sim.roads[nx .. ":" .. ny] or sim:roadSiteAt(nx,ny)
+    end
+    local base=planned and {126,107,71} or {149,136,103}
+    rect(vg,sx-17,sy-14,34,28,base)
+    if connected(-1,0) then rect(vg,sx-28,sy-14,12,28,base) end
+    if connected(1,0) then rect(vg,sx+16,sy-14,12,28,base) end
+    if connected(0,-1) then rect(vg,sx-17,sy-21,34,8,base) end
+    if connected(0,1) then rect(vg,sx-17,sy+13,34,8,base) end
+    if not planned then
+        for j=-2,2 do for k=-1,1 do
+            local px=sx+j*6+(k%2)*3
+            local py=sy+k*8+(j%2)*2
+            nvgBeginPath(vg);nvgEllipse(vg,px,py,3+(j+k)%2,2)
+            nvgFillColor(vg,color({183+(x+y)%9,170+(x*3+y)%8,137+(x+y*2)%8,220}));nvgFill(vg)
+        end end
+    end
 end
 local function tree(vg, sx, sy, seed)
     local kinds = { "tree-oak", "tree-pine", "tree-bamboo" }
@@ -61,13 +85,31 @@ local function drawFarm(vg,b,sim,ghost)
     local alpha=ghost and 0.65 or (b.complete and 1 or 0.65)
     for dx=1-width,0 do for dy=1-height,0 do
         local tx,ty=b.x+dx,b.y+dy
-        local sx,sy=iso(tx,ty)
-        local sway=(stage=="green" or stage=="ripe") and math.sin((sim and sim.elapsed or 0)*1.1+tx*0.9+ty*0.6)*1.5 or 0
-        if not Art.draw(vg,"crop-" .. stage,sx-37+sway,sy-37,74,60,alpha) then tile(vg,tx,ty,{121,100,60}) end
+        local sx,sy=project(tx,ty)
+        rect(vg,sx-27,sy-20,54,40,{112,88,52,math.floor(alpha*245)})
+        for row=0,3 do
+            local ry=sy-15+row*10
+            line(vg,sx-25,ry+4,sx+25,ry+4,{76,58,35,115},2)
+            for col=0,6 do
+                local px=sx-22+col*7+(row%2)*2
+                local sway=math.sin((sim and sim.elapsed or 0)*1.1+col+row+tx)*1.3
+                if stage=="seed" then
+                    circle(vg,px,ry,1.5,{190,158,93,180})
+                else
+                    local ripe=stage=="ripe"
+                    local h=stage=="sprout" and 4 or ripe and 12 or 8
+                    local blade=ripe and {221,182,71,240} or {91,145,64,225}
+                    line(vg,px,ry+2,px+sway,ry+2-h,blade,ripe and 2 or 1.5)
+                    line(vg,px,ry,px-3+sway,ry-h*0.55,blade,1)
+                    line(vg,px,ry,px+3+sway,ry-h*0.60,blade,1)
+                    if ripe then circle(vg,px+sway,ry-h,2,{237,200,99,235}) end
+                end
+            end
+        end
     end end
-    local points={west={-30,0,0,-15},north={0,-15,30,0},east={30,0,0,15},south={0,15,-30,0}}
+    local points={west={-28,-21,-28,21},north={-28,-21,28,-21},east={28,-21,28,21},south={-28,21,28,21}}
     for _,edge in ipairs(Farm.exposedEdges(sim,b)) do
-        local sx,sy=iso(edge.x,edge.y)
+        local sx,sy=project(edge.x,edge.y)
         local p=points[edge.side]
         local x1,y1,x2,y2=sx+p[1],sy+p[2],sx+p[3],sy+p[4]
         local gate=edge.side=="south" and edge.x==b.x and edge.y==b.y
@@ -84,8 +126,8 @@ local function drawFarm(vg,b,sim,ghost)
         line(vg,x2,y2-12,x2,y2,{111,76,44,240},2.8)
     end
     if b.complete and Farm.needsWork(b,D.buildings.farm.period) and (b.farmWork or 0)>0 then
-        local centerX=iso(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-        local sx,sy=iso(b.x,b.y)
+        local centerX=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
+        local sx,sy=project(b.x,b.y)
         local progress=math.min(1,(b.farmWork or 0)/Farm.workSeconds)
         rect(vg,sx-20,sy+19,40,4,{66,52,34,210})
         rect(vg,sx-19,sy+20,38*progress,2,{224,187,97,240})
@@ -100,25 +142,25 @@ local function drawFarm(vg,b,sim,ghost)
         end
     end
     if not b.complete and not ghost then
-        local sx,sy=iso(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
+        local sx,sy=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
         rect(vg,sx-25,sy+17,50,4,{68,59,41});rect(vg,sx-25,sy+17,50*(b.progress or 0),4,{225,191,105})
     end
 end
 local function house(vg, b, selected, clock, art, ghost, sim)
     local width, height = b.footprintW or 1, b.footprintH or 1
-    local x, y = iso(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
+    local x, y = project(b.x-(width-1)*0.5, b.y-(height-1)*0.5)
+    y=y+18+(height-1)*TILE_H/2-6
     local def = D.buildings[b.kind]
-    if b.kind~="farm" then
+    if b.kind~="farm" and not b.complete then
         for dx=1-width,0 do for dy=1-height,0 do
-            tile(vg,b.x+dx,b.y+dy,{111,108,78,180},3)
+            tile(vg,b.x+dx,b.y+dy,{111,108,78,75},3)
         end end
     end
     if selected then
         for dx = 1-width, 0 do for dy = 1-height, 0 do tile(vg, b.x+dx, b.y+dy, { 239, 208, 115, 120 }) end end
     end
     if b.kind=="farm" then drawFarm(vg,b,sim,ghost);return end
-    -- Keep roofs within the footprint silhouette; oversized roofs hid roads
-    -- and made close workshops merge into a single painted shape.
+    -- Anchor each painted facade at the south edge of its rectangular site.
     local size = buildingVisualSize(b)
     local atlasPainted=false
     if not art or art<=0 then
@@ -174,25 +216,19 @@ local function house(vg, b, selected, clock, art, ghost, sim)
 end
 local function diningFloor(vg,b,side)
     local width,height=b.footprintW or 1,b.footprintH or 1
-    local x,y=iso(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
-    x=x+(side or -1)*60
-    -- The open dining platform is in front of the facade, not painted on the roof.
-    polygon(vg,{x-61,y+18,x,y+1,x+61,y+18,x,y+46},{93,65,40,248})
-    polygon(vg,{x-56,y+17,x,y+5,x+56,y+17,x,y+40},{190,140,79,250})
-    line(vg,x-48,y+22,x+48,y+22,{222,174,103,220},2)
-    polygon(vg,{x-33,y+27,x,y+15,x+33,y+27,x,y+39},{88,59,36,250})
-    polygon(vg,{x-29,y+26,x,y+18,x+29,y+26,x,y+35},{187,143,80,250})
-    -- Low open-front roof and posts make the annex read as a room while its
-    -- occupants remain in front of the roof plane.
-    if not Art.draw(vg,"dining-pavilion",x-68,y-43,136,69) then
-        line(vg,x-53,y-12,x-53,y+18,{101,71,42,240},3)
-        line(vg,x+53,y-12,x+53,y+18,{101,71,42,240},3)
-        polygon(vg,{x-59,y-12,x,y-32,x+59,y-12,x,y-3},{66,69,66,245})
-    end
-    line(vg,x+47,y+7,x+65,y-2,{168,123,68,230},3)
+    local x,y=project(b.x-(width-1)*0.5,b.y-(height-1)*0.5)
+    -- Open cutaway in the kitchen facade: four seats stay within its footprint.
+    rect(vg,x-43,y+7,86,51,{72,51,32,245})
+    rect(vg,x-39,y+10,78,43,{173,125,68,248})
+    for i=0,5 do line(vg,x-37+i*14,y+10,x-37+i*14,y+53,{207,155,90,90},1) end
+    line(vg,x-44,y+8,x+44,y+8,{95,64,39,245},4)
+    line(vg,x-44,y+8,x-44,y+57,{94,62,37,245},3)
+    line(vg,x+44,y+8,x+44,y+57,{94,62,37,245},3)
+    rect(vg,x-12,y+25,24,19,{103,70,43,245})
+    rect(vg,x-10,y+26,20,15,{217,174,101,245})
     for seat=1,Meals.seats do
         local wx,wy=Meals.seatPosition(b,seat,side)
-        local sx,sy=iso(wx,wy)
+        local sx,sy=project(wx,wy)
         nvgBeginPath(vg);nvgEllipse(vg,sx,sy+2,8,4);nvgFillColor(vg,color({66,45,30,230}));nvgFill(vg)
         nvgBeginPath(vg);nvgEllipse(vg,sx,sy,6,3);nvgFillColor(vg,color({180,127,70,245}));nvgFill(vg)
         circle(vg,sx+3,sy-5,2.3,{229,208,164})
@@ -217,7 +253,7 @@ local function thoughtBubble(vg,sx,sy,thought)
     end
 end
 local function person(vg, x, y, c, carrying, clock, role, direction, profile, action, cargo, walking, phase, thought, cargoAmount)
-    local sx, sy = iso(x, y)
+    local sx, sy = project(x, y)
     local step = walking and math.abs(math.sin(clock * 7 + (phase or 0))) * 1.4 or 0
     local size = action == "hammer" and 47 or action == "eat" and 30 or 42
     local base = "person-" .. (role or (carrying and "loaded" or "carrier")) .. "-" .. (direction or "se")
@@ -357,25 +393,25 @@ function WorldView.create(sim, onTile)
     local ghost = nil
     local function projection()
         local l = panel:GetAbsoluteLayout()
-        return l, l.x + l.w * 0.53 + camera.x, l.y + l.h * 0.52 - 270 * camera.zoom + camera.y
+        return l, l.x + l.w * 0.5 + camera.x, l.y + l.h * 0.5 + camera.y
     end
     local function clampCamera()
         if sim.mode == "finite" then
-            camera.x = math.max(-600, math.min(600, camera.x))
-            camera.y = math.max(-350, math.min(350, camera.y))
+            camera.x = math.max(-750, math.min(750, camera.x))
+            camera.y = math.max(-520, math.min(520, camera.y))
         end
     end
     local function centerOn(x,y)
         local l=panel:GetAbsoluteLayout()
-        local sx,sy=iso(x,y)
-        camera.x=(0.5-0.53)*l.w-sx*camera.zoom
-        camera.y=(0.5-0.52)*l.h+270*camera.zoom-sy*camera.zoom
+        local sx,sy=project(x,y)
+        camera.x=-sx*camera.zoom
+        camera.y=-sy*camera.zoom
         clampCamera()
     end
     local function tileAt(event)
         local _, ox, oy = projection()
-        local a, b = (event.x - ox) / camera.zoom / 30, (event.y - oy) / camera.zoom / 15
-        local x, y = math.floor((a + b) / 2 + 0.5), math.floor((b - a) / 2 + 0.5)
+        local wx,wy=unproject((event.x-ox)/camera.zoom,(event.y-oy)/camera.zoom)
+        local x,y=math.floor(wx+0.5),math.floor(wy+0.5)
         return x, y
     end
     local function preview(event)
@@ -408,8 +444,8 @@ function WorldView.create(sim, onTile)
         local fx,fy=(ax+bx)*0.5,(ay+by)*0.5
         local l=panel:GetAbsoluteLayout()
         camera.zoom=math.max(0.55,math.min(1.8,physicalPinch.zoom*distance/physicalPinch.distance))
-        camera.x=fx-physicalPinch.worldX*camera.zoom-l.x-l.w*0.53
-        camera.y=fy-physicalPinch.worldY*camera.zoom-l.y-l.h*0.52+270*camera.zoom
+        camera.x=fx-physicalPinch.worldX*camera.zoom-l.x-l.w*0.5
+        camera.y=fy-physicalPinch.worldY*camera.zoom-l.y-l.h*0.5
         clampCamera()
     end
     panel.props.onPointerDown = function(event)
@@ -455,16 +491,15 @@ function WorldView.create(sim, onTile)
             local hit, depth = nil, -math.huge
             for _, building in ipairs(sim.buildings) do
                 local width,height=building.footprintW or 1,building.footprintH or 1
-                local bx, by = iso(building.x-(width-1)*0.5,building.y-(height-1)*0.5)
+                local bx, by = project(building.x-(width-1)*0.5,building.y-(height-1)*0.5)
                 local size=buildingVisualSize(building)
-                local facade=building.kind~="farm" and px>=bx-size*0.44 and px<=bx+size*0.44 and
-                    py>=by-size*0.86 and py<=by+8
-                local porchSide=building.kind=="kitchen" and Meals.diningSide(sim,building) or -1
-                local porchX=bx+porchSide*60
+                local bottom=18+(height-1)*TILE_H/2
+                local facade=building.kind~="farm" and px>=bx-size*0.48 and px<=bx+size*0.48 and
+                    py>=by+bottom-size and py<=by+bottom
                 local porch=building.kind=="kitchen" and building.complete and
-                    px>=porchX-68 and px<=porchX+68 and py>=by-43 and py<=by+46
-                if (facade or porch) and building.x+building.y > depth then
-                    hit, depth = building, building.x+building.y
+                    px>=bx-44 and px<=bx+44 and py>=by+8 and py<=by+58
+                if (facade or porch) and building.y+building.x*0.001 > depth then
+                    hit, depth = building, building.y+building.x*0.001
                 end
             end
             if hit then x,y = hit.x,hit.y end
@@ -498,8 +533,8 @@ function WorldView.create(sim, onTile)
         if not anchor then panel.props.onPinchStart(event);anchor=pinchAnchor end
         local zoom=math.max(0.55,math.min(1.8,camera.pinchZoom*(event.scale or 1)))
         camera.zoom=zoom
-        camera.x=anchor.screenX-anchor.x*zoom-l.x-l.w*0.53
-        camera.y=anchor.screenY-anchor.y*zoom-l.y-l.h*0.52+270*zoom
+        camera.x=anchor.screenX-anchor.x*zoom-l.x-l.w*0.5
+        camera.y=anchor.screenY-anchor.y*zoom-l.y-l.h*0.5
         clampCamera()
     end
     panel.props.onPinchEnd = function() pinchAnchor=nil;camera.pinchZoom=camera.zoom end
@@ -547,9 +582,7 @@ function WorldView.create(sim, onTile)
             end
         end
         local world,ox,oy=projection()
-        local a=(world.x+world.w/2-ox)/camera.zoom/30
-        local b=(world.y+world.h/2-oy)/camera.zoom/15
-        local cx,cy=(a+b)/2,(b-a)/2
+        local cx,cy=unproject((world.x+world.w/2-ox)/camera.zoom,(world.y+world.h/2-oy)/camera.zoom)
         local px=x0+(cx-low+0.5)/span*w
         local py=y0+(cy-low+0.5)/span*h
         line(vg,px-6,py,px+6,py,{255,234,170},1.5)
@@ -565,27 +598,44 @@ function WorldView.create(sim, onTile)
         local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
         for _, px in ipairs({ l.x - 80, l.x + l.w + 80 }) do
             for _, py in ipairs({ l.y - 80, l.y + l.h + 80 }) do
-                local a, b = (px - ox) / camera.zoom / 30, (py - oy) / camera.zoom / 15
-                minX, maxX = math.min(minX, (a + b) / 2), math.max(maxX, (a + b) / 2)
-                minY, maxY = math.min(minY, (b - a) / 2), math.max(maxY, (b - a) / 2)
+                local wx,wy=unproject((px-ox)/camera.zoom,(py-oy)/camera.zoom)
+                minX,maxX=math.min(minX,wx),math.max(maxX,wx)
+                minY,maxY=math.min(minY,wy),math.max(maxY,wy)
             end
         end
         minX, maxX, minY, maxY = math.floor(minX), math.ceil(maxX), math.floor(minY), math.ceil(maxY)
         if sim.mode == "finite" then minX, maxX, minY, maxY = math.max(1, minX), math.min(22, maxX), math.max(1, minY), math.min(22, maxY) end
-        for sum = minX + minY, maxX + maxY do
-            for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
-                local y = sum - x
+        for y=minY,maxY do
+            for x=minX,maxX do
                 do
                     local terrain = sim:terrain(x, y)
                     local variation = (x * 17 + y * 23) % 13
                     -- Neighboring ground tiles share one color. Terrain detail is scattered
                     -- separately, so ordinary play has no checkerboard tile boundaries.
-                    local c = { 112, 126, 77 }
+                    local c = { 118, 133, 78 }
                     if terrain == "water" then c = { 77, 116, 116 }
                     elseif terrain == "fog" then c = { 69, 88, 68 } end
                     -- Slight overlap hides antialiased hairlines between equal-color diamonds.
                     tile(vg, x, y, c, -1)
-                    local sx, sy = iso(x, y)
+                    local sx, sy = project(x, y)
+                    if terrain=="grass" or terrain=="forest" then
+                        if (x*7+y*11)%3==0 then
+                            nvgBeginPath(vg);nvgEllipse(vg,sx+(x*13+y*5)%19-9,sy+(x*3+y*17)%13-6,18,8)
+                            nvgFillColor(vg,color({151,150,76,16}));nvgFill(vg)
+                        end
+                        if (x*11+y*7)%5==0 then
+                            for i=0,2 do
+                                local tx=sx-17+i*8+(x*3+y)%5
+                                local ty=sy+((x*5+y*7+i*3)%17)-9
+                                line(vg,tx,ty,tx-2,ty-4,{65,103,50,105},1.4)
+                                line(vg,tx,ty,tx+2,ty-3,{153,163,82,100},1)
+                            end
+                        end
+                        if sim:terrain(x+1,y)=="water" or sim:terrain(x-1,y)=="water" then
+                            local bankX=sim:terrain(x+1,y)=="water" and sx+TILE_W/2-4 or sx-TILE_W/2+4
+                            rect(vg,bankX-4,sy-TILE_H/2,8,TILE_H,{176,158,91,58})
+                        end
+                    end
                     if (terrain == "grass" or terrain == "forest") and (x*13+y*19)%4 == 0 then
                         local dx, dy = ((x*31+y*13)%27)-13, ((x*11+y*23)%9)-4
                         line(vg, sx+dx, sy+dy, sx+dx-2, sy+dy-3, {76,101,52,85}, 1)
@@ -594,20 +644,13 @@ function WorldView.create(sim, onTile)
                     if mode ~= "inspect" and terrain == "grass" then tileOutline(vg,x,y,{239,225,167,105}) end
                     local site=sim:roadSiteAt(x,y)
                     if site then
-                        tile(vg,x,y,{127,107,67},2)
+                        roadSurface(vg,sim,x,y,true)
                         for k=-1,1 do line(vg,sx-12+k*7,sy-3,sx-5+k*7,sy+2,{188,163,102},1) end
                         rect(vg,sx-14,sy+5,28,3,{58,57,37});rect(vg,sx-14,sy+5,28*site.progress,3,{222,184,95})
                     elseif sim.roads[x .. ":" .. y] then
-                        tile(vg, x, y, { 161, 143, 101 }, 1)
-                        for j = -1, 1 do
-                            for k = -1, 1 do
-                                local px,py = iso(x+j*0.25,y+k*0.25)
-                                polygon(vg,{px,py-2,px+5,py,px,py+3,px-5,py}, {175+variation,158+variation,116+variation})
-                            end
-                        end
-                        Art.draw(vg, "ground-road", sx-30, sy-15, 60, 30)
-                        line(vg, sx - 13, sy, sx + 3, sy + 7, { 168, 149, 110 }, 1)
-                        line(vg, sx + 8, sy - 6, sx + 18, sy - 1, { 213, 194, 155 }, 1)
+                        roadSurface(vg,sim,x,y,false)
+                        line(vg, sx-20,sy+9,sx-6,sy+9,{168,149,110},1)
+                        line(vg, sx+7,sy-7,sx+21,sy-7,{213,194,155},1)
                     elseif terrain == "water" and (x*7+y*11)%3 == 0 then
                         line(vg, sx - 9, sy + math.sin(sim.elapsed + x) * 2, sx + 10, sy + 1, { 187, 210, 188, 95 }, 1)
                     elseif (x * 7 + y) % 9 == 0 then
@@ -653,14 +696,14 @@ function WorldView.create(sim, onTile)
                 drawX=9.3+((guardIndex-1)%3)*0.28
                 drawY=9.25+math.floor((guardIndex-1)/3)*0.2
             end
-            local depth=math.floor(drawX+drawY+0.5)
-            if diningHall then depth=diningHall.x+diningHall.y end
+            local depth=math.floor(drawY+0.5)
+            if diningHall then depth=diningHall.y end
             if (a.farmPresence or 0)>0 and a.building then
                 local field=sim.buildings[a.building]
-                if field and field.kind=="farm" then depth=math.max(depth,field.x+field.y) end
+                if field and field.kind=="farm" then depth=math.max(depth,field.y) end
             end
-            local sx,sy=iso(drawX,drawY)
-            if depth < minX+minY or depth > maxX+maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
+            local sx,sy=project(drawX,drawY)
+            if depth < minY or depth > maxY or sx*camera.zoom+ox < l.x-70 or sx*camera.zoom+ox > l.x+l.w+70
                 or sy*camera.zoom+oy < l.y-70 or sy*camera.zoom+oy > l.y+l.h+70 then return end
             agentsByDepth[depth]=agentsByDepth[depth] or {}
             local walking=(a.path and a.path[a.index] ~= nil) or (a.farmPresence and a.farmPresence>0 and a.farmPresence<1) or
@@ -711,17 +754,16 @@ function WorldView.create(sim, onTile)
             local action=a.meal and a.meal.phase=="eat" and "eat" or nil
             addAgent(a,role,profile,action,nil,index,index)
         end
-        for sum = minX + minY, maxX + maxY do
-            for x = math.max(minX, sum - maxY), math.min(maxX, sum - minY) do
-                local y = sum - x
+        for y=minY,maxY do
+            for x=minX,maxX do
                 do
-                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then local sx, sy = iso(x, y); tree(vg, sx, sy, x * 3 + y) end
+                    if sim:standingTree(x,y) and not sim:buildingAt(x,y) then local sx, sy = project(x, y); tree(vg, sx, sy, x * 3 + y) end
                     local b = sim:buildingAt(x, y)
                     if not b and not sim.roads[x .. ":" .. y] then
                         local terrain = sim:terrain(x,y)
-                        local sx,sy = iso(x,y)
+                        local sx,sy = project(x,y)
                         if terrain == "forest" and (x*7+y*3)%13 == 0 then Art.draw(vg, "rock-moss", sx-27,sy-32,54,40)
-                        elseif terrain == "grass" and (x*11+y*7)%29 == 0 then Art.draw(vg, "bush-flowers",sx-22,sy-28,44,35)
+                        elseif terrain == "grass" and (x*11+y*7)%13 == 0 then Art.draw(vg, "bush-flowers",sx-18,sy-22,36,30)
                         elseif terrain == "water" and sim:terrain(x-1,y) ~= "water" and (x+y)%3 == 0 then Art.draw(vg,"reeds",sx-20,sy-28,40,35) end
                     end
                     if b and b.x==x and b.y==y then
@@ -740,7 +782,7 @@ function WorldView.create(sim, onTile)
                     end
                 end
             end
-            local bucket=agentsByDepth[sum]
+            local bucket=agentsByDepth[y]
             if bucket then
                 for _,entry in ipairs(bucket) do
                     local a=entry.actor
@@ -766,8 +808,8 @@ function WorldView.create(sim, onTile)
         cameraState = function() return {x=camera.x,y=camera.y,zoom=camera.zoom} end,
         frontier = function()
             local _, high = sim.map:bounds()
-            local sx, sy = iso(high - 2, 9)
-            camera.x, camera.y = -sx * camera.zoom, (270 - sy) * camera.zoom
+            local sx, sy = project(high - 2, 9)
+            camera.x, camera.y = -sx * camera.zoom, -sy * camera.zoom
         end,
     }
     return result

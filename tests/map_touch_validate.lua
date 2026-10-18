@@ -3,8 +3,8 @@ local Store=require "game.SaveStore"
 local function worldPixel(view,sx,sy)
     local l=view.panel:GetAbsoluteLayout()
     local c=view.cameraState()
-    local ox=l.x+l.w*0.53+c.x
-    local oy=l.y+l.h*0.52-270*c.zoom+c.y
+    local ox=l.x+l.w*0.5+c.x
+    local oy=l.y+l.h*0.5+c.y
     return (sx-ox)/c.zoom,(sy-oy)/c.zoom
 end
 V.atFrame(6,function()
@@ -73,7 +73,7 @@ V.atFrame(12,function()
     local l=view.panel:GetAbsoluteLayout()
     local c=view.cameraState()
     local function screen(x,y)
-        return l.x+l.w*0.53+c.x+(x-y)*30*c.zoom,l.y+l.h*0.52-270*c.zoom+c.y+(x+y)*15*c.zoom
+        return l.x+l.w*0.5+c.x+(x-10)*56*c.zoom,l.y+l.h*0.5+c.y+(y-9)*42*c.zoom
     end
     local sx,sy=screen(9,8)
     view.panel.props.onPointerDown({x=sx,y=sy})
@@ -95,13 +95,13 @@ V.atFrame(12,function()
     hud.root:FindById("cancelPlacement").props.onClick()
     local hall=live:addBuilding("kitchen",12,8,true)
     local side=require("game.Meals").diningSide(live,hall)
-    V.assert(side==1,"Dining bay chooses the open side when the store crowds its left")
+    V.assert(side==1,"Dining placement remains stable when the store crowds one side")
     local now=view.cameraState()
     local centerX,centerY=hall.x-0.5,hall.y-0.5
-    local px=l.x+l.w*0.53+now.x+((centerX-centerY)*30+side*60)*now.zoom
-    local py=l.y+l.h*0.52-270*now.zoom+now.y+((centerX+centerY)*15+18)*now.zoom
+    local px=l.x+l.w*0.5+now.x+(centerX-10)*56*now.zoom
+    local py=l.y+l.h*0.5+now.y+((centerY-9)*42+34)*now.zoom
     local wx,wy=worldPixel(view,px,py)
-    V.assert(math.abs(wx-(120+side*60))<0.01 and math.abs(wy-303)<0.01 and live:buildingAt(12,8)==hall,
+    V.assert(math.abs(wx-(centerX-10)*56)<0.01 and math.abs(wy-((centerY-9)*42+34))<0.01 and live:buildingAt(12,8)==hall,
         "Dining annex tap maps back to the matching world position")
     view.panel.props.onPointerDown({pointerId=31,pointerType="touch",x=px,y=py})
     view.panel.props.onPointerUp({pointerId=31,pointerType="touch",x=px,y=py})

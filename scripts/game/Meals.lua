@@ -23,7 +23,7 @@ function Meals.diningSide(sim,b)
     local function center(building)
         local x=building.x-((building.footprintW or 1)-1)*0.5
         local y=building.y-((building.footprintH or 1)-1)*0.5
-        return (x-y)*30,(x+y)*15
+        return x*56,y*42
     end
     local hx,hy=center(b)
     local function crowd(side)
@@ -31,7 +31,7 @@ function Meals.diningSide(sim,b)
         for _,other in ipairs(sim.buildings) do
             if other~=b and other.kind~="farm" then
                 local ox,oy=center(other)
-                local dx=math.abs(ox-(hx+side*60))
+                local dx=math.abs(ox-(hx+side*75))
                 local dy=math.abs(oy-(hy+18))
                 score=score+math.max(0,105-dx)*math.max(0,65-dy)
             end
@@ -41,12 +41,10 @@ function Meals.diningSide(sim,b)
     return crowd(1)+500<crowd(-1) and 1 or -1
 end
 function Meals.seatPosition(b,seat,side)
-    -- Four distinct screen-space columns in the clearer front-facing bay.
-    local offset={{-0.1,1.3},{0.365,0.835},{0.835,0.365},{1.3,-0.1}}
-    local p=offset[seat] or offset[1]
-    side=side or -1
-    return b.x-((b.footprintW or 1)-1)*0.5+p[1]+side,
-        b.y-((b.footprintH or 1)-1)*0.5+p[2]-side
+    local column=(seat-1)%2
+    local row=math.floor((seat-1)/2)
+    return b.x-((b.footprintW or 1)-1)*0.5+(column-0.5)*0.62,
+        b.y-((b.footprintH or 1)-1)*0.5+0.48+row*0.52
 end
 local function freeSeat(sim,id,actor)
     local taken={}

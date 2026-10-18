@@ -10,6 +10,6 @@ V.atFrame(9,function()
     hud.root:FindById("build_quarry").props.onClick()
     local l=view.panel:GetAbsoluteLayout()
     local x,y=8,8
-    view.panel.props.onPointerMove({x=l.x+l.w*0.53+(x-y)*30,y=l.y+l.h*0.52-270+(x+y)*15})
+    view.panel.props.onPointerMove({x=l.x+l.w*0.5+(x-10)*56,y=l.y+l.h*0.5+(y-9)*42})
 end)
 V.atFrame(65,function() V.finish() end)

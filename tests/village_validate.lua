@@ -27,8 +27,8 @@ V.atFrame(8, function()
     local road = hud.root:FindById("build_road")
     road.props.onClick(road)
     local layout = view.panel:GetAbsoluteLayout()
-    local sx = layout.x + layout.w * 0.53 - 60
-    local sy = layout.y + layout.h * 0.52 - 270 + 240
+    local sx = layout.x + layout.w * 0.5 - 3*56
+    local sy = layout.y + layout.h * 0.5
     view.panel.props.onTap({ x = sx, y = sy }) -- tile (7,9) at default camera
     V.assert(live:roadSiteAt(7,9) ~= nil and live.roadCount==0, "Map tap plans the intended road tile without instant completion")
     advance(live,10)
