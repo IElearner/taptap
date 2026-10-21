@@ -1,0 +1,63 @@
+-- Normal online new-game progression, using only the game's real starter stock.
+-- Unlike the old village fixture, road work never uses offline=true.
+local Sim=require 'game.Simulation'
+local Data=require 'game.SaveData'
+local Store=require 'game.PixelSaveStore'
+local D=require 'game.Definitions'
+local function untilTrue(s,predicate,seconds)
+    for _=1,seconds*10 do if predicate() then return true end;s:update(.1) end
+    return predicate()
+end
+local function build(s,kind,x,y)
+    local ok,message,b=s:build(kind,x,y)
+    V.assert(ok,'New-game plan '..kind..' at '..x..','..y..': '..tostring(message))
+    if not ok then return nil end
+    local complete=untilTrue(s,function() return kind=='road' and s.roads[x..':'..y] or b and b.complete end,600)
+    V.assert(complete,'Normal online workers finish '..kind..' at '..x..','..y)
+    return b
+end
+local function nextLesson(s,n)
+    V.assert(s:nextLesson() and s.lesson==n+1,'Normal new-game lesson '..n..' completes its real objective')
+end
+V.atFrame(8,function()
+    local s=Sim.new('finite',23);s.started=true
+    V.assert(s.stock.wood==72 and s.stock.stone==40 and s.stock.food==28 and s.population==10,'Fixture starts from the actual player new-game inventory and population')
+    for x=7,4,-1 do build(s,'road',x,9) end
+    nextLesson(s,1)
+    local ok,_,home=s:build('house',7,8)
+    V.assert(ok,'Player plans the first house with real earned road access')
+    for _=1,120 do s:update(.1) end
+    V.assert(home and not home.complete,'Save is taken during active first-house work')
+    local files={}
+    local backend={now=function() return 1000 end,read=function(k)return files[k] end,write=function(k,v)files[k]=v;return true end}
+    V.assert(Store.new(backend):save(s,true),'Active new game saves through the actual pixel schema encoder')
+    local restored
+    Store.new(backend):load('finite',function(bundle) restored=Data.restore(bundle,'finite') end)
+    V.assert(restored~=nil,'The pixel save rebuilds a live simulation with active construction')
+    if not restored then return end
+    s=restored;home=s:buildingAt(7,8)
+    V.assert(untilTrue(s,function()return home.complete end,600) and s.population==14,'Resumed first house completes once and adds four residents')
+    nextLesson(s,2)
+    for y=10,13 do build(s,'road',9,y) end
+    build(s,'road',8,13);build(s,'farm',8,12);nextLesson(s,3)
+    build(s,'road',13,9);build(s,'mill',13,8);nextLesson(s,4)
+    build(s,'road',14,9);build(s,'road',15,9)
+    for y=10,13 do build(s,'road',15,y) end
+    build(s,'road',14,13);build(s,'kitchen',14,12)
+    V.assert(untilTrue(s,function()return s.produced.food>=4 end,600),'Unboosted normal new game grows grain, mills flour, cooks and delivers four new rations')
+    nextLesson(s,5)
+    V.assert(untilTrue(s,function()return s.mealsServed>0 end,180),'A real worker eats from the newly built food system')
+    build(s,'road',16,9);build(s,'road',17,9);build(s,'woodcutter',17,8)
+    nextLesson(s,6)
+    V.assert(untilTrue(s,function()return next(s.felledTrees)~=nil end,180),'The new-game woodcutter really fells a standing tree')
+    build(s,'road',8,8);build(s,'road',8,7);build(s,'barracks',8,6)
+    for _=1,3 do V.assert(s:train(),'Available residents and actual materials train one villager guard') end
+    nextLesson(s,7)
+    V.assert(s:startRaid(),'Prepared new-game guards can begin the final tutorial defense')
+    V.assert(untilTrue(s,function()return s.victory or s.defeat end,120) and s.victory and not s.defeat,'Normal new-game progression wins the real introductory defense')
+    nextLesson(s,8)
+    V.assert(s.lesson==#D.lessons+1,'All eight lessons completed after a real mid-construction save/load')
+    for resource,value in pairs(s.stock) do V.assert(value>=0,'Final stock never goes negative: '..resource) end
+    print('PIXEL_QA_NEWGAME_FINISH',s.elapsed,s.produced.food,s.mealsServed,s.health)
+end)
+V.atFrame(25,function() V.finish() end)

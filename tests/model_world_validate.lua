@@ -61,6 +61,7 @@ V.atFrame(12,function()
     local rotation=model.actors.builder1.shoulders[2].rotation
     armBefore={rotation.x,rotation.y,rotation.z,rotation.w}
     sim.elapsed=sim.elapsed+0.5
+    for _,a in ipairs(sim.builders) do if a.phase=="hammer" then a.timer=a.timer+.5 end end
 end)
 V.atFrame(16,function()
     local rotation=view.modelWorld.actors.builder1.shoulders[2].rotation

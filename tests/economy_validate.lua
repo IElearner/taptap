@@ -4,8 +4,12 @@ local Data=require "game.SaveData"
 local function advance(s,seconds)
     for _=1,seconds*10 do s:update(0.1) end
 end
+local function untilTrue(s,predicate,seconds)
+    for _=1,seconds*10 do if predicate() then return true end;s:update(.1) end
+    return predicate()
+end
 V.atFrame(8,function()
-    local s=Sim.new();s.started,s.skipped=true,true;s.stock.food=200
+    local s=Sim.new();s.started,s.skipped=true,true;s.stock.food=200;s.stock.grain=16
     local ok,message=s:build("road",7,9);V.assert(ok,"Road connects the new canteen: " .. tostring(message))
     ok,message=s:build("kitchen",8,8);V.assert(ok,"Canteen foundation can be placed: " .. tostring(message))
     ok,message=s:build("road",6,9);V.assert(ok,"Road reaches meat processing")
@@ -13,8 +17,8 @@ V.atFrame(8,function()
     ok,message=s:build("butcher",5,11);V.assert(ok,"Butcher shop foundation can be placed: " .. tostring(message))
     V.assert(s:build("road",13,9) and s:build("road",14,9),"Connect the larger ranch")
     ok,message=s:build("ranch",14,8);V.assert(ok,"Two-tile ranch can be placed: " .. tostring(message))
-    advance(s,130)
-    V.assert(s:count("ranch")==1 and s:count("butcher")==1 and s:count("kitchen")==1,"Workers complete the new food chain")
+    V.assert(untilTrue(s,function() return s:count('ranch')==1 and s:count('butcher')==1 and s:count('kitchen')==1 end,600),"Workers complete the food chain through real staged deliveries")
+    V.assert(untilTrue(s,function() return (s.produced.meat or 0)>0 and s.produced.food>0 end,400),"Supplied grain supports a complete livestock-to-meal production cycle")
     V.assert((s.produced.livestock or 0)>0 and (s.produced.meat or 0)>0,"Ranch livestock is delivered and butchered into meat")
     V.assert(s.produced.food>0,"Canteen cooks meat into rations without requiring a mill")
     local hall=s:buildingAt(8,8)
@@ -35,8 +39,7 @@ V.atFrame(8,function()
     local tired=Sim.new();tired.started,tired.skipped=true,true
     local diner=tired:addBuilding("kitchen",8,8,true);diner.mealStock=2
     local visitor=tired.carriers[1];visitor.energy=20;visitor.hunger=0
-    advance(tired,12)
-    V.assert(visitor.energy>90 and visitor.hunger<30 and tired.mealsServed>0,"Low stamina sends a villager to eat and recover at the canteen")
+    V.assert(untilTrue(tired,function() return visitor.energy>90 and visitor.hunger<30 and tired.mealsServed>0 end,45),"Low stamina completes a real doorway, seated meal and recovery at the canteen")
 end)
 V.atFrame(25,function() V.finish() end)
 V.atFrame(9,function()

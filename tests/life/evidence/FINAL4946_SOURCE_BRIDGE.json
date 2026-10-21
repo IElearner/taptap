@@ -1,0 +1,13 @@
+{
+  "current": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+  "reverseOverlay": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+  "fileCount": 192,
+  "changed": [
+    "scripts/game/PixelLife.lua",
+    "scripts/game/SaveData.lua"
+  ],
+  "baseline": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+  "source": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+  "ordering": "Path.parts sorting, identical to native runner",
+  "independentlyRecomputed": true
+}

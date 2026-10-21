@@ -1,0 +1,900 @@
+{
+  "source": "/workspace/generated_images/exec-4c1ff805-d65b-4abc-bd69-8879dc0cb336.png",
+  "source_kind": "OpenAI image_gen original artwork",
+  "buildings": {
+    "store": {
+      "path": "buildings/store.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 160,
+      "doorY": 196,
+      "footprint": [
+        2,
+        2
+      ],
+      "source_box": [
+        0,
+        0,
+        392,
+        384
+      ],
+      "packed_box": [
+        100,
+        97,
+        220,
+        200
+      ]
+    },
+    "house": {
+      "path": "buildings/house.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        392,
+        0,
+        744,
+        384
+      ],
+      "packed_box": [
+        36,
+        64,
+        220,
+        200
+      ]
+    },
+    "kitchen": {
+      "path": "buildings/kitchen.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 49,
+      "doorY": 194,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        744,
+        0,
+        1145,
+        384
+      ],
+      "packed_box": [
+        24,
+        55,
+        232,
+        202
+      ],
+      "seats": [
+        [
+          78,
+          181
+        ],
+        [
+          111,
+          181
+        ],
+        [
+          143,
+          181
+        ],
+        [
+          175,
+          181
+        ]
+      ],
+      "cookWindow": [
+        206,
+        181
+      ],
+      "chimney": [
+        210,
+        89
+      ],
+      "smokeBounds": [
+        195,
+        0,
+        226,
+        89
+      ],
+      "hitbox": [
+        24,
+        88,
+        232,
+        202
+      ]
+    },
+    "mill": {
+      "path": "buildings/mill.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 160,
+      "doorY": 196,
+      "footprint": [
+        2,
+        3
+      ],
+      "source_box": [
+        0,
+        384,
+        367,
+        690
+      ],
+      "packed_box": [
+        100,
+        110,
+        220,
+        200
+      ],
+      "millCenter": [
+        154,
+        165
+      ]
+    },
+    "woodcutter": {
+      "path": "buildings/woodcutter.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        367,
+        384,
+        742,
+        690
+      ],
+      "packed_box": [
+        36,
+        67,
+        220,
+        200
+      ]
+    },
+    "butcher": {
+      "path": "buildings/butcher.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        742,
+        384,
+        1145,
+        690
+      ],
+      "packed_box": [
+        36,
+        71,
+        220,
+        200
+      ]
+    },
+    "ranch": {
+      "path": "buildings/ranch.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        0,
+        690,
+        398,
+        987
+      ],
+      "packed_box": [
+        36,
+        74,
+        220,
+        200
+      ]
+    },
+    "quarry": {
+      "path": "buildings/quarry.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        398,
+        690,
+        742,
+        987
+      ],
+      "packed_box": [
+        36,
+        44,
+        220,
+        200
+      ]
+    },
+    "courier": {
+      "path": "buildings/courier.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        742,
+        690,
+        1145,
+        987
+      ],
+      "packed_box": [
+        36,
+        75,
+        220,
+        200
+      ]
+    },
+    "barracks": {
+      "path": "buildings/barracks.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "source_box": [
+        0,
+        987,
+        424,
+        1374
+      ],
+      "packed_box": [
+        36,
+        65,
+        220,
+        200
+      ]
+    },
+    "farm": {
+      "path": "buildings/farm.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 160,
+      "doorY": 196,
+      "footprint": [
+        2,
+        2
+      ],
+      "source_box": [
+        424,
+        987,
+        769,
+        1374
+      ],
+      "packed_box": [
+        100,
+        122,
+        220,
+        200
+      ]
+    },
+    "frame": {
+      "path": "buildings/frame.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "source_box": [
+        769,
+        987,
+        1145,
+        1374
+      ],
+      "packed_box": [
+        36,
+        48,
+        220,
+        200
+      ]
+    },
+    "sawmill": {
+      "path": "buildings/sawmill.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        4,
+        3
+      ],
+      "source": "art-pipeline/pixel-v2/sources/workshops-source.png",
+      "source_box": [
+        0,
+        0,
+        1037,
+        590
+      ],
+      "packed_box": [
+        7,
+        78,
+        231,
+        196
+      ],
+      "sawPoint": [
+        104,
+        160
+      ],
+      "workBounds": [
+        8,
+        153,
+        247,
+        199
+      ]
+    },
+    "bakery": {
+      "path": "buildings/bakery.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "source": "art-pipeline/pixel-v2/sources/workshops-source.png",
+      "source_box": [
+        1040,
+        0,
+        1774,
+        590
+      ],
+      "packed_box": [
+        38,
+        55,
+        222,
+        196
+      ],
+      "ovenPoint": [
+        83,
+        164
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ]
+    },
+    "forester": {
+      "path": "buildings/forester.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        83,
+        177
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        34,
+        93,
+        218,
+        199
+      ],
+      "source": "art-pipeline/pixel-v3/sources/civil.png",
+      "source_box": [
+        127,
+        48,
+        897,
+        493
+      ],
+      "source_door": [
+        520,
+        477
+      ]
+    },
+    "mason": {
+      "path": "buildings/mason.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        75,
+        177
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        36,
+        119,
+        220,
+        198
+      ],
+      "source": "art-pipeline/pixel-v3/sources/civil.png",
+      "source_box": [
+        44,
+        534,
+        999,
+        943
+      ],
+      "source_door": [
+        520,
+        935
+      ]
+    },
+    "fishery": {
+      "path": "buildings/fishery.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        2
+      ],
+      "workPoint": [
+        168,
+        177
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        35,
+        108,
+        219,
+        218
+      ],
+      "source": "art-pipeline/pixel-v3/sources/civil.png",
+      "source_box": [
+        97,
+        978,
+        933,
+        1480
+      ],
+      "source_door": [
+        520,
+        1380
+      ]
+    },
+    "ironmine": {
+      "path": "buildings/ironmine.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        128,
+        181
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        36,
+        101,
+        220,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/mines.png",
+      "source_box": [
+        105,
+        34,
+        959,
+        479
+      ],
+      "source_door": [
+        530,
+        475
+      ]
+    },
+    "coalmine": {
+      "path": "buildings/coalmine.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        128,
+        181
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        34,
+        98,
+        218,
+        198
+      ],
+      "source": "art-pipeline/pixel-v3/sources/mines.png",
+      "source_box": [
+        84,
+        511,
+        979,
+        997
+      ],
+      "source_door": [
+        540,
+        990
+      ]
+    },
+    "goldmine": {
+      "path": "buildings/goldmine.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        128,
+        181
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        32,
+        104,
+        216,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/mines.png",
+      "source_box": [
+        54,
+        1013,
+        985,
+        1485
+      ],
+      "source_door": [
+        540,
+        1479
+      ]
+    },
+    "smelter": {
+      "path": "buildings/smelter.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        4,
+        3
+      ],
+      "workPoint": [
+        74,
+        181
+      ],
+      "workBounds": [
+        8,
+        153,
+        247,
+        199
+      ],
+      "packed_box": [
+        0,
+        75,
+        224,
+        198
+      ],
+      "source": "art-pipeline/pixel-v3/sources/ironcraft.png",
+      "source_box": [
+        63,
+        9,
+        959,
+        501
+      ],
+      "source_door": [
+        575,
+        494
+      ]
+    },
+    "ironweapons": {
+      "path": "buildings/ironweapons.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        79,
+        179
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        37,
+        97,
+        221,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/ironcraft.png",
+      "source_box": [
+        76,
+        534,
+        952,
+        1009
+      ],
+      "source_door": [
+        510,
+        1003
+      ]
+    },
+    "ironarmor": {
+      "path": "buildings/ironarmor.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        78,
+        179
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        30,
+        99,
+        214,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/ironcraft.png",
+      "source_box": [
+        83,
+        1044,
+        942,
+        1500
+      ],
+      "source_door": [
+        540,
+        1495
+      ]
+    },
+    "tannery": {
+      "path": "buildings/tannery.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        75,
+        180
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        34,
+        113,
+        218,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/woodleather.png",
+      "source_box": [
+        34,
+        28,
+        995,
+        466
+      ],
+      "source_door": [
+        527,
+        459
+      ]
+    },
+    "woodweapons": {
+      "path": "buildings/woodweapons.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        77,
+        180
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        36,
+        111,
+        220,
+        198
+      ],
+      "source": "art-pipeline/pixel-v3/sources/woodleather.png",
+      "source_box": [
+        26,
+        499,
+        996,
+        957
+      ],
+      "source_door": [
+        510,
+        949
+      ]
+    },
+    "leatherarmor": {
+      "path": "buildings/leatherarmor.png",
+      "width": 256,
+      "height": 224,
+      "anchorX": 192,
+      "anchorY": 176,
+      "doorX": 128,
+      "doorY": 196,
+      "footprint": [
+        3,
+        3
+      ],
+      "workPoint": [
+        78,
+        180
+      ],
+      "workBounds": [
+        36,
+        153,
+        219,
+        199
+      ],
+      "packed_box": [
+        29,
+        104,
+        213,
+        197
+      ],
+      "source": "art-pipeline/pixel-v3/sources/woodleather.png",
+      "source_box": [
+        43,
+        994,
+        982,
+        1469
+      ],
+      "source_door": [
+        550,
+        1461
+      ]
+    }
+  }
+}

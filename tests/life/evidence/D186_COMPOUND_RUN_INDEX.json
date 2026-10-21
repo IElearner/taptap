@@ -1,0 +1,132 @@
+{
+  "sourceHash": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+  "acceptedRuns": 6,
+  "acceptedAssertions": 66,
+  "accepted": [
+    {
+      "run": "d186-upgrade",
+      "manifest": "tests/life/evidence/raw/d186-upgrade-manifest.json",
+      "completeArtifact": "tests/life/evidence/d186-upgrade-complete.json",
+      "complete": true,
+      "finishFrame": 11,
+      "assertions": {
+        "total": 34,
+        "passed": 34,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-upgrade-hud",
+      "manifest": "tests/life/evidence/raw/d186-upgrade-hud-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-upgrade-hud-states.json",
+      "complete": true,
+      "finishFrame": 87,
+      "assertions": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-woodcutter",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-woodcutter-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-woodcutter-states.json",
+      "complete": true,
+      "finishFrame": 465,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-fishery",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-fishery-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-fishery-states.json",
+      "complete": true,
+      "finishFrame": 1017,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-quarry",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-quarry-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-quarry-states.json",
+      "complete": true,
+      "finishFrame": 990,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-mill-complete",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-mill-complete-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-mill-complete-states.json",
+      "complete": true,
+      "finishFrame": 1957,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    }
+  ],
+  "excluded": [
+    {
+      "run": "d186-woodrack",
+      "reason": "Product save/load blocker at genuine carrier approach",
+      "rawResult": "FAIL",
+      "assertions": {
+        "total": 9,
+        "passed": 7,
+        "failed": 2
+      }
+    },
+    {
+      "run": "d186-woodrack-diagnostic",
+      "reason": "Same blocker reproduced with exact failed save and one-ULP diagnostic",
+      "rawResult": "FAIL",
+      "assertions": {
+        "total": 9,
+        "passed": 7,
+        "failed": 2
+      }
+    },
+    {
+      "run": "d186-compoundvisual-mill",
+      "reason": "1800-frame budget exhausted; automatic 1/1 PASS has no complete artifact and is NOT accepted",
+      "rawResult": "PASS",
+      "assertions": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    }
+  ],
+  "overallAccepted": false,
+  "blocker": "SaveData private pickup destination rejects a valid cjson coordinate roundtrip",
+  "physicalPhoneTested": false
+}

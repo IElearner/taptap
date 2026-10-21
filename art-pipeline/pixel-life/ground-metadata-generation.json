@@ -1,0 +1,9 @@
+{
+  "tool": "Maker MCP generate_resource_meta",
+  "success": true,
+  "generatorCommit": "a6a4145ac8be26d9385f3a318032cc79009f8a79",
+  "generated": [
+    "assets/art/pixel-v1/life/ground-props.png",
+    "assets/art/pixel-v1/life/ground-props-import.json"
+  ]
+}

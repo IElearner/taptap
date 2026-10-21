@@ -1,0 +1,11 @@
+--- /workspace/work/development/PixelActors.1fa74ea0.lua	2026-10-20 06:29:55.050888758 +0000
++++ scripts/game/PixelActors.lua	2026-10-20 06:29:55.070673126 +0000
+@@ -89,7 +89,7 @@
+         old.walking,old.frame,old.action=walking,frame,action
+         result[#result+1]={key=key,actor=a,x=x,y=y,walking=walking,direction=old.direction,
+             frame=frame,action=action,actionClock=actionClock,
+-            look=(a.workerLook or 1)-1,cargo=a.carrying and Cargo.resource(a) or nil,building=b,
++            look=(a.workerLook or 1)-1,cargo=a.carrying and (b and b.kind=="woodcutter" and sim:outputResource(b) or Cargo.resource(a)) or nil,building=b,
+             faction=key:match('^guard') and 'guard' or key:match('^enemy') and 'enemy' or nil,
+             layerBuilding=interior and b or meal and (meal.phase=='enter' or meal.phase=='eat' or meal.phase=='exit') and sim.buildings[meal.target] or nil}
+     end

@@ -3,6 +3,7 @@
 ---@field mode string
 ---@field seed number
 ---@field expansion number
+---@field worldSize number
 local Map = {}
 Map.__index = Map
 ---@param mode string?
@@ -14,10 +15,11 @@ function Map.new(mode, seed)
 end
 function Map:init(mode, seed)
     self.mode, self.seed, self.expansion = mode or "finite", seed or 7319, 0
+    self.worldSize=self.mode=="finite" and 30 or 22
 end
 function Map:bounds()
     local margin = self.mode == "infinite" and self.expansion * 8 or 0
-    return 1 - margin, 22 + margin
+    return 1 - margin, self.worldSize + margin
 end
 function Map:terrain(x, y)
     local low, high = self:bounds()

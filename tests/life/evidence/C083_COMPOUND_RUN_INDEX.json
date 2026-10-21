@@ -1,0 +1,313 @@
+{
+  "source": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+  "status": "sealed; visual integration not accepted",
+  "acceptedRuns": 7,
+  "acceptedAssertions": 430,
+  "phoneTested": false,
+  "rows": [
+    {
+      "run": "c083-compound-model-diagnostic",
+      "included": false,
+      "classification": "superseded comparator diagnostic; raw retained",
+      "assertions": {
+        "total": 336,
+        "passed": 335,
+        "failed": 1
+      },
+      "rawResult": "FAIL",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 100,
+      "finishMarkers": [
+        [
+          "28",
+          "FAILED",
+          "336",
+          "335",
+          "1"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-model-diagnostic-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-model-diagnostic-manifest.json",
+      "issues": [
+        "ironmine reload never replans the compound or road"
+      ]
+    },
+    {
+      "run": "c083-compound-model-final",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 336,
+        "passed": 336,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 100,
+      "finishMarkers": [
+        [
+          "28",
+          "PASSED",
+          "336",
+          "336",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-model-final-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-model-final-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compound-model",
+      "included": false,
+      "classification": "superseded comparator diagnostic; raw retained",
+      "assertions": {
+        "total": 336,
+        "passed": 335,
+        "failed": 1
+      },
+      "rawResult": "FAIL",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 880,
+      "finishMarkers": [
+        [
+          "28",
+          "FAILED",
+          "336",
+          "335",
+          "1"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-model-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-model-manifest.json",
+      "issues": [
+        "ironmine reload never replans the compound or road"
+      ]
+    },
+    {
+      "run": "c083-compound-model-tolerance",
+      "included": false,
+      "classification": "superseded comparator diagnostic; raw retained",
+      "assertions": {
+        "total": 336,
+        "passed": 336,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 100,
+      "finishMarkers": [
+        [
+          "28",
+          "PASSED",
+          "336",
+          "336",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-model-tolerance-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-model-tolerance-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compound-rail",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 52,
+        "passed": 52,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 1830,
+      "finishMarkers": [
+        [
+          "70",
+          "PASSED",
+          "52",
+          "52",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-rail-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-rail-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compound-terrain",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 22,
+        "passed": 22,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 730,
+      "finishMarkers": [
+        [
+          "17",
+          "PASSED",
+          "22",
+          "22",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/c083-compound-terrain-complete.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compound-terrain-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compoundvisual-fishery",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 2420,
+      "finishMarkers": [
+        [
+          "1017",
+          "PASSED",
+          "5",
+          "5",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/visual/c083-compoundvisual-fishery-states.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compoundvisual-fishery-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compoundvisual-mill",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 2420,
+      "finishMarkers": [
+        [
+          "1957",
+          "PASSED",
+          "5",
+          "5",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/visual/c083-compoundvisual-mill-states.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compoundvisual-mill-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compoundvisual-quarry",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 2420,
+      "finishMarkers": [
+        [
+          "990",
+          "PASSED",
+          "5",
+          "5",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/visual/c083-compoundvisual-quarry-states.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compoundvisual-quarry-manifest.json",
+      "issues": []
+    },
+    {
+      "run": "c083-compoundvisual-woodcutter",
+      "included": true,
+      "classification": "accepted model/script evidence; visual judgment separate",
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "sourceAfter": "c083700670e9bc548eacc26ff97ecd910292142c1c85aaf12602dad4c41aaeb8",
+      "helpersStable": true,
+      "fixturesStable": true,
+      "frames": 2420,
+      "finishMarkers": [
+        [
+          "432",
+          "PASSED",
+          "5",
+          "5",
+          "0"
+        ]
+      ],
+      "completedBeforeEnd": true,
+      "completeArtifact": "tests/life/evidence/visual/c083-compoundvisual-woodcutter-states.json",
+      "complete": true,
+      "manifest": "tests/life/evidence/raw/c083-compoundvisual-woodcutter-manifest.json",
+      "issues": []
+    }
+  ]
+}

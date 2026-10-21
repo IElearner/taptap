@@ -48,11 +48,14 @@ local function engineBackend()
         end,
     }
 end
-local function filename(mode) return "shanheli_save_v1_" .. mode .. ".json" end
+local function filename(self,mode) return self.namespace .. "_" .. mode .. ".json" end
 Store.nativeBackend = engineBackend
-local function cloudKey(mode) return "shanheli_save_v1_" .. mode end
-function Store.new(backend)
+local function cloudKey(self,mode) return self.namespace .. "_" .. mode end
+function Store.new(backend,options)
     local self = setmetatable({}, Store)
+    options=options or {}
+    self.namespace=options.namespace or 'shanheli_save_v1'
+    self.schema=options.schema
     self:init(backend or engineBackend())
     return self
 end
@@ -73,6 +76,7 @@ function Store:decode(value, mode)
         if not ok then return nil end
         decoded = result
     end
+    if self.schema and (type(decoded)~='table' or decoded.application~=self.schema or decoded.saveSchema~=1) then return nil end
     if Data.restore(decoded, mode) then return decoded end
     return nil
 end
@@ -86,7 +90,7 @@ function Store:load(mode, callback)
     self.generation, self.loading, self.loadElapsed, self.activeMode = self.generation + 1, true, 0, mode
     self.status, self.cloudReady[mode] = "读取存档中…", false
     local generation = self.generation
-    local localData = newer(self:decode(self.backend.read(filename(mode)), mode), self:decode(self.backend.read(filename(mode) .. ".bak"), mode))
+    local localData = newer(self:decode(self.backend.read(filename(self,mode)), mode), self:decode(self.backend.read(filename(self,mode) .. ".bak"), mode))
     local finished = false
     local function finish(cloudOk, value, available)
         if finished or generation ~= self.generation then return end
@@ -105,7 +109,7 @@ function Store:load(mode, callback)
     end
     self.completeLoad = function() finish(false, nil, true) end
     if not self.backend.cloudGet then finish(false, nil, false); return end
-    local ok, sent = pcall(self.backend.cloudGet, cloudKey(mode), function(success, data) finish(success, data, true) end)
+    local ok, sent = pcall(self.backend.cloudGet, cloudKey(self,mode), function(success, data) finish(success, data, true) end)
     if not ok or not sent then finish(false, nil, false) end
 end
 function Store:flush(mode)
@@ -124,7 +128,7 @@ function Store:flush(mode)
         end
         self:flush(mode)
     end
-    local ok, sent = pcall(self.backend.cloudSet, cloudKey(mode), queued.blob, done)
+    local ok, sent = pcall(self.backend.cloudSet, cloudKey(self,mode), queued.blob, done)
     if not ok or not sent then done(false) end
 end
 function Store:save(sim, idleEnabled)
@@ -133,11 +137,12 @@ function Store:save(sim, idleEnabled)
     local revision = (self.revisions[mode] or 0) + 1
     local at = math.max(self.now(), self.lastTimes[mode] or 0)
     local bundle = Data.capture(sim, at, revision, idleEnabled)
+    if self.schema then bundle.application,bundle.saveSchema=self.schema,1 end
     local blob = cjson.encode(bundle)
     if #blob > 4 * 1024 * 1024 then self.status = "存档超出大小限制，未覆盖旧档"; return false end
-    local previous = self.backend.read(filename(mode))
-    if self:decode(previous, mode) then self.backend.write(filename(mode) .. ".bak", previous) end
-    local ok = self.backend.write(filename(mode), blob)
+    local previous = self.backend.read(filename(self,mode))
+    if self:decode(previous, mode) then self.backend.write(filename(self,mode) .. ".bak", previous) end
+    local ok = self.backend.write(filename(self,mode), blob)
     self.revisions[mode], self.lastTimes[mode] = revision, at
     if self.activeMode == mode then self.status = ok and "本地已保存" or "本地保存失败" end
     if self.cloudReady[mode] and self.backend.cloudSet then

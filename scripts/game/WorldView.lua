@@ -38,7 +38,7 @@ end
 function WorldView.create(sim, onTile)
     local modelWorld=ModelWorld.new(sim)
     ---@type {x:number,y:number,zoom:number,pinchZoom:number}
-    local camera = { x = 0, y = 0, zoom = 1.55, pinchZoom = 1.55 }
+    local camera = { x = 0, y = 0, zoom = 1.08, pinchZoom = 1.08 }
     local panel = UI.Panel { position = "absolute", top = 0, bottom = 0, left = 0, right = 0, pointerEvents = "auto" }
     local mode = "inspect"
     local selected = false
@@ -99,7 +99,7 @@ function WorldView.create(sim, onTile)
         local distance=math.sqrt((ax-bx)^2+(ay-by)^2)
         local fx,fy=(ax+bx)*0.5,(ay+by)*0.5
         local l=panel:GetAbsoluteLayout()
-        camera.zoom=math.max(0.55,math.min(1.8,physicalPinch.zoom*distance/physicalPinch.distance))
+        camera.zoom=math.max(0.55,math.min(2.2,physicalPinch.zoom*distance/physicalPinch.distance))
         camera.x=fx-physicalPinch.worldX*camera.zoom-l.x-l.w*0.5
         camera.y=fy-physicalPinch.worldY*camera.zoom-l.y-l.h*0.5
         clampCamera()
@@ -172,7 +172,7 @@ function WorldView.create(sim, onTile)
         local l=panel:GetAbsoluteLayout()
         local anchor=pinchAnchor
         if not anchor then panel.props.onPinchStart(event);anchor=pinchAnchor end
-        local zoom=math.max(0.55,math.min(1.8,camera.pinchZoom*(event.scale or 1)))
+        local zoom=math.max(0.55,math.min(2.2,camera.pinchZoom*(event.scale or 1)))
         camera.zoom=zoom
         camera.x=anchor.screenX-anchor.x*zoom-l.x-l.w*0.5
         camera.y=anchor.screenY-anchor.y*zoom-l.y-l.h*0.5
@@ -272,7 +272,7 @@ function WorldView.create(sim, onTile)
             end
             if thought then
                 local at=modelWorld.camera:WorldToScreenPoint(person.node.worldPosition+Vector3(0,0.8,0))
-                thoughtBubble(vg,l.x+at.x*l.w,l.y+at.y*l.h+35,thought)
+                thoughtBubble(vg,l.x+at.x*l.w,l.y+at.y*l.h-5,thought)
             end
         end
     end
@@ -287,8 +287,8 @@ function WorldView.create(sim, onTile)
         previewState = function() return ghost end,
         select = function(value) selected = value end,
         selectedBuilding = function() return selected end,
-        zoom = function(delta) camera.zoom = math.max(0.55, math.min(1.8, camera.zoom + delta)) end,
-        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1.55 end,
+        zoom = function(delta) camera.zoom = math.max(0.55, math.min(2.2, camera.zoom + delta)) end,
+        home = function() camera.x, camera.y, camera.zoom = 0, 0, 1.08 end,
         cameraState = function() return {x=camera.x,y=camera.y,zoom=camera.zoom} end,
         frontier = function()
             local _, high = sim.map:bounds()

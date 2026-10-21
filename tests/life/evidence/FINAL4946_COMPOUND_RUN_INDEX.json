@@ -1,0 +1,231 @@
+{
+  "scope": "Integrated compounds / real storage handoff / terrain and rails / safe upgrade, not whole-game acceptance",
+  "finalSource": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+  "finalNativeRuns": 6,
+  "finalNativeAssertions": 451,
+  "final": [
+    {
+      "run": "final4946-woodrack",
+      "manifest": "tests/life/evidence/raw/final4946-woodrack-manifest.json",
+      "completeArtifact": "tests/life/evidence/final4946-woodrack-complete.json",
+      "complete": true,
+      "finishFrame": 16,
+      "assertions": {
+        "total": 19,
+        "passed": 19,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    },
+    {
+      "run": "final4946-pickup-save",
+      "manifest": "tests/life/evidence/raw/final4946-pickup-save-manifest.json",
+      "completeArtifact": "tests/life/evidence/final4946-pickup-save-complete.json",
+      "complete": true,
+      "finishFrame": 11,
+      "assertions": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    },
+    {
+      "run": "final4946-compound-model",
+      "manifest": "tests/life/evidence/raw/final4946-compound-model-manifest.json",
+      "completeArtifact": "tests/life/evidence/final4946-compound-model-complete.json",
+      "complete": true,
+      "finishFrame": 28,
+      "assertions": {
+        "total": 336,
+        "passed": 336,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    },
+    {
+      "run": "final4946-terrain",
+      "manifest": "tests/life/evidence/raw/final4946-terrain-manifest.json",
+      "completeArtifact": "tests/life/evidence/final4946-terrain-complete.json",
+      "complete": true,
+      "finishFrame": 17,
+      "assertions": {
+        "total": 22,
+        "passed": 22,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    },
+    {
+      "run": "final4946-rail",
+      "manifest": "tests/life/evidence/raw/final4946-rail-manifest.json",
+      "completeArtifact": "tests/life/evidence/final4946-rail-complete.json",
+      "complete": true,
+      "finishFrame": 68,
+      "assertions": {
+        "total": 52,
+        "passed": 52,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    },
+    {
+      "run": "final4946-south",
+      "manifest": "tests/life/evidence/raw/final4946-south-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/final4946-south-states.json",
+      "complete": true,
+      "finishFrame": 183,
+      "assertions": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9",
+      "sourceAfter": "4946f47a59b228956275c3e757fa40f7c805315dc51a4ee0df0ac0ba4772cbd9"
+    }
+  ],
+  "inheritedSource": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+  "inheritedRuns": 6,
+  "inheritedAssertions": 66,
+  "inherited": [
+    {
+      "run": "d186-upgrade",
+      "manifest": "tests/life/evidence/raw/d186-upgrade-manifest.json",
+      "completeArtifact": "tests/life/evidence/d186-upgrade-complete.json",
+      "complete": true,
+      "finishFrame": 11,
+      "assertions": {
+        "total": 34,
+        "passed": 34,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-upgrade-hud",
+      "manifest": "tests/life/evidence/raw/d186-upgrade-hud-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-upgrade-hud-states.json",
+      "complete": true,
+      "finishFrame": 87,
+      "assertions": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-woodcutter",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-woodcutter-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-woodcutter-states.json",
+      "complete": true,
+      "finishFrame": 465,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-fishery",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-fishery-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-fishery-states.json",
+      "complete": true,
+      "finishFrame": 1017,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-quarry",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-quarry-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-quarry-states.json",
+      "complete": true,
+      "finishFrame": 990,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    },
+    {
+      "run": "d186-compoundvisual-mill-complete",
+      "manifest": "tests/life/evidence/raw/d186-compoundvisual-mill-complete-manifest.json",
+      "completeArtifact": "tests/life/evidence/visual/d186-compoundvisual-mill-complete-states.json",
+      "complete": true,
+      "finishFrame": 1957,
+      "assertions": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "rawResult": "PASS",
+      "sourceBefore": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb",
+      "sourceAfter": "d18631775292a1a36053e4e37c77b6ead0437c3c075a47e1e4524b07349e7ebb"
+    }
+  ],
+  "bridge": "FINAL4946_SOURCE_BRIDGE.json",
+  "inheritedScope": "Unchanged east fish/wood/quarry/mill render branches and unchanged upgrade API/HUD. Final SaveData behavior independently retested; south branch not inherited.",
+  "excluded": [
+    {
+      "run": "d186-woodrack",
+      "reason": "Product save/load blocker at genuine carrier approach",
+      "rawResult": "FAIL",
+      "assertions": {
+        "total": 9,
+        "passed": 7,
+        "failed": 2
+      }
+    },
+    {
+      "run": "d186-woodrack-diagnostic",
+      "reason": "Same blocker reproduced with exact failed save and one-ULP diagnostic",
+      "rawResult": "FAIL",
+      "assertions": {
+        "total": 9,
+        "passed": 7,
+        "failed": 2
+      }
+    },
+    {
+      "run": "d186-compoundvisual-mill",
+      "reason": "1800-frame budget exhausted; automatic 1/1 PASS has no complete artifact and is NOT accepted",
+      "rawResult": "PASS",
+      "assertions": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    }
+  ],
+  "qaAcceptedScope": true,
+  "phoneTested": false,
+  "wholeGame95Claimed": false,
+  "legacyAllVersionsExhaustivelyTested": false
+}

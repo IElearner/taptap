@@ -117,7 +117,11 @@ V.atFrame(8, function()
     live:build("woodcutter", 8, 8); advance(live, 8)
     local oldWood = live.stock.wood
     Game.Focus(false); liveClock.now = liveClock.now + 120; Game.Focus(true)
-    for _ = 1, 20 do Game.Update(0.1) end
+    for _ = 1, 20 do
+        Game.Update(0.1)
+        local _,_,_,settlementInfo=Game.Inspect()
+        if not settlementInfo.settling then break end
+    end
     local info
     live, _, hud, info = Game.Inspect()
     V.assert(not info.settling and live.stock.wood > oldWood, "Background and return trigger offline production")

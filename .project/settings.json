@@ -21,7 +21,18 @@
       "../assets",
       "../scripts"
     ],
-    "asset_ignores": []
+    "asset_ignores": [
+      "../assets/actors",
+      "../assets/environment",
+      "../assets/lighting",
+      "../assets/material",
+      "../assets/model",
+      "../assets/image",
+      "../assets/art/v9",
+      "../assets/art/v10",
+      "../assets/art/v11",
+      "../assets/art/v12"
+    ]
   },
   "@runtime": {
     "multiplayer": {

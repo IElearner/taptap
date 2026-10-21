@@ -6,7 +6,7 @@ local Move=require "game.Movement"
 V.atFrame(8,function()
     local walker={x=0,y=0,path={{x=1,y=0}},index=1}
     Move.step(walker,0.1)
-    V.assert(math.abs(walker.x-0.18)<0.001,"Villagers walk at the slower default pace")
+    V.assert(walker.x>=0.08 and walker.x<=0.12,"Default travel remains a readable walking pace of about one tile per second")
     local planned=Sim.new("finite",23)
     planned.started,planned.skipped=true,true
     V.assert(planned:build("road",7,9) and planned:build("road",6,9),

@@ -62,8 +62,8 @@ V.atFrame(12,function()
     local guard=model.actors.guard1
     V.assert(guard and guard.action=="eat" and guard.bowl.enabled and guard.tools.chopsticks.enabled,
         "A militia diner sits and uses meal props just like civilian diners")
-    poseBefore=model.actors.carrier1.shoulders[2].rotation.x
-    sim.elapsed=sim.elapsed+0.35
+    poseBefore=model.actors.carrier1.hands[2].worldPosition
+    sim.elapsed=sim.elapsed+0.8
     -- The stage models are different geometry, not a complete house under an overlay.
     local foundation=cache:GetResource("Model",Manifest.models.house_0.model)
     local frame=cache:GetResource("Model",Manifest.models.house_1.model)
@@ -74,6 +74,6 @@ V.atFrame(12,function()
     end
 end)
 V.atFrame(18,function()
-    V.assert(math.abs(view.modelWorld.actors.carrier1.shoulders[2].rotation.x-poseBefore)>0.001,"Rebuilt seated character still animates its physical arm")
+    V.assert((view.modelWorld.actors.carrier1.hands[2].worldPosition-poseBefore):Length()>.001,"Rebuilt seated character moves its physical hand between bowl and mouth")
 end)
 V.atFrame(30,function() V.finish() end)
