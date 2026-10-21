@@ -1,0 +1,1106 @@
+{
+  "version": 1,
+  "scope": "first_launch_buildable_types",
+  "target_building_count": 32,
+  "population": {
+    "starting_residents": 16,
+    "houses": 4,
+    "capacity_per_house": 4,
+    "baseline_simultaneous_haulers": 2,
+    "baseline_simultaneous_construction_workers": 1,
+    "available_specialists": 13,
+    "game_day_minutes": 12,
+    "adult_food_portions_per_day": 2,
+    "assigned_specialists": 7,
+    "available_labor_reserve": 6
+  },
+  "logistics": {
+    "load_units_per_trip": 2,
+    "average_round_trip_seconds": 20,
+    "porters": 2
+  },
+  "resources": [
+    "麥粒",
+    "原木",
+    "木料",
+    "原石",
+    "切石",
+    "鐵礦石",
+    "煤",
+    "金礦石",
+    "鐵錠",
+    "金錠",
+    "面粉",
+    "麩皮",
+    "面餅",
+    "鮮魚",
+    "肥豬",
+    "猪皮",
+    "香腸",
+    "皮革",
+    "木斧",
+    "弓",
+    "長槍",
+    "皮甲",
+    "木盾",
+    "鐵劍",
+    "鐵槍",
+    "弩",
+    "鐵甲",
+    "鐵盾",
+    "戰馬",
+    "招募令",
+    "衝車",
+    "投石器",
+    "熟練工資格",
+    "手推車",
+    "新居民",
+    "可征兵劳力",
+    "長槍兵",
+    "鄉勇",
+    "弓手",
+    "刀盾兵",
+    "騎兵",
+    "渡口修復",
+    "交付完成",
+    "斧盾兵",
+    "弩手",
+    "熟練勞力"
+  ],
+  "plots": [
+    {
+      "name": "麥田",
+      "counts_as_building": false,
+      "output": {
+        "麥粒": 8
+      },
+      "cycle_seconds": 120,
+      "phases": {
+        "播種": 10,
+        "勞作一": 10,
+        "勞作二": 10,
+        "勞作三": 10,
+        "成熟": 60,
+        "休息": 20
+      }
+    },
+    {
+      "name": "林地",
+      "counts_as_building": false,
+      "enables_building": "伐木场"
+    },
+    {
+      "name": "礦区",
+      "counts_as_building": false,
+      "enables_buildings": [
+        "采石场",
+        "铁矿",
+        "煤矿",
+        "金矿"
+      ]
+    },
+    {
+      "name": "渔区",
+      "counts_as_building": false,
+      "enables_building": "渔棚"
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home",
+      "name": "家院",
+      "job": "居住",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 6,
+        "切石": 3
+      }
+    },
+    {
+      "id": "hall",
+      "name": "村务堂",
+      "job": "里正",
+      "inputs": {
+        "金錠": 1,
+        "面餅": 2
+      },
+      "outputs": {
+        "招募令": 1,
+        "新居民": 1
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      },
+      "recipes": [
+        {
+          "name": "徵募軍隊",
+          "inputs": {
+            "金錠": 1
+          },
+          "outputs": {
+            "招募令": 1
+          },
+          "cycle_seconds": 60
+        },
+        {
+          "name": "邀請成年移民",
+          "inputs": {
+            "面餅": 2
+          },
+          "outputs": {
+            "新居民": 1
+          },
+          "cycle_seconds": 180
+        }
+      ],
+      "note": "兩種互斥訂單；移民需家院有空床位，招募軍隊消耗勞力儲備。"
+    },
+    {
+      "id": "warehouse",
+      "name": "仓库",
+      "job": "倉管",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "granary",
+      "name": "粮仓",
+      "job": "倉管",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 6,
+        "切石": 3
+      }
+    },
+    {
+      "id": "farm",
+      "name": "农庄",
+      "job": "農夫",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 6,
+        "切石": 3
+      }
+    },
+    {
+      "id": "inn",
+      "name": "食堂",
+      "job": "酒館廚役",
+      "inputs": {
+        "面餅": 1,
+        "香腸": 1,
+        "鮮魚": 1
+      },
+      "outputs": {},
+      "terminal_sinks": {},
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "面饼餐",
+          "inputs": {
+            "面餅": 1
+          },
+          "outputs": {},
+          "terminal_sinks": {
+            "面餅": "居民/部队一餐"
+          }
+        },
+        {
+          "name": "香肠餐",
+          "inputs": {
+            "香腸": 1
+          },
+          "outputs": {},
+          "terminal_sinks": {
+            "香腸": "居民/部队一餐"
+          }
+        },
+        {
+          "name": "鱼餐",
+          "inputs": {
+            "鮮魚": 1
+          },
+          "outputs": {},
+          "terminal_sinks": {
+            "鮮魚": "居民/部队一餐"
+          }
+        }
+      ]
+    },
+    {
+      "id": "woodcutters",
+      "name": "伐木场",
+      "job": "伐木工",
+      "inputs": {},
+      "outputs": {
+        "原木": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 6,
+        "切石": 3
+      }
+    },
+    {
+      "id": "sawmill",
+      "name": "锯木坊",
+      "job": "鋸木工",
+      "inputs": {
+        "原木": 1
+      },
+      "outputs": {
+        "木料": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "quarry",
+      "name": "采石场",
+      "job": "石匠",
+      "inputs": {},
+      "outputs": {
+        "原石": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "mason",
+      "name": "石匠铺",
+      "job": "石匠",
+      "inputs": {
+        "原石": 2
+      },
+      "outputs": {
+        "切石": 1
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "ironmine",
+      "name": "铁矿",
+      "job": "礦工",
+      "inputs": {},
+      "outputs": {
+        "鐵礦石": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "coalmine",
+      "name": "煤矿",
+      "job": "礦工",
+      "inputs": {},
+      "outputs": {
+        "煤": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "goldmine",
+      "name": "金矿",
+      "job": "礦工",
+      "inputs": {},
+      "outputs": {
+        "金礦石": 1
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "mill",
+      "name": "磨坊",
+      "job": "磨工",
+      "inputs": {
+        "麥粒": 2
+      },
+      "outputs": {
+        "面粉": 2,
+        "麩皮": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "bakery",
+      "name": "饼坊",
+      "job": "饼師",
+      "inputs": {
+        "面粉": 1
+      },
+      "outputs": {
+        "面餅": 2
+      },
+      "cycle_seconds": 40,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "fishery",
+      "name": "渔棚",
+      "job": "漁夫",
+      "inputs": {},
+      "outputs": {
+        "鮮魚": 2
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 6,
+        "切石": 3
+      }
+    },
+    {
+      "id": "swine",
+      "name": "猪圈",
+      "job": "養豬工",
+      "inputs": {
+        "麩皮": 6
+      },
+      "outputs": {
+        "肥豬": 1
+      },
+      "cycle_seconds": 180,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "note": "肥豬生長後轉入屠宰坊；豬皮只在屠宰時產生。"
+    },
+    {
+      "id": "butcher",
+      "name": "屠宰坊",
+      "job": "屠夫",
+      "inputs": {
+        "肥豬": 1
+      },
+      "outputs": {
+        "香腸": 3,
+        "猪皮": 1
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "tannery",
+      "name": "制革坊",
+      "job": "制革工",
+      "inputs": {
+        "猪皮": 2
+      },
+      "outputs": {
+        "皮革": 1
+      },
+      "cycle_seconds": 60,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "smelter",
+      "name": "冶炼场",
+      "job": "冶煉工",
+      "inputs": {
+        "鐵礦石": 1,
+        "煤": 1,
+        "金礦石": 1
+      },
+      "outputs": {
+        "鐵錠": 1,
+        "金錠": 1
+      },
+      "cycle_seconds": 60,
+      "note": "每次選擇鐵或金配方；不能同一批同時消耗兩種礦石。",
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      },
+      "recipes": [
+        {
+          "name": "冶鐵",
+          "inputs": {
+            "鐵礦石": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "鐵錠": 1
+          },
+          "cycle_seconds": 60
+        },
+        {
+          "name": "冶金",
+          "inputs": {
+            "金礦石": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "金錠": 1
+          },
+          "cycle_seconds": 60
+        }
+      ]
+    },
+    {
+      "id": "woodweapons",
+      "name": "木器作坊",
+      "job": "木器匠",
+      "inputs": {
+        "木料": 2
+      },
+      "outputs": {
+        "木斧": 1,
+        "弓": 1,
+        "長槍": 1
+      },
+      "cycle_seconds": 60,
+      "note": "三種物品分別排單，不是同批同時產出。",
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "木斧",
+          "inputs": {
+            "木料": 2
+          },
+          "outputs": {
+            "木斧": 1
+          },
+          "cycle_seconds": 60
+        },
+        {
+          "name": "弓",
+          "inputs": {
+            "木料": 2
+          },
+          "outputs": {
+            "弓": 1
+          },
+          "cycle_seconds": 60
+        },
+        {
+          "name": "長槍",
+          "inputs": {
+            "木料": 2
+          },
+          "outputs": {
+            "長槍": 1
+          },
+          "cycle_seconds": 60
+        }
+      ]
+    },
+    {
+      "id": "leatherarmor",
+      "name": "皮甲坊",
+      "job": "皮甲匠",
+      "inputs": {
+        "皮革": 1,
+        "木料": 1
+      },
+      "outputs": {
+        "皮甲": 1,
+        "木盾": 1
+      },
+      "cycle_seconds": 60,
+      "note": "皮甲與木盾為不同訂單。",
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "皮甲",
+          "inputs": {
+            "皮革": 1,
+            "木料": 1
+          },
+          "outputs": {
+            "皮甲": 1
+          },
+          "cycle_seconds": 60
+        },
+        {
+          "name": "木盾",
+          "inputs": {
+            "木料": 1
+          },
+          "outputs": {
+            "木盾": 1
+          },
+          "cycle_seconds": 60
+        }
+      ]
+    },
+    {
+      "id": "ironweapons",
+      "name": "武器铺",
+      "job": "武器匠",
+      "inputs": {
+        "鐵錠": 1,
+        "煤": 1
+      },
+      "outputs": {
+        "鐵劍": 1,
+        "鐵槍": 1,
+        "弩": 1
+      },
+      "cycle_seconds": 90,
+      "note": "三種武器分別排單。",
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "鐵劍",
+          "inputs": {
+            "鐵錠": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "鐵劍": 1
+          },
+          "cycle_seconds": 90
+        },
+        {
+          "name": "鐵槍",
+          "inputs": {
+            "鐵錠": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "鐵槍": 1
+          },
+          "cycle_seconds": 90
+        },
+        {
+          "name": "弩",
+          "inputs": {
+            "鐵錠": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "弩": 1
+          },
+          "cycle_seconds": 90
+        }
+      ]
+    },
+    {
+      "id": "ironarmor",
+      "name": "盔甲铺",
+      "job": "盔甲匠",
+      "inputs": {
+        "鐵錠": 1,
+        "煤": 1
+      },
+      "outputs": {
+        "鐵甲": 1,
+        "鐵盾": 1
+      },
+      "cycle_seconds": 90,
+      "note": "鐵甲與鐵盾為不同訂單。",
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "鐵甲",
+          "inputs": {
+            "鐵錠": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "鐵甲": 1
+          },
+          "cycle_seconds": 90
+        },
+        {
+          "name": "鐵盾",
+          "inputs": {
+            "鐵錠": 1,
+            "煤": 1
+          },
+          "outputs": {
+            "鐵盾": 1
+          },
+          "cycle_seconds": 90
+        }
+      ]
+    },
+    {
+      "id": "stable",
+      "name": "马厩",
+      "job": "馬夫",
+      "inputs": {
+        "麥粒": 4
+      },
+      "outputs": {
+        "戰馬": 1
+      },
+      "cycle_seconds": 240,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "barracks",
+      "name": "兵营",
+      "job": "校尉",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      }
+    },
+    {
+      "id": "siege",
+      "name": "攻城器械坊",
+      "job": "器械匠",
+      "inputs": {
+        "木料": 2,
+        "鐵錠": 1,
+        "切石": 1
+      },
+      "outputs": {
+        "衝車": 1,
+        "投石器": 1
+      },
+      "cycle_seconds": 180,
+      "note": "器械分別排單。",
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      },
+      "recipes": [
+        {
+          "name": "衝車",
+          "inputs": {
+            "木料": 2,
+            "鐵錠": 1,
+            "切石": 1
+          },
+          "outputs": {
+            "衝車": 1
+          },
+          "cycle_seconds": 180
+        },
+        {
+          "name": "投石器",
+          "inputs": {
+            "木料": 2,
+            "鐵錠": 1,
+            "切石": 1
+          },
+          "outputs": {
+            "投石器": 1
+          },
+          "cycle_seconds": 180
+        }
+      ]
+    },
+    {
+      "id": "watchtower",
+      "name": "瞭望塔",
+      "job": "守衛",
+      "inputs": {},
+      "outputs": {},
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      }
+    },
+    {
+      "id": "school",
+      "name": "学堂",
+      "job": "教習",
+      "inputs": {},
+      "outputs": {
+        "熟練工資格": 1
+      },
+      "cycle_seconds": 120,
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "market",
+      "name": "市集",
+      "job": "市集管事",
+      "inputs": {},
+      "outputs": {
+        "金錠": 1
+      },
+      "terminal_sinks": {
+        "麥粒": "貿易剩餘出口",
+        "原木": "貿易剩餘出口",
+        "木料": "貿易剩餘出口",
+        "原石": "貿易剩餘出口",
+        "切石": "貿易剩餘出口",
+        "鐵礦石": "貿易剩餘出口",
+        "煤": "貿易剩餘出口",
+        "金礦石": "貿易剩餘出口",
+        "鐵錠": "貿易剩餘出口",
+        "金錠": "貿易剩餘出口",
+        "面粉": "貿易剩餘出口",
+        "麩皮": "貿易剩餘出口",
+        "面餅": "貿易剩餘出口",
+        "鮮魚": "貿易剩餘出口",
+        "肥豬": "貿易剩餘出口",
+        "猪皮": "貿易剩餘出口",
+        "香腸": "貿易剩餘出口",
+        "皮革": "貿易剩餘出口",
+        "木斧": "貿易剩餘出口",
+        "弓": "貿易剩餘出口",
+        "長槍": "貿易剩餘出口",
+        "皮甲": "貿易剩餘出口",
+        "木盾": "貿易剩餘出口",
+        "鐵劍": "貿易剩餘出口",
+        "鐵槍": "貿易剩餘出口",
+        "弩": "貿易剩餘出口",
+        "鐵甲": "貿易剩餘出口",
+        "鐵盾": "貿易剩餘出口",
+        "戰馬": "貿易剩餘出口",
+        "衝車": "貿易剩餘出口",
+        "投石器": "貿易剩餘出口",
+        "手推車": "貿易剩餘出口"
+      },
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      },
+      "recipes": [
+        {
+          "name": "出售訂單",
+          "inputs": {
+            "可交易物資": 2
+          },
+          "outputs": {
+            "金錠": 1
+          },
+          "cycle_seconds": 60
+        }
+      ],
+      "note": "一次只選一種余量物資；可交易物资是上述 inputs 中除金锭以外的物品。",
+      "trade_inputs": [
+        "麥粒",
+        "原木",
+        "木料",
+        "原石",
+        "切石",
+        "鐵礦石",
+        "煤",
+        "金礦石",
+        "鐵錠",
+        "面粉",
+        "麩皮",
+        "面餅",
+        "鮮魚",
+        "肥豬",
+        "猪皮",
+        "香腸",
+        "皮革",
+        "木斧",
+        "弓",
+        "長槍",
+        "皮甲",
+        "木盾",
+        "鐵劍",
+        "鐵槍",
+        "弩",
+        "鐵甲",
+        "鐵盾",
+        "戰馬",
+        "衝車",
+        "投石器",
+        "手推車"
+      ]
+    },
+    {
+      "id": "cartwright",
+      "name": "车马作坊",
+      "job": "車匠",
+      "inputs": {
+        "木料": 2,
+        "鐵錠": 1
+      },
+      "outputs": {
+        "手推車": 1
+      },
+      "cycle_seconds": 120,
+      "terminal_sinks": {
+        "手推車": "提升物流能力"
+      },
+      "construction": {
+        "木料": 10,
+        "切石": 6
+      }
+    },
+    {
+      "id": "ferry",
+      "name": "渡口驿站",
+      "job": "驛卒",
+      "inputs": {},
+      "outputs": {},
+      "terminal_sinks": {},
+      "construction": {
+        "木料": 14,
+        "切石": 10
+      },
+      "note": "先修复已存在的渡口遗址，再单独交付军粮和一名长枪兵；新建时另用construction成本。",
+      "recipes": [
+        {
+          "name": "修复渡口",
+          "inputs": {
+            "木料": 4,
+            "切石": 3
+          },
+          "outputs": {
+            "渡口修復": 1
+          },
+          "cycle_seconds": 0
+        },
+        {
+          "name": "交付关卡军需",
+          "inputs": {
+            "面餅": 38,
+            "長槍兵": 1
+          },
+          "outputs": {
+            "交付完成": 1
+          },
+          "cycle_seconds": 0
+        }
+      ]
+    }
+  ],
+  "unit_recipes": [
+    {
+      "name": "鄉勇",
+      "inputs": {
+        "招募令": 1,
+        "木斧": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "鄉勇": 1
+      }
+    },
+    {
+      "name": "斧盾兵",
+      "inputs": {
+        "招募令": 1,
+        "木斧": 1,
+        "木盾": 1,
+        "皮甲": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "斧盾兵": 1
+      }
+    },
+    {
+      "name": "弓手",
+      "inputs": {
+        "招募令": 1,
+        "弓": 1,
+        "皮甲": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "弓手": 1
+      }
+    },
+    {
+      "name": "刀盾兵",
+      "inputs": {
+        "招募令": 1,
+        "鐵劍": 1,
+        "鐵甲": 1,
+        "鐵盾": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "刀盾兵": 1
+      }
+    },
+    {
+      "name": "弩手",
+      "inputs": {
+        "招募令": 1,
+        "弩": 1,
+        "鐵甲": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "弩手": 1
+      }
+    },
+    {
+      "name": "長槍兵",
+      "inputs": {
+        "招募令": 1,
+        "鐵槍": 1,
+        "鐵甲": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "長槍兵": 1
+      }
+    },
+    {
+      "name": "騎兵",
+      "inputs": {
+        "招募令": 1,
+        "戰馬": 1,
+        "長槍": 1,
+        "皮甲": 1,
+        "可征兵劳力": 1
+      },
+      "outputs": {
+        "騎兵": 1
+      }
+    }
+  ],
+  "terminal_sinks": {
+    "木料": "建築/道路建造",
+    "切石": "建築/道路建造",
+    "原石": "建築道路材料或石匠加工",
+    "衝車": "前線攻城部隊",
+    "投石器": "前線攻城部隊",
+    "新居民": "入住房屋并扩充工作人口",
+    "可征兵劳力": "可投入岗位或被招募入伍的人口储备",
+    "招募令": "兵种编制",
+    "鄉勇": "部署为守军或完成渡口军令",
+    "弓手": "部署为守军或完成渡口军令",
+    "刀盾兵": "部署为守军或完成渡口军令",
+    "長槍兵": "部署为守军或完成渡口军令",
+    "騎兵": "部署为守军或完成渡口军令",
+    "斧盾兵": "部署为守军或完成渡口军令",
+    "弩手": "部署为守军或完成渡口军令",
+    "渡口修復": "关卡修复目标",
+    "交付完成": "有限关卡胜利条件",
+    "熟練勞力": "分配到专业岗位"
+  },
+  "food_math": {
+    "starting_population": 16,
+    "target_population": 18,
+    "portions_per_person_per_day": 2,
+    "starting_food_need_per_day": 32,
+    "starting_food_per_minute": 2.6666666667,
+    "daily_food_for_target": 38,
+    "game_day_minutes": 12,
+    "daily_food_per_minute": 3.1666666666666665,
+    "bread_per_flour": 2,
+    "bakery_flour_per_cycle": 1,
+    "bakery_bread_per_cycle": 2,
+    "bakery_cycle_seconds": 40,
+    "mill_grain_per_cycle": 2,
+    "mill_flour_per_cycle": 2,
+    "mill_bran_per_cycle": 2,
+    "mill_cycle_seconds": 60,
+    "field_grain_per_cycle": 8,
+    "field_cycle_seconds": 120,
+    "inn_food_transport_trips_per_day": 39,
+    "porter_daily_trips": 72,
+    "target_military_units": 1,
+    "bakery_count_target": 2
+  },
+  "validation_seed_stocks": {
+    "可征兵劳力": 6,
+    "木料": 60,
+    "切石": 30,
+    "原木": 4,
+    "原石": 6,
+    "麥粒": 48,
+    "面粉": 12,
+    "面餅": 32,
+    "鮮魚": 6
+  },
+  "validation_seed_buildings": {
+    "家院": 4,
+    "村务堂": 1,
+    "仓库": 1,
+    "粮仓": 1,
+    "农庄": 1,
+    "食堂": 1,
+    "伐木场": 1,
+    "锯木坊": 1,
+    "采石场": 1,
+    "石匠铺": 1,
+    "磨坊": 1,
+    "饼坊": 1,
+    "渔棚": 1
+  },
+  "population_transitions": [
+    {
+      "name": "成年移民安置",
+      "inputs": {
+        "新居民": 1
+      },
+      "outputs": {
+        "可征兵劳力": 1
+      },
+      "condition": "家院有空床位；转换为可分配成年劳力"
+    },
+    {
+      "name": "专业训练",
+      "inputs": {
+        "可征兵劳力": 1,
+        "熟練工資格": 1
+      },
+      "outputs": {
+        "熟練勞力": 1
+      },
+      "condition": "用一名待命成人和学堂训练名额转为专业工"
+    }
+  ]
+}

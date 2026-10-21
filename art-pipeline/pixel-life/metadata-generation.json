@@ -1,0 +1,14 @@
+{
+  "tool": "Maker MCP generate_resource_meta",
+  "generatorCommit": "a6a4145ac8be26d9385f3a318032cc79009f8a79",
+  "result": "success",
+  "generated": 17,
+  "paths": [
+    "assets/art/pixel-v1/life",
+    "scripts/game/WorkSites.lua",
+    "scripts/game/WorkLife.lua",
+    "scripts/game/PixelLife.lua",
+    "scripts/game/PixelCargo.lua"
+  ],
+  "initialSandboxAttempt": "loopback listen EPERM; exact local generator retry automatically approved"
+}

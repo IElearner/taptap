@@ -1,0 +1,471 @@
+{
+  "source": "/workspace/generated_images/exec-a2eaa379-4281-4a97-8acd-84228f7ceff8.png",
+  "source_kind": "OpenAI image_gen original artwork",
+  "cell": [
+    40,
+    48
+  ],
+  "feet_anchor": [
+    20,
+    44
+  ],
+  "direction_rows": [
+    "S",
+    "W",
+    "E",
+    "N"
+  ],
+  "variants": 2,
+  "frames": 4,
+  "scale": 0.14545454545454545,
+  "records": [
+    {
+      "row": 0,
+      "frame": 0,
+      "source_box": [
+        155,
+        7,
+        261,
+        172
+      ],
+      "body_size": [
+        15,
+        24
+      ]
+    },
+    {
+      "row": 0,
+      "frame": 1,
+      "source_box": [
+        402,
+        7,
+        509,
+        172
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 0,
+      "frame": 2,
+      "source_box": [
+        651,
+        8,
+        759,
+        172
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 0,
+      "frame": 3,
+      "source_box": [
+        887,
+        7,
+        994,
+        172
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 1,
+      "frame": 0,
+      "source_box": [
+        146,
+        524,
+        261,
+        688
+      ],
+      "body_size": [
+        17,
+        24
+      ]
+    },
+    {
+      "row": 1,
+      "frame": 1,
+      "source_box": [
+        391,
+        524,
+        506,
+        688
+      ],
+      "body_size": [
+        17,
+        24
+      ]
+    },
+    {
+      "row": 1,
+      "frame": 2,
+      "source_box": [
+        644,
+        524,
+        757,
+        688
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 1,
+      "frame": 3,
+      "source_box": [
+        890,
+        524,
+        1005,
+        688
+      ],
+      "body_size": [
+        17,
+        24
+      ]
+    },
+    {
+      "row": 2,
+      "frame": 0,
+      "source_box": [
+        143,
+        179,
+        256,
+        345
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 2,
+      "frame": 1,
+      "source_box": [
+        392,
+        180,
+        507,
+        345
+      ],
+      "body_size": [
+        17,
+        24
+      ]
+    },
+    {
+      "row": 2,
+      "frame": 2,
+      "source_box": [
+        644,
+        180,
+        759,
+        345
+      ],
+      "body_size": [
+        17,
+        24
+      ]
+    },
+    {
+      "row": 2,
+      "frame": 3,
+      "source_box": [
+        893,
+        179,
+        1006,
+        345
+      ],
+      "body_size": [
+        16,
+        24
+      ]
+    },
+    {
+      "row": 3,
+      "frame": 0,
+      "source_box": [
+        152,
+        354,
+        257,
+        517
+      ],
+      "body_size": [
+        15,
+        24
+      ]
+    },
+    {
+      "row": 3,
+      "frame": 1,
+      "source_box": [
+        402,
+        354,
+        506,
+        517
+      ],
+      "body_size": [
+        15,
+        24
+      ]
+    },
+    {
+      "row": 3,
+      "frame": 2,
+      "source_box": [
+        648,
+        354,
+        753,
+        517
+      ],
+      "body_size": [
+        15,
+        24
+      ]
+    },
+    {
+      "row": 3,
+      "frame": 3,
+      "source_box": [
+        895,
+        354,
+        1000,
+        517
+      ],
+      "body_size": [
+        15,
+        24
+      ]
+    },
+    {
+      "row": 4,
+      "frame": 0,
+      "source_box": [
+        142,
+        709,
+        261,
+        865
+      ],
+      "body_size": [
+        17,
+        23
+      ]
+    },
+    {
+      "row": 4,
+      "frame": 1,
+      "source_box": [
+        392,
+        708,
+        511,
+        865
+      ],
+      "body_size": [
+        17,
+        23
+      ]
+    },
+    {
+      "row": 4,
+      "frame": 2,
+      "source_box": [
+        637,
+        708,
+        758,
+        865
+      ],
+      "body_size": [
+        18,
+        23
+      ]
+    },
+    {
+      "row": 4,
+      "frame": 3,
+      "source_box": [
+        885,
+        708,
+        1005,
+        864
+      ],
+      "body_size": [
+        17,
+        23
+      ]
+    },
+    {
+      "row": 5,
+      "frame": 0,
+      "source_box": [
+        145,
+        1217,
+        256,
+        1368
+      ],
+      "body_size": [
+        16,
+        22
+      ]
+    },
+    {
+      "row": 5,
+      "frame": 1,
+      "source_box": [
+        387,
+        1217,
+        500,
+        1368
+      ],
+      "body_size": [
+        16,
+        22
+      ]
+    },
+    {
+      "row": 5,
+      "frame": 2,
+      "source_box": [
+        637,
+        1216,
+        750,
+        1368
+      ],
+      "body_size": [
+        16,
+        22
+      ]
+    },
+    {
+      "row": 5,
+      "frame": 3,
+      "source_box": [
+        890,
+        1216,
+        1002,
+        1368
+      ],
+      "body_size": [
+        16,
+        22
+      ]
+    },
+    {
+      "row": 6,
+      "frame": 0,
+      "source_box": [
+        142,
+        878,
+        256,
+        1032
+      ],
+      "body_size": [
+        17,
+        22
+      ]
+    },
+    {
+      "row": 6,
+      "frame": 1,
+      "source_box": [
+        396,
+        880,
+        511,
+        1032
+      ],
+      "body_size": [
+        17,
+        22
+      ]
+    },
+    {
+      "row": 6,
+      "frame": 2,
+      "source_box": [
+        647,
+        879,
+        762,
+        1032
+      ],
+      "body_size": [
+        17,
+        22
+      ]
+    },
+    {
+      "row": 6,
+      "frame": 3,
+      "source_box": [
+        896,
+        878,
+        1011,
+        1035
+      ],
+      "body_size": [
+        17,
+        23
+      ]
+    },
+    {
+      "row": 7,
+      "frame": 0,
+      "source_box": [
+        142,
+        1045,
+        265,
+        1203
+      ],
+      "body_size": [
+        18,
+        23
+      ]
+    },
+    {
+      "row": 7,
+      "frame": 1,
+      "source_box": [
+        392,
+        1045,
+        513,
+        1201
+      ],
+      "body_size": [
+        18,
+        23
+      ]
+    },
+    {
+      "row": 7,
+      "frame": 2,
+      "source_box": [
+        637,
+        1047,
+        758,
+        1203
+      ],
+      "body_size": [
+        18,
+        23
+      ]
+    },
+    {
+      "row": 7,
+      "frame": 3,
+      "source_box": [
+        884,
+        1046,
+        1006,
+        1206
+      ],
+      "body_size": [
+        18,
+        23
+      ]
+    }
+  ]
+}

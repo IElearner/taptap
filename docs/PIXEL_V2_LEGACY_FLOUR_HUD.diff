@@ -1,0 +1,79 @@
+--- /workspace/work/development/Hud.095b0196.lua	2026-10-20 06:18:24.586586885 +0000
++++ scripts/game/Hud.lua	2026-10-20 06:26:30.546358408 +0000
+@@ -317,6 +317,13 @@
+             end
+             for _,job in ipairs(sim.jobs) do cargo(job,false,false) end
+             for _,actor in ipairs(sim.carriers) do cargo(actor.job,actor.carrying,actor.handedOff) end
++            -- Logs still in a logger's hands have not reached the camp shelf.
++            -- Legacy saved loads remain wood until their old batch is delivered.
++            for _,actor in pairs(sim.workers) do
++                local camp=sim.buildings[actor.building]
++                if camp and camp.kind=="woodcutter" and actor.carrying and not actor.stockedLoad
++                    and sim:outputResource(camp)==resource then transit=transit+(actor.loadAmount or 1) end
++            end
+             stockLines[#stockLines+1]=D.names[resource] .. "  仓 " .. sim.stock[resource] .. " / 待运 " .. shelf .. " / 在途 " .. transit
+         end
+         ledger:SetText(table.concat(stockLines,"\n"))
+@@ -324,38 +331,44 @@
+         if b then
+             local def = D.buildings[b.kind]
+             selectedTitle:SetText(def.name); selectedInfo:SetText(def.description .. "\n实际占地 " .. (b.footprintW or 1) .. "×" .. (b.footprintH or 1) .. "，共 " .. #D.cells(b) .. " 格。")
++            local activeDisplay=sim.paused and "暂停中" or tostring(b.activeWorkers or 0)
+             local connected=sim:connected(b)
++            local outputCapacity=b.kind=="ranch" and 2 or b.kind=="woodcutter" and 6 or 8
+             local reason
+-            if not connected then reason="未连路 · 门前道路需接回义仓"
++            if sim.paused then reason="已暂停经营 · 恢复后继续作业"
++            elseif not connected then reason="未连路 · 门前道路需接回义仓"
+             elseif not b.complete then reason="施工中 · 材料已预留，等待工人取材"
+             elseif def.output and b.workers==0 then reason="无工人 · 增加岗位后开工"
+             elseif b.kind=="woodcutter" and sim:treeCount(b,6)==0 and b.buffer==0 and not b.outgoing then reason="林地已伐尽 · 靠近其他树林另建伐木场"
+-            elseif def.output and b.buffer>=8-(def.amount or 1)+1 then reason="产物满库 · 等搬运工取走"
++            elseif b.kind=="quarry" and sim.rock<=0 then reason="石料已采尽"..(sim.mode=="infinite" and " · 拓荒可发现新储量" or " · 请合理分配现有石料")
++            elseif def.output and b.buffer>outputCapacity-(def.amount or 1) then reason=b.kind=="ranch" and "出栏区已满 · 等搬运工取走" or b.kind=="woodcutter" and "原木待运 · 已暂停新采伐" or "产物待运 · 货架不足一整批空间"
+             elseif def.input and b.inputs==0 and not (b.kind=="ranch" and (b.feedRemaining or 0)>0) then reason=b.incoming and "原料在途 · 搬运工正在送达" or "缺原料 · 请检查上游与义仓"
+-            elseif def.output and (b.workRate or 0)==0 then reason="工人用餐 / 归岗中"
++            elseif def.output and ((b.activeWorkers or 0)==0 or (b.workRate or 0)==0) then reason="工人用餐 / 归岗中"
+             elseif def.output then reason="正在作业 · 取放货由搬运工完成"
+             else reason="道路畅通" end
+             selectedFlow:SetText((connected and "已接通义仓" or "尚未接通义仓") .. " · " .. reason)
+             local inventory={}
+-            if def.output then inventory[#inventory+1]=D.job(b.kind).." "..(b.activeWorkers or 0).." 在岗 / "..b.workers.." 已安排 / 2 上限";inventory[#inventory+1]=D.names[sim:outputResource(b)].."待运 "..(b.buffer or 0).." / "..(b.kind=="ranch" and 2 or 8) end
++            if def.output then inventory[#inventory+1]=D.job(b.kind).."在岗 "..activeDisplay.." / "..b.workers.." 已安排 / 2 上限";inventory[#inventory+1]=D.names[sim:outputResource(b)].."待运 "..(b.buffer or 0)..(b.kind=="woodcutter" and " · ≥6暂停新采伐" or (" / "..outputCapacity)) end
+             if def.input then inventory[#inventory+1]="原料 "..b.inputs.." / 4 · "..D.names[def.input]..(def.alternateInput and (" 或 "..D.names[def.alternateInput]) or "") end
++            local oldFlour=b.kind=="kitchen" and b.inputGoods and (b.inputGoods.flour or 0) or 0
++            if oldFlour>0 then inventory[#inventory+1]="旧档面粉 "..oldFlour.."（续用，按原配方烹饪）" end
+             if b.kind=="sawmill" or b.kind=="bakery" or b.kind=="mill" then inventory[#inventory+1]="本轮 "..math.min(100,math.floor((b.timer or 0)/def.period*100)).."% · 每 "..def.period.." 秒 / "..def.amount.." "..D.names[def.output] end
+             if b.kind=="store" then inventory=stockLines end
+             selectedStock:SetText(table.concat(inventory,"\n"))
+             local siteStatus=not sim:connected(b) and "待修建 · 等待门前接路" or b.progress==0 and "待修建 · 等待工人取材到场" or "修建中 " .. math.floor(b.progress*100) .. "%"
+-            selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. (b.activeWorkers or 0) .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or siteStatus)
++            selectedState:SetText(b.complete and (D.job(b.kind) .. "岗位 " .. b.workers .. " / 在岗 " .. activeDisplay .. " · " .. (sim:connected(b) and "道路畅通" or "尚未通路")) or siteStatus)
+             if b.kind=="farm" and b.complete then
+                 local stage=Farm.stage(b,D.buildings.farm.period)
+                 local stageName=({seed="播种期",sprout="幼苗期",green="拔节期",ripe="成熟期"})[stage]
+                 local task=Farm.needsWork(b,D.buildings.farm.period) and
+                     ({"犁地播种中","浇水中","照料麦苗中","收割中"})[Farm.step(b)+1] or "麦子生长中 · 工人在田边等待 / 休息"
+-                selectedState:SetText("工人 " .. (b.activeWorkers or 0) .. " 人 · " .. stageName .. " " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n" .. task .. "\n每轮收获 3 袋麦粒，工人运往磨坊或牧场，余粮入仓。")
++                selectedState:SetText("在岗 " .. activeDisplay .. " · " .. stageName .. " " .. math.floor((b.timer or 0)/D.buildings.farm.period*100) .. "%\n" .. task .. "\n每轮收获 3 袋麦粒，工人运往磨坊或牧场，余粮入仓。")
+             elseif b.kind=="ranch" and b.complete then
+-                selectedState:SetText("养殖户 "..(b.activeWorkers or 0).." 人 · 麦粒饲料 "..b.inputs.." 袋 · 已投喂 "..(b.feedVisits or 0).." 次\n饲槽余粮 "..math.ceil(b.feedRemaining or 0).." 秒 · 生长 "..math.floor(b.timer/105*100).."% · 待出栏 "..b.buffer.." 头\n麦田供料，养殖户定时撒料，成畜优先送屠宰场。")
++                selectedState:SetText("养殖户在岗 "..activeDisplay.." · 麦粒饲料 "..b.inputs.." 袋 · 已投喂 "..(b.feedVisits or 0).." 次\n饲槽余粮 "..math.ceil(b.feedRemaining or 0).." 秒 · 生长 "..math.floor(b.timer/105*100).."% · 待出栏 "..b.buffer.." 头\n麦田供料，养殖户定时撒料，成畜优先送屠宰场。")
+             elseif b.kind=="butcher" and b.complete then
+-                selectedState:SetText("屠夫 "..(b.activeWorkers or 0).." 人 · 待加工牲畜 "..b.inputs.." 头\n加工 "..math.floor(b.timer/8*100).."% · 待运鲜肉 "..b.buffer.." 份\n工人把鲜肉优先送往食堂。")
++                selectedState:SetText("屠夫在岗 "..activeDisplay.." · 待加工牲畜 "..b.inputs.." 头\n加工 "..math.floor(b.timer/8*100).."% · 待运鲜肉 "..b.buffer.." 份\n工人把鲜肉优先送往食堂。")
+             elseif b.kind=="woodcutter" and b.complete then
+-                selectedState:SetText("樵夫 " .. (b.activeWorkers or 0) .. " 人 · 待运木料 " .. (b.buffer or 0) .. "\n附近余树 " .. sim:treeCount(b,6) .. " 棵 · 每树1根原木，送锯木坊加工。")
++                selectedState:SetText("樵夫在岗 " .. activeDisplay .. " · 待运木料 " .. (b.buffer or 0) .. "\n附近余树 " .. sim:treeCount(b,6) .. " 棵 · 每树1根原木，送锯木坊加工。")
+             end
+             if b.kind=="kitchen" and b.complete then
+                 local inside,queue=0,0
+@@ -371,7 +384,7 @@
+                 for _,a in ipairs(sim.builders) do visit(a) end
+                 for _,a in ipairs(sim.guards or {}) do visit(a) end
+                 local Meals=require "game.Meals"
+-                selectedState:SetText("厨师 " .. (b.activeWorkers or 0) .. " 人 · 供餐席位 " .. inside .. "/" .. Meals.seats .. " · 候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 灶房面饼 " .. (b.inputGoods and b.inputGoods.bread or 0) .. " / 鲜肉 " .. (b.inputGoods and b.inputGoods.meat or 0) .. "\n工人送面饼或鲜肉，村民入座吃饭。")
++                selectedState:SetText("厨师在岗 " .. activeDisplay .. " · 供餐席位 " .. inside .. "/" .. Meals.seats .. " · 候餐 " .. queue .. "\n店内口粮 " .. (b.mealStock or 0) .. "/" .. Meals.pantryCapacity .. " · 灶房面饼 " .. (b.inputGoods and b.inputGoods.bread or 0) .. " / 鲜肉 " .. (b.inputGoods and b.inputGoods.meat or 0) .. (oldFlour>0 and (" · 旧档面粉 "..oldFlour.."（续用）") or "") .. "\n工人送面饼或鲜肉，村民入座吃饭。")
+             end
+             minus:SetVisible(def.output ~= nil); plus:SetVisible(def.output ~= nil)
+             train:SetVisible(b.kind == "barracks"); repair:SetVisible(b.kind == "store")

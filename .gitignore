@@ -11,6 +11,8 @@ logs/.nfs*
 # Temp & swap files
 .tmp/
 *.crswap
+__pycache__/
+*.blend1
 .org.chromium.Chromium.??????
 .DS_Store
 
@@ -73,3 +75,9 @@ CLAUDE.md
 
 /guest_shanheli_save_v1_*.json
 /guest_shanheli_save_v1_*.json.bak
+
+# Pixel test player progress (separate from legacy saves)
+/shanheli_pixel_v1_*.json
+/shanheli_pixel_v1_*.json.bak
+/guest_shanheli_pixel_v1_*.json
+/guest_shanheli_pixel_v1_*.json.bak

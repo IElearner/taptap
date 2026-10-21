@@ -1,0 +1,14 @@
+{
+  "status": "GROUND_STATIONS_NATIVE_CONTACT_PENDING",
+  "mill": {
+    "millCenter": [
+      154,
+      165
+    ]
+  },
+  "stations": {
+    "source": "assets/art/pixel-v1/life/ground-props-import.json",
+    "placement": "WorkSites.workCell; operator feet +/-14px X, -2px Y; storage operator -20px X,+2px Y",
+    "compatibility": "Do not apply obsolete high-workPoint contact candidates; legacy compact footprints unchanged"
+  }
+}

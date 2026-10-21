@@ -1,0 +1,23 @@
+{
+  "source": "/workspace/taptap/art-pipeline/pixel-v1/sources/exec-48f73dc2-66b1-4c52-8262-ee86ca25d097.png",
+  "cell": [
+    40,
+    48
+  ],
+  "feet_anchor": [
+    20,
+    44
+  ],
+  "rows": [
+    "A hammer E",
+    "A road S",
+    "A carry E",
+    "A carry S",
+    "B hammer E",
+    "B road S",
+    "B carry E",
+    "B carry S"
+  ],
+  "scale": 0.13559322033898305,
+  "direction_limit": "hammer E/W and road S only, no falsely labelled north frame"
+}

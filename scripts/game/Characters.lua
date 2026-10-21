@@ -1,5 +1,5 @@
--- Presentation only. Identity derives from stable carrier order / building coordinates,
--- so loading a save or changing camera never randomizes a villager's appearance.
+-- New ordinary workers receive one of two random looks at creation. Legacy
+-- workers use a stable index fallback; drawing never changes their identity.
 local C = {}
 ---@class VillagePersonProfile
 ---@field id? string
@@ -10,25 +10,25 @@ local C = {}
 ---@type VillagePersonProfile[]
 C.civilians = {
     { id = "blue-man", color = { 78, 108, 135 }, hat = "straw", age = "adult", gender = "male" },
-    { id = "ochre-woman", color = { 174, 126, 64 }, hat = "scarf", age = "adult", gender = "female" },
-    { id = "grey-elder", color = { 124, 121, 108 }, hat = "cap", age = "elder", gender = "male" },
-    { id = "green-woman", color = { 88, 128, 91 }, hat = "braid", age = "young-adult", gender = "female" },
+    { id = "ochre-woman", color = { 143, 91, 62 }, hat = "scarf", age = "adult", gender = "female" },
 }
 local specialists = {
+    woodcutter = {id="lumberjack",color={83,107,68},hat="scarf",age="adult",gender="male"},
+    ranch = {id="herder",color={152,125,84},hat="cap",age="adult",gender="male"},
     kitchen = { id = "chef", color = { 74, 91, 116 }, hat = "scarf", age = "adult", gender = "female" },
     butcher = { id = "butcher", color = { 132, 79, 57 }, hat = "cap", age = "adult", gender = "male" },
 }
-function C.carrier(index, carrying)
-    local profile = C.civilians[(index - 1) % #C.civilians + 1]
+function C.carrier(index, carrying,actor)
+    local profile = C.civilians[actor and actor.workerLook or (index - 1) % #C.civilians + 1]
     return (carrying and "loaded-" or "civilian-") .. profile.id, profile
 end
-function C.worker(building, index)
+function C.worker(building, index,actor)
     if not building or not building.complete or index > building.workers or index < 1 then return nil end
     local specialist = specialists[building.kind]
     if specialist then return "occupation-" .. specialist.id, specialist end
     -- Carrying, construction and ordinary production are assignments of the
     -- same civilian profession. A stable building/slot seed keeps each face.
-    return C.carrier((building.id or 1) + index - 1, false)
+    return C.carrier((building.id or 1) + index - 1, false,actor)
 end
 function C.militia(index)
     if index % 2 == 0 then

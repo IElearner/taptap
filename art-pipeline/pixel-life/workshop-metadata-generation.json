@@ -1,0 +1,18 @@
+{
+  "tool": "Maker MCP generate_resource_meta",
+  "generatorCommit": "a6a4145ac8be26d9385f3a318032cc79009f8a79",
+  "success": true,
+  "generated": [
+    "assets/art/pixel-v1/life/workshop-butcher.png",
+    "assets/art/pixel-v1/life/workshop-miller.png",
+    "assets/art/pixel-v1/life/workshop-import.json",
+    "assets/art/pixel-v1/life/workshop-carpenter.png",
+    "assets/art/pixel-v1/life/workshop-smith.png",
+    "assets/art/pixel-v1/life/workshop-baker.png",
+    "assets/art/pixel-v1/life/workshop-leatherworker.png",
+    "scripts/game/CarrierLife.lua",
+    "scripts/game/WorkBreaks.lua"
+  ],
+  "preserved_count": 13,
+  "result_record": "/workspace/work/maker/life-final-meta-result.json"
+}

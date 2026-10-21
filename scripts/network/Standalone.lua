@@ -1,14 +1,16 @@
 -- Lifecycle based on templates/scaffold-2d.lua. Single-player mobile prototype.
 local UI = require "urhox-libs/UI"
 local Simulation = require "game.Simulation"
-local WorldView = require "game.WorldView"
+local WorldView = require "game.PixelWorldView"
 local Hud = require "game.Hud"
-local SaveStore = require "game.SaveStore"
+local SaveStore = require "game.PixelSaveStore"
 local SaveData = require "game.SaveData"
 local Offline = require "game.Offline"
 local Game = {}
 local session = { accepted = false, userId = 0, guest = false }
 local injectedStore = false
+---@type false|{state:table, info:table}
+local demoReturn=false
 ---@type VillageSimulation
 local state
 ---@type VillageWorldView
@@ -27,6 +29,7 @@ local info = {}
 local actions = { mode = "inspect", selected = false }
 local render, create
 local function persist()
+    if demoReturn then return false end
     if state and state.started and not info.loading and not info.settling then
         return store:save(state, info.idleEnabled)
     end
@@ -36,7 +39,7 @@ local function finishSettlement()
     info.settling, info.summary = false, settlement:summary()
     if settlement.seconds > 0 then state:notify(info.summary) end
     -- Timestamp is committed with the resulting economy, so a reload cannot claim twice.
-    if state.started then store:save(state, info.idleEnabled) end
+    if state.started and not demoReturn then store:save(state, info.idleEnabled) end
     saveClock = 0
 end
 local function startSettlement(savedAt)
@@ -82,8 +85,22 @@ render = function()
             if built then actions.selected = built; view.select(built) end
         else actions.selected,actions.road = false,false; view.select(false) end
     end)
-    actions.restart = function() create(state.mode, true) end
+    actions.demo = function()
+        if info.loading or info.settling then return end
+        if demoReturn then
+            state,info=demoReturn.state,demoReturn.info;demoReturn=false
+            lastWall=store.now();saveClock=0;render();state:notify("已返回你的村庄。")
+        else
+            persist()
+            demoReturn={state=state,info=info}
+            state=require("game.DemoVillage").new()
+            info={demo=true,loading=false,settling=false,idleEnabled=false,status="演示村庄",summary="演示不会覆盖原存档；可在系统中返回自己的村庄。"}
+            lastWall=store.now();saveClock=0;render()
+        end
+    end
+    actions.restart = function() if demoReturn then actions.demo() end;create(state.mode, true) end
     actions.changeMode = function(value)
+        if demoReturn then actions.demo() end
         persist()
         create(value, false)
     end
@@ -94,11 +111,13 @@ render = function()
         return true
     end
     actions.save = function()
+        if demoReturn then state:notify("演示村不会覆盖原存档；返回自己的村庄后可保存。");return end
         persist()
         state:notify(store.status)
     end
     actions.toggleIdle = function()
         if info.loading or info.settling then return end
+        if demoReturn then state:notify("演示村不会进行离线结算。");return end
         info.idleEnabled = not info.idleEnabled
         store:save(state, info.idleEnabled)
     end
@@ -141,11 +160,11 @@ create = function(mode, fresh)
     print("[山河里] Save-aware single-player session ready")
 end
 function Game.Start()
-    graphics.windowTitle = "山河里 · 炊烟再起"
-    UI.Init({ theme = "default-light", scale = UI.Scale.DEFAULT,
-        fonts = { { family = "sans", weights = { normal = "Fonts/MiSans-Regular.ttf" } } } })
+    graphics.windowTitle = "山河里 · 像素村庄 产业拓展 v3"
+    UI.Init({ theme = require('game.PixelTheme'), scale = UI.Scale.DEFAULT })
     session = { accepted = false, guest = false, userId = clientCloud and tonumber(clientCloud.userId) or 0 }
     injectedStore = false
+    demoReturn=false
     store = SaveStore.new()
     create("finite", false)
 end
@@ -157,7 +176,7 @@ function Game.Update(dt)
             local done = settlement:step(1024)
             info.progress = 1 - settlement.remaining / math.max(1, settlement.seconds)
             if done then finishSettlement() end
-        elseif now - lastWall > 5 and state.started and not state.menuOpen then
+        elseif not demoReturn and now - lastWall > 5 and state.started and not state.menuOpen then
             startSettlement(lastWall)
         else
             if not state.menuOpen then state:update(dt) end
@@ -166,7 +185,7 @@ function Game.Update(dt)
         end
     end
     lastWall = now
-    info.status = store.status
+    info.status = demoReturn and "演示村庄 · 原存档已保留" or store.status
     uiClock = uiClock + dt
     if uiClock >= 0.15 then local elapsed = uiClock; uiClock = 0; hud.update(elapsed) end
 end
@@ -183,12 +202,12 @@ end
 function Game.Stop()
     persist()
     if view then view.dispose(); view = nil end
-    require("game.Art").release()
     UI.Shutdown()
 end
 function Game.Inspect() return state, view, hud, info, store end
 -- Dependency injection also lets tests avoid touching a real player's files or cloud data.
 function Game.UseStore(storage, showLogin)
+    demoReturn=false
     if store then store.generation = store.generation + 1 end
     store, injectedStore = storage, true
     session.accepted = not showLogin

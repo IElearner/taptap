@@ -1,0 +1,278 @@
+{
+  "cell": [
+    80,
+    72
+  ],
+  "anchor": [
+    40,
+    64
+  ],
+  "columns": 4,
+  "rows": 2,
+  "source": "art-pipeline/pixel-life/sources/ground-props.png",
+  "frames": [
+    {
+      "name": "mill",
+      "row": 0,
+      "frame": 0,
+      "source_region": [
+        0,
+        380,
+        384,
+        650
+      ],
+      "source_anchor": [
+        202.5,
+        244
+      ],
+      "scale": 0.10830324909747292,
+      "origin": [
+        18,
+        38
+      ],
+      "alpha_bounds": [
+        25,
+        40,
+        55,
+        64
+      ],
+      "surfaceCandidate": [
+        35,
+        51
+      ],
+      "deviceCandidate": [
+        40,
+        47
+      ],
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "kneading",
+      "row": 0,
+      "frame": 1,
+      "source_region": [
+        384,
+        380,
+        768,
+        650
+      ],
+      "source_anchor": [
+        204.5,
+        244
+      ],
+      "scale": 0.11076923076923077,
+      "origin": [
+        17,
+        37
+      ],
+      "alpha_bounds": [
+        22,
+        42,
+        58,
+        64
+      ],
+      "surfaceCandidate": [
+        40,
+        52
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "chopping",
+      "row": 0,
+      "frame": 2,
+      "source_region": [
+        768,
+        380,
+        1152,
+        650
+      ],
+      "source_anchor": [
+        189.5,
+        240
+      ],
+      "scale": 0.10699588477366255,
+      "origin": [
+        20,
+        38
+      ],
+      "alpha_bounds": [
+        27,
+        44,
+        53,
+        64
+      ],
+      "surfaceCandidate": [
+        40,
+        51
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "sawhorse",
+      "row": 0,
+      "frame": 3,
+      "source_region": [
+        1152,
+        380,
+        1536,
+        650
+      ],
+      "source_anchor": [
+        169.0,
+        250
+      ],
+      "scale": 0.1125,
+      "origin": [
+        21,
+        36
+      ],
+      "alpha_bounds": [
+        22,
+        39,
+        58,
+        64
+      ],
+      "surfaceCandidate": [
+        40,
+        52
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "forge-anvil",
+      "row": 1,
+      "frame": 0,
+      "source_region": [
+        0,
+        680,
+        384,
+        950
+      ],
+      "source_anchor": [
+        207.5,
+        237
+      ],
+      "scale": 0.12779552715654952,
+      "origin": [
+        13,
+        34
+      ],
+      "alpha_bounds": [
+        20,
+        43,
+        59,
+        65
+      ],
+      "surfaceCandidate": [
+        53,
+        50
+      ],
+      "deviceCandidate": [
+        31,
+        53
+      ],
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "scraping",
+      "row": 1,
+      "frame": 1,
+      "source_region": [
+        384,
+        680,
+        768,
+        950
+      ],
+      "source_anchor": [
+        194.5,
+        235
+      ],
+      "scale": 0.11356466876971609,
+      "origin": [
+        18,
+        37
+      ],
+      "alpha_bounds": [
+        22,
+        41,
+        58,
+        64
+      ],
+      "surfaceCandidate": [
+        42,
+        50
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "empty-rack",
+      "row": 1,
+      "frame": 2,
+      "source_region": [
+        768,
+        680,
+        1152,
+        950
+      ],
+      "source_anchor": [
+        174.5,
+        246
+      ],
+      "scale": 0.1180327868852459,
+      "origin": [
+        19,
+        35
+      ],
+      "alpha_bounds": [
+        22,
+        36,
+        57,
+        64
+      ],
+      "surfaceCandidate": [
+        40,
+        55
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    },
+    {
+      "name": "steps",
+      "row": 1,
+      "frame": 3,
+      "source_region": [
+        1152,
+        680,
+        1536,
+        950
+      ],
+      "source_anchor": [
+        178.0,
+        252
+      ],
+      "scale": 0.1069182389937107,
+      "origin": [
+        21,
+        37
+      ],
+      "alpha_bounds": [
+        23,
+        44,
+        57,
+        64
+      ],
+      "surfaceCandidate": [
+        40,
+        52
+      ],
+      "deviceCandidate": null,
+      "contact_status": "source pixel candidate; native actor/prop contact required"
+    }
+  ],
+  "empty_stock": true
+}

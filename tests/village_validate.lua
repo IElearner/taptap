@@ -4,12 +4,19 @@ local D = require "game.Definitions"
 local function advance(s, seconds)
     for _ = 1, math.ceil(seconds * 10) do s:update(0.1) end
 end
+local function untilTrue(s,predicate,seconds)
+    for _=1,seconds*10 do if predicate() then return true end;s:update(.1) end
+    return predicate()
+end
 local function build(s, kind, x, y)
     local ok, message, b = s:build(kind, x, y)
     V.assert(ok, kind .. ": " .. message)
     if ok and kind=="road" then
         for _=1,3000 do if s.roads[x .. ":" .. y] then break end;s:update(0.1,true) end
         V.assert(s.roads[x .. ":" .. y], "Planned road is constructed before logistics use")
+    end
+    if ok and kind~="road" then
+        V.assert(untilTrue(s,function() return b.complete end,600),kind .. ": real staged construction finishes within ten simulated minutes")
     end
     return b
 end
@@ -65,7 +72,7 @@ V.atFrame(8, function()
     for y=10,13 do build(s,"road",15,y) end
     build(s,"road",14,13)
     build(s, "kitchen", 14, 12)
-    advance(s, 150)
+    V.assert(untilTrue(s,function() return s.produced.food>=4 end,300),"The complete grain chain delivers its first cooked batch")
     V.assert(s.produced.food >= 4, "Grain is transported, milled, cooked and delivered as food")
     V.assert(s:nextLesson(), "Food tutorial counts delivered food, not starter inventory")
     build(s,"road",16,9);build(s,"road",17,9);build(s,"woodcutter",17,8);advance(s,30)

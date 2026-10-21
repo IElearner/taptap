@@ -27,7 +27,7 @@ function Farm.exposedEdges(sim,b)
     return edges
 end
 function Farm.needsWork(b, period)
-    if not b.complete or (b.buffer or 0) > 0 or b.outgoing then return false end
+    if not b.complete or (b.buffer or 0) > 0 then return false end
     local step=Farm.step(b)
     return (b.timer or 0) >= period*thresholds[step+1]
 end
